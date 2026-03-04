@@ -1,0 +1,16 @@
+<Project Sdk="Godot.NET.Sdk/4.2.2">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'android' ">net8.0</TargetFramework>
+    <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'ios' ">net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <LangVersion>11</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Exclude test and spec directories from game project -->
+    <Compile Remove="tests/**" />
+    <Compile Remove="specs/**" />
+  </ItemGroup>
+</Project>

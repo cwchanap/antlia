@@ -1,0 +1,214 @@
+[gd_scene load_steps=9 format=3 uid="uid://dv7y8h9j0k1l2"]
+
+[ext_resource type="PackedScene" uid="uid://bus_scene_001" path="res://scenes/bus.tscn" id="1_bus"]
+[ext_resource type="Script" path="res://scripts/CameraFollow.cs" id="2_camera"]
+[ext_resource type="Script" path="res://scripts/LapManager.cs" id="3_lapmanager"]
+[ext_resource type="PackedScene" uid="uid://lap_summary_ui" path="res://ui/LapSummary.tscn" id="4_lap_summary"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_trigger"]
+size = Vector3(10, 5, 2)
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
+sky_top_color = Color(0.385, 0.454, 0.55, 1)
+sky_horizon_color = Color(0.646, 0.656, 0.67, 1)
+ground_horizon_color = Color(0.646, 0.656, 0.67, 1)
+
+[sub_resource type="Sky" id="Sky_1"]
+sky_material = SubResource("ProceduralSkyMaterial_1")
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+sky = SubResource("Sky_1")
+ambient_light_source = 3
+ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_energy = 0.5
+tonemap_mode = 2
+ssao_enabled = true
+glow_enabled = true
+glow_intensity = 0.5
+
+[node name="TestTrack" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, -0.75, 0.433013, 0, 10, 0)
+shadow_enabled = true
+
+[node name="Ground" type="StaticBody3D" parent="."]
+collision_layer = 2
+collision_mask = 1
+
+[node name="GroundMesh" type="MeshInstance3D" parent="Ground"]
+transform = Transform3D(100, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0)
+mesh = BoxMesh
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+transform = Transform3D(100, 0, 0, 0, 1, 0, 0, 0, 100, 0, 0, 0)
+shape = BoxShape3D
+
+[node name="TrackRoad" type="StaticBody3D" parent="."]
+collision_layer = 2
+collision_mask = 1
+
+[node name="RoadSegment1" type="MeshInstance3D" parent="TrackRoad"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 15, 0, 0.1, 0)
+mesh = BoxMesh
+
+[node name="CollisionShape1" type="CollisionShape3D" parent="TrackRoad"]
+transform = Transform3D(8, 0, 0, 0, 0.1, 0, 0, 0, 30, 0, 0.1, 0)
+shape = BoxShape3D
+
+[node name="RoadSegment2" type="MeshInstance3D" parent="TrackRoad"]
+transform = Transform3D(15, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 30)
+mesh = BoxMesh
+
+[node name="CollisionShape2" type="CollisionShape3D" parent="TrackRoad"]
+transform = Transform3D(30, 0, 0, 0, 0.1, 0, 0, 0, 8, 0, 0.1, 30)
+shape = BoxShape3D
+
+[node name="RoadSegment3" type="MeshInstance3D" parent="TrackRoad"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 15, 30, 0.1, 30)
+mesh = BoxMesh
+
+[node name="CollisionShape3" type="CollisionShape3D" parent="TrackRoad"]
+transform = Transform3D(8, 0, 0, 0, 0.1, 0, 0, 0, 30, 30, 0.1, 30)
+shape = BoxShape3D
+
+[node name="RoadSegment4" type="MeshInstance3D" parent="TrackRoad"]
+transform = Transform3D(15, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.1, 0)
+mesh = BoxMesh
+
+[node name="CollisionShape4" type="CollisionShape3D" parent="TrackRoad"]
+transform = Transform3D(30, 0, 0, 0, 0.1, 0, 0, 0, 8, 15, 0.1, 0)
+shape = BoxShape3D
+
+[node name="RoadBoundaries" type="Node3D" parent="."]
+
+[node name="InnerWall1" type="StaticBody3D" parent="RoadBoundaries"]
+collision_layer = 4
+collision_mask = 1
+
+[node name="WallMesh1" type="MeshInstance3D" parent="RoadBoundaries/InnerWall1"]
+transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 20, -3, 0.5, 15)
+mesh = BoxMesh
+
+[node name="CollisionShape" type="CollisionShape3D" parent="RoadBoundaries/InnerWall1"]
+transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 20, -3, 0.5, 15)
+shape = BoxShape3D
+
+[node name="InnerWall2" type="StaticBody3D" parent="RoadBoundaries"]
+collision_layer = 4
+collision_mask = 1
+
+[node name="WallMesh2" type="MeshInstance3D" parent="RoadBoundaries/InnerWall2"]
+transform = Transform3D(20, 0, 0, 0, 1, 0, 0, 0, 0.5, 10, 0.5, 27)
+mesh = BoxMesh
+
+[node name="CollisionShape" type="CollisionShape3D" parent="RoadBoundaries/InnerWall2"]
+transform = Transform3D(20, 0, 0, 0, 1, 0, 0, 0, 0.5, 10, 0.5, 27)
+shape = BoxShape3D
+
+[node name="OuterWall1" type="StaticBody3D" parent="RoadBoundaries"]
+collision_layer = 4
+collision_mask = 1
+
+[node name="WallMesh3" type="MeshInstance3D" parent="RoadBoundaries/OuterWall1"]
+transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 35, -8, 0.5, 15)
+mesh = BoxMesh
+
+[node name="CollisionShape" type="CollisionShape3D" parent="RoadBoundaries/OuterWall1"]
+transform = Transform3D(0.5, 0, 0, 0, 1, 0, 0, 0, 35, -8, 0.5, 15)
+shape = BoxShape3D
+
+[node name="OuterWall2" type="StaticBody3D" parent="RoadBoundaries"]
+collision_layer = 4
+collision_mask = 1
+
+[node name="WallMesh4" type="MeshInstance3D" parent="RoadBoundaries/OuterWall2"]
+transform = Transform3D(40, 0, 0, 0, 1, 0, 0, 0, 0.5, 15, 0.5, 35)
+mesh = BoxMesh
+
+[node name="CollisionShape" type="CollisionShape3D" parent="RoadBoundaries/OuterWall2"]
+transform = Transform3D(40, 0, 0, 0, 1, 0, 0, 0, 0.5, 15, 0.5, 35)
+shape = BoxShape3D
+
+[node name="Obstacles" type="Node3D" parent="."]
+
+[node name="Obstacle1" type="StaticBody3D" parent="Obstacles"]
+collision_layer = 8
+collision_mask = 1
+
+[node name="ObstacleMesh" type="MeshInstance3D" parent="Obstacles/Obstacle1"]
+transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 5, 1, 5)
+mesh = BoxMesh
+
+[node name="CollisionShape" type="CollisionShape3D" parent="Obstacles/Obstacle1"]
+transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 5, 1, 5)
+shape = BoxShape3D
+
+[node name="Obstacle2" type="StaticBody3D" parent="Obstacles"]
+collision_layer = 8
+collision_mask = 1
+
+[node name="ObstacleMesh" type="MeshInstance3D" parent="Obstacles/Obstacle2"]
+transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 25, 1, 20)
+mesh = BoxMesh
+
+[node name="CollisionShape" type="CollisionShape3D" parent="Obstacles/Obstacle2"]
+transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 25, 1, 20)
+shape = BoxShape3D
+
+[node name="Bus" parent="." instance=ExtResource("1_bus")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -10)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 5)
+current = true
+fov = 75.0
+script = ExtResource("2_camera")
+TargetPath = NodePath("../Bus")
+
+[node name="LapManager" type="Node" parent="."]
+script = ExtResource("3_lapmanager")
+
+[node name="Triggers" type="Node3D" parent="."]
+
+[node name="StartFinishTrigger" type="Area3D" parent="Triggers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -12)
+collision_layer = 16
+collision_mask = 1
+monitoring = true
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Triggers/StartFinishTrigger"]
+shape = SubResource("BoxShape3D_trigger")
+
+[node name="OffRoadArea1" type="Area3D" parent="Triggers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1, 15)
+collision_layer = 16
+collision_mask = 1
+monitoring = true
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Triggers/OffRoadArea1"]
+transform = Transform3D(2, 0, 0, 0, 3, 0, 0, 0, 25, 0, 0, 0)
+shape = SubResource("BoxShape3D_trigger")
+
+[node name="OffRoadArea2" type="Area3D" parent="Triggers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 1, 33)
+collision_layer = 16
+collision_mask = 1
+monitoring = true
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Triggers/OffRoadArea2"]
+transform = Transform3D(25, 0, 0, 0, 3, 0, 0, 0, 2, 0, 0, 0)
+shape = SubResource("BoxShape3D_trigger")
+
+[node name="LapSummaryUI" parent="." instance=ExtResource("4_lap_summary")]
+
+[connection signal="body_entered" from="Triggers/StartFinishTrigger" to="LapManager" method="OnStartFinishTriggerEntered"]
+[connection signal="body_entered" from="Triggers/OffRoadArea1" to="LapManager" method="OnOffRoadAreaEntered"]
+[connection signal="body_entered" from="Triggers/OffRoadArea2" to="LapManager" method="OnOffRoadAreaEntered"]

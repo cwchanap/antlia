@@ -1,0 +1,48 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Bus Driving Simulator"
+config/description="A 3D bus driving simulator MVP"
+config/version="0.1.0"
+run/main_scene="res://scenes/test_track.tscn"
+config/features=PackedStringArray("4.2", "C Sharp", "Forward Plus")
+config/icon="res://icon.svg"
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/size/mode=2
+window/vsync/vsync_mode=1
+
+[dotnet]
+
+project/assembly_name="BusDrivingSimulator"
+
+[layer_names]
+
+3d_physics/layer_1="Bus"
+3d_physics/layer_2="Track"
+3d_physics/layer_3="RoadBoundaries"
+3d_physics/layer_4="Obstacles"
+3d_physics/layer_5="Triggers"
+
+[physics]
+
+3d/default_gravity=9.8
+3d/default_linear_damp=0.0
+3d/default_angular_damp=0.1
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
+anti_aliasing/quality/msaa_3d=2

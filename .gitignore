@@ -1,0 +1,117 @@
+# Godot 4.x
+.godot/
+.import/
+export.cfg
+export_presets.cfg
+*.translation
+
+# Godot-specific ignores
+*.import
+*.md5
+
+# C# / .NET
+bin/
+obj/
+*.csproj.user
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa]rm/
+[Aa]rm64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# NuGet Packages
+*.nupkg
+*.snupkg
+**/packages/*
+*.nuget.props
+*.nuget.targets
+
+# Visual Studio / Rider
+.vs/
+.vscode/
+.idea/
+*.sln.iml
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Mono auto generated files
+mono_crash.*
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+*.db
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# OS-specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+\#*\#
+
+# Test results
+TestResults/
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+*.coverage
+*.coveragexml
+
+# Backup files
+*.bak
+*.backup
+*~
