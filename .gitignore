@@ -1,0 +1,15 @@
+.godot/
+.import/
+bin/
+tests/bin/
+godot-cpp/bin/
+godot-cpp/gen/
+godot-cpp/.sconsign*.dblite
+*.os
+*.so
+*.dylib
+*.dll
+*.framework/
+*.xcworkspace/
+*.xcodeproj/
+*.DS_Store

@@ -1,0 +1,17 @@
+import os
+
+env = Environment(
+    CXX=os.environ.get("CXX", "c++"),
+    CPPPATH=["../src"],
+    CXXFLAGS=["-std=c++17", "-Wall", "-Wextra", "-Wpedantic"],
+)
+
+target = env.Program(
+    target="bin/test_bus_driving_model",
+    source=[
+        "test_bus_driving_model.cpp",
+        "../src/driving/bus_driving_model.cpp",
+    ],
+)
+
+Default(target)
