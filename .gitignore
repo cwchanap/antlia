@@ -5,6 +5,8 @@ tests/bin/
 godot-cpp/bin/
 godot-cpp/gen/
 godot-cpp/.sconsign*.dblite
+*.o
+.sconsign*.dblite
 *.os
 *.so
 *.dylib
