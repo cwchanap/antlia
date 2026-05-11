@@ -2,7 +2,7 @@
 
 ## Context
 
-Antlia starts as an empty workspace. The first slice will create a Godot 4 project using C++ GDExtension and scaffold a runnable bus driving prototype.
+Antlia starts as an empty workspace. The first slice will create a Godot 4.6-compatible project using C++ GDExtension and scaffold a runnable bus driving prototype.
 
 The goal is not a complete simulator. The goal is a small, playable foundation with a stable driving feel, clear C++ boundaries, and unit tests for the driving math.
 
@@ -70,7 +70,7 @@ src/
     bus_driving_model.h
 tests/
   SConstruct
-  doctest.h
+  test_harness.h
   test_bus_driving_model.cpp
 scenes/
   demo_bus_test.tscn
@@ -176,7 +176,7 @@ The scene only needs to prove the driving loop. It should avoid city layout, rou
 
 ## Unit Testing
 
-Use a lightweight C++ test runner, preferably doctest, for the pure driving model.
+Use a tiny local C++ test harness for the pure driving model. The first scaffold avoids adding a second external dependency before the Godot C++ binding is stable.
 
 Initial unit tests should cover:
 
