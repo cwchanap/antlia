@@ -2,6 +2,8 @@
 .import/
 bin/
 tests/bin/
+__pycache__/
+*.py[cod]
 godot-cpp/bin/
 godot-cpp/gen/
 godot-cpp/.sconsign*.dblite
