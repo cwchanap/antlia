@@ -1,6 +1,7 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="GDExtension" path="res://antlia.gdextension" id="1_antlia"]
+[ext_resource type="PackedScene" path="res://scenes/simple_city_map.tscn" id="2_city_map"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bus"]
 size = Vector3(2.5, 2.4, 7.5)
@@ -12,20 +13,12 @@ size = Vector3(2.5, 2.4, 7.5)
 albedo_color = Color(0.93, 0.73, 0.18, 1)
 roughness = 0.72
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
-size = Vector3(80, 0.2, 80)
-
-[sub_resource type="BoxMesh" id="BoxMesh_ground"]
-size = Vector3(80, 0.1, 80)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
-albedo_color = Color(0.18, 0.36, 0.22, 1)
-roughness = 0.9
-
 [node name="DemoBusTest" type="Node3D"]
 
+[node name="CityMap" parent="." instance=ExtResource("2_city_map")]
+
 [node name="Bus" type="BusController3D" parent="."]
-position = Vector3(0, 1.2, 0)
+position = Vector3(0, 1.2, 46)
 max_forward_speed = 18.0
 max_reverse_speed = 5.0
 acceleration = 4.5
@@ -44,16 +37,6 @@ shape = SubResource("BoxShape3D_bus")
 [node name="PlaceholderBusMesh" type="MeshInstance3D" parent="Bus"]
 mesh = SubResource("BoxMesh_bus")
 surface_material_override/0 = SubResource("StandardMaterial3D_bus")
-
-[node name="Ground" type="StaticBody3D" parent="."]
-position = Vector3(0, -0.1, 0)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
-shape = SubResource("BoxShape3D_ground")
-
-[node name="GroundMesh" type="MeshInstance3D" parent="Ground"]
-mesh = SubResource("BoxMesh_ground")
-surface_material_override/0 = SubResource("StandardMaterial3D_ground")
 
 [node name="ChaseCamera" type="Camera3D" parent="Bus"]
 position = Vector3(0, 5, 12)

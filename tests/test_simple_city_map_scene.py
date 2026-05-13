@@ -5,6 +5,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MAP_SCENE = ROOT / "scenes" / "simple_city_map.tscn"
+DEMO_SCENE = ROOT / "scenes" / "demo_bus_test.tscn"
 
 
 class SimpleCityMapSceneTest(unittest.TestCase):
@@ -49,6 +50,25 @@ class SimpleCityMapSceneTest(unittest.TestCase):
         ]
         for token in forbidden_runtime_systems:
             self.assertNotIn(token, scene)
+
+    def test_demo_scene_instances_city_map_without_old_ground(self):
+        demo = DEMO_SCENE.read_text(encoding="utf-8")
+
+        resource_match = re.search(
+            r'\[ext_resource type="PackedScene" path="res://scenes/simple_city_map\.tscn" id="([^"]+)"\]',
+            demo,
+        )
+        self.assertIsNotNone(resource_match, "demo scene does not reference simple_city_map.tscn")
+        resource_id = resource_match.group(1)
+
+        self.assertIn(
+            f'[node name="CityMap" parent="." instance=ExtResource("{resource_id}")]',
+            demo,
+        )
+        self.assertIn('position = Vector3(0, 1.2, 46)', demo)
+        self.assertNotIn('[node name="Ground" type="StaticBody3D" parent="."]', demo)
+        self.assertNotIn('BoxShape3D_ground', demo)
+        self.assertNotIn('BoxMesh_ground', demo)
 
 
 if __name__ == "__main__":
