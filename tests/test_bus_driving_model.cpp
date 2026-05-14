@@ -21,15 +21,23 @@ BusDrivingTuning tuning() {
     BusDrivingTuning value;
     value.max_forward_speed = 10.0;
     value.max_reverse_speed = 3.0;
-    value.acceleration = 5.0;
-    value.brake_force = 8.0;
-    value.drag = 1.0;
-    value.handbrake_drag = 6.0;
+    value.acceleration = 2.5;
+    value.brake_force = 60000.0;
+    value.drag = 0.15;
+    value.handbrake_drag = 5.0;
     value.steering_speed = 2.0;
     value.steering_return_speed = 4.0;
     value.max_steering_angle = 0.5;
     value.high_speed_steering_scale = 0.25;
-    value.turn_rate = 1.2;
+    value.turn_rate = 1.0;
+    value.mass_kg = 12000.0;
+    value.engine_force = 36000.0;
+    value.reverse_force = 22000.0;
+    value.rolling_resistance = 650.0;
+    value.air_drag_coefficient = 18.0;
+    value.wheelbase_meters = 6.0;
+    value.lateral_grip = 4.5;
+    value.handbrake_grip_scale = 0.35;
     return value;
 }
 
@@ -47,6 +55,44 @@ ANTLIA_TEST(acceleration_increases_speed_up_to_forward_cap) {
 
     CHECK(model.speed_mps() > 0.0);
     CHECK(model.speed_mps() <= params.max_forward_speed);
+}
+
+ANTLIA_TEST(heavier_mass_accelerates_slower_under_same_engine_force) {
+    BusDrivingTuning light = tuning();
+    BusDrivingTuning heavy = tuning();
+    light.mass_kg = 9000.0;
+    heavy.mass_kg = 18000.0;
+    light.engine_force = 36000.0;
+    heavy.engine_force = 36000.0;
+
+    BusDrivingModel light_model;
+    BusDrivingModel heavy_model;
+
+    for (int i = 0; i < 60; ++i) {
+        BusDrivingInput input = tick(1.0 / 60.0);
+        input.throttle = 1.0;
+        light_model.step(input, light);
+        heavy_model.step(input, heavy);
+    }
+
+    CHECK(light_model.speed_mps() > heavy_model.speed_mps());
+}
+
+ANTLIA_TEST(frame_reports_force_based_longitudinal_acceleration) {
+    BusDrivingModel model;
+    BusDrivingTuning params = tuning();
+    params.mass_kg = 12000.0;
+    params.engine_force = 36000.0;
+    params.rolling_resistance = 0.0;
+    params.air_drag_coefficient = 0.0;
+    params.drag = 0.0;
+
+    BusDrivingInput input = tick(0.1);
+    input.throttle = 1.0;
+    const auto frame = model.step(input, params);
+
+    CHECK_NEAR(frame.longitudinal_acceleration_mps2, 3.0, 0.0001);
+    CHECK(frame.speed_mps > 0.0);
 }
 
 ANTLIA_TEST(braking_reduces_forward_speed) {
