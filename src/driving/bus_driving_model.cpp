@@ -11,6 +11,7 @@ constexpr double kInputMinimum = -1.0;
 constexpr double kInputMaximum = 1.0;
 constexpr double kMaximumPhysicsStep = 0.25;
 constexpr double kReverseAccelerationScale = 0.6;
+constexpr double kStopSpeed = 0.05;
 
 double finite_or(double value, double fallback) {
     return std::isfinite(value) ? value : fallback;
@@ -26,6 +27,16 @@ double positive_or(double value, double fallback) {
         return value;
     }
     return std::fabs(finite_or(fallback, 0.0));
+}
+
+double sign_of(double value) {
+    if (value > 0.0) {
+        return 1.0;
+    }
+    if (value < 0.0) {
+        return -1.0;
+    }
+    return 0.0;
 }
 
 } // namespace
@@ -50,24 +61,35 @@ BusDrivingFrame BusDrivingModel::step(const BusDrivingInput &input, const BusDri
         net_force += tuning.engine_force * throttle * engine_scale;
     }
 
-    const double longitudinal_acceleration = net_force / tuning.mass_kg;
-    speed_mps_ += longitudinal_acceleration * dt;
-
     if (brake > 0.0) {
-        speed_mps_ = finite_or(speed_mps_, 0.0);
-        if (speed_mps_ > 0.0) {
-            speed_mps_ = move_toward(speed_mps_, 0.0, tuning.brake_force * brake * dt);
+        if (speed_mps_ > kStopSpeed) {
+            net_force -= tuning.brake_force * brake;
         } else {
-            speed_mps_ -= tuning.acceleration * kReverseAccelerationScale * brake * dt;
+            net_force -= tuning.reverse_force * brake;
         }
     }
 
-    if (throttle <= 0.0 && brake <= 0.0) {
-        speed_mps_ = move_toward(speed_mps_, 0.0, tuning.drag * dt);
+    const double speed_sign = sign_of(speed_mps_);
+    if (speed_sign != 0.0) {
+        const double drag_force = tuning.air_drag_coefficient * speed_mps_ * speed_mps_;
+        const double linear_drag_force = tuning.drag * tuning.mass_kg;
+        net_force -= speed_sign * (tuning.rolling_resistance + drag_force + linear_drag_force);
     }
 
-    if (input.handbrake) {
-        speed_mps_ = move_toward(speed_mps_, 0.0, tuning.handbrake_drag * dt);
+    if (input.handbrake && speed_sign != 0.0) {
+        net_force -= speed_sign * tuning.handbrake_drag * tuning.mass_kg;
+    }
+
+    const double previous_speed = speed_mps_;
+    const double longitudinal_acceleration = net_force / tuning.mass_kg;
+    speed_mps_ += longitudinal_acceleration * dt;
+
+    const bool passive_only = throttle <= 0.0 && brake <= 0.0;
+    if (previous_speed > 0.0 && speed_mps_ < 0.0 && (brake > 0.0 || passive_only)) {
+        speed_mps_ = 0.0;
+    }
+    if (previous_speed < 0.0 && speed_mps_ > 0.0 && passive_only) {
+        speed_mps_ = 0.0;
     }
 
     speed_mps_ = clamp(speed_mps_, -tuning.max_reverse_speed, tuning.max_forward_speed);
@@ -129,7 +151,7 @@ BusDrivingTuning BusDrivingModel::sanitized(BusDrivingTuning tuning) {
     tuning.max_forward_speed = abs_max(tuning.max_forward_speed, 0.1);
     tuning.max_reverse_speed = abs_max(tuning.max_reverse_speed, 0.1);
     tuning.acceleration = abs_max(tuning.acceleration, 0.1);
-    tuning.brake_force = abs_max(tuning.brake_force, 0.1);
+    tuning.brake_force = abs_max(tuning.brake_force, 100.0);
     tuning.drag = std::max(finite_or(tuning.drag, 0.0), 0.0);
     tuning.handbrake_drag = std::max(finite_or(tuning.handbrake_drag, 0.0), 0.0);
     tuning.steering_speed = abs_max(tuning.steering_speed, 0.1);

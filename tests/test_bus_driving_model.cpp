@@ -22,7 +22,7 @@ BusDrivingTuning tuning() {
     value.max_forward_speed = 10.0;
     value.max_reverse_speed = 3.0;
     value.acceleration = 2.5;
-    value.brake_force = 8.0;
+    value.brake_force = 60000.0;
     value.drag = 0.15;
     value.handbrake_drag = 5.0;
     value.steering_speed = 2.0;
@@ -123,24 +123,26 @@ ANTLIA_TEST(finite_engine_force_is_respected_when_acceleration_tuning_is_higher)
     CHECK_NEAR(heavy_frame.longitudinal_acceleration_mps2, 2.0, 0.0001);
 }
 
-ANTLIA_TEST(braking_reduces_forward_speed) {
-    BusDrivingModel model;
+ANTLIA_TEST(brake_force_slows_bus_faster_than_passive_resistance) {
+    BusDrivingModel passive_model;
+    BusDrivingModel brake_model;
     BusDrivingTuning params = tuning();
 
-    for (int i = 0; i < 60; ++i) {
+    for (int i = 0; i < 90; ++i) {
         BusDrivingInput input = tick(1.0 / 60.0);
         input.throttle = 1.0;
-        model.step(input, params);
+        passive_model.step(input, params);
+        brake_model.step(input, params);
     }
 
-    const double before_brake = model.speed_mps();
-    for (int i = 0; i < 20; ++i) {
-        BusDrivingInput input = tick(1.0 / 60.0);
-        input.brake = 1.0;
-        model.step(input, params);
-    }
+    BusDrivingInput brake = tick(0.5);
+    brake.brake = 1.0;
+    const double passive_speed_before = passive_model.speed_mps();
+    passive_model.step(tick(0.5), params);
+    brake_model.step(brake, params);
 
-    CHECK(model.speed_mps() < before_brake);
+    CHECK(passive_model.speed_mps() < passive_speed_before);
+    CHECK(brake_model.speed_mps() < passive_model.speed_mps());
 }
 
 ANTLIA_TEST(continued_braking_transitions_into_reverse) {
@@ -186,6 +188,56 @@ ANTLIA_TEST(drag_slows_bus_without_input) {
     }
 
     CHECK(model.speed_mps() < before_drag);
+}
+
+ANTLIA_TEST(rolling_resistance_slows_bus_without_input) {
+    BusDrivingModel model;
+    BusDrivingTuning params = tuning();
+    params.air_drag_coefficient = 0.0;
+    params.drag = 0.0;
+    params.rolling_resistance = 1200.0;
+
+    for (int i = 0; i < 90; ++i) {
+        BusDrivingInput input = tick(1.0 / 60.0);
+        input.throttle = 1.0;
+        model.step(input, params);
+    }
+
+    const double before = model.speed_mps();
+    model.step(tick(1.0), params);
+
+    CHECK(model.speed_mps() < before);
+}
+
+ANTLIA_TEST(aerodynamic_drag_has_stronger_effect_at_high_speed) {
+    BusDrivingTuning params = tuning();
+    params.rolling_resistance = 0.0;
+    params.drag = 0.0;
+    params.air_drag_coefficient = 80.0;
+
+    BusDrivingModel slow_model;
+    BusDrivingModel fast_model;
+
+    for (int i = 0; i < 30; ++i) {
+        BusDrivingInput input = tick(1.0 / 60.0);
+        input.throttle = 1.0;
+        slow_model.step(input, params);
+    }
+
+    for (int i = 0; i < 180; ++i) {
+        BusDrivingInput input = tick(1.0 / 60.0);
+        input.throttle = 1.0;
+        fast_model.step(input, params);
+    }
+
+    const double slow_before = slow_model.speed_mps();
+    const double fast_before = fast_model.speed_mps();
+    slow_model.step(tick(1.0), params);
+    fast_model.step(tick(1.0), params);
+
+    const double slow_loss = slow_before - slow_model.speed_mps();
+    const double fast_loss = fast_before - fast_model.speed_mps();
+    CHECK(fast_loss > slow_loss);
 }
 
 ANTLIA_TEST(handbrake_decelerates_more_aggressively_than_normal_drag) {
