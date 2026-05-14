@@ -287,23 +287,26 @@ ANTLIA_TEST(steering_recenters_when_released) {
     CHECK(std::fabs(model.steering_radians()) < std::fabs(before_release));
 }
 
-ANTLIA_TEST(steering_effect_reduces_at_high_speed) {
+ANTLIA_TEST(high_speed_steering_reduces_effective_turning_through_grip_limits) {
     BusDrivingModel slow_model;
     BusDrivingModel fast_model;
     BusDrivingTuning params = tuning();
+    params.lateral_grip = 2.0;
 
     BusDrivingInput steer = tick(0.25);
     steer.steer = 1.0;
-    slow_model.step(steer, params);
+    const auto slow_frame = slow_model.step(steer, params);
 
     for (int i = 0; i < 180; ++i) {
         BusDrivingInput input = tick(1.0 / 60.0);
         input.throttle = 1.0;
         fast_model.step(input, params);
     }
-    fast_model.step(steer, params);
+    const auto fast_frame = fast_model.step(steer, params);
 
-    CHECK(std::fabs(fast_model.last_effective_steering()) < std::fabs(slow_model.last_effective_steering()));
+    CHECK(std::fabs(fast_frame.effective_steering) < std::fabs(slow_frame.effective_steering));
+    CHECK(fast_frame.grip_scale < slow_frame.grip_scale);
+    CHECK(fast_frame.lateral_slip > slow_frame.lateral_slip);
 }
 
 ANTLIA_TEST(frame_reports_yaw_and_forward_distance_when_moving_and_steering) {
@@ -324,6 +327,32 @@ ANTLIA_TEST(frame_reports_yaw_and_forward_distance_when_moving_and_steering) {
 
     CHECK(frame.yaw_delta_radians > 0.0);
     CHECK(frame.forward_distance_meters > 0.0);
+}
+
+ANTLIA_TEST(longer_wheelbase_turns_more_widely) {
+    BusDrivingTuning short_bus = tuning();
+    BusDrivingTuning long_bus = tuning();
+    short_bus.wheelbase_meters = 4.0;
+    long_bus.wheelbase_meters = 9.0;
+
+    BusDrivingModel short_model;
+    BusDrivingModel long_model;
+
+    for (int i = 0; i < 120; ++i) {
+        BusDrivingInput input = tick(1.0 / 60.0);
+        input.throttle = 1.0;
+        input.steer = 1.0;
+        short_model.step(input, short_bus);
+        long_model.step(input, long_bus);
+    }
+
+    BusDrivingInput turn = tick(0.2);
+    turn.throttle = 1.0;
+    turn.steer = 1.0;
+    const auto short_frame = short_model.step(turn, short_bus);
+    const auto long_frame = long_model.step(turn, long_bus);
+
+    CHECK(std::fabs(short_frame.yaw_delta_radians) > std::fabs(long_frame.yaw_delta_radians));
 }
 
 ANTLIA_TEST(inputs_are_clamped_to_public_ranges) {
