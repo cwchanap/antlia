@@ -475,6 +475,7 @@ ANTLIA_TEST(non_finite_input_and_tuning_are_sanitized) {
     BusDrivingInput valid_input = tick(0.25);
     valid_input.throttle = 1.0;
     valid_input.steer = 1.0;
+    valid_input.handbrake = true;
 
     const auto tuning_frame = tuning_model.step(valid_input, params);
 
@@ -494,12 +495,22 @@ ANTLIA_TEST(non_finite_input_and_tuning_are_sanitized) {
 ANTLIA_TEST(reset_clears_speed_steering_and_next_frame_telemetry) {
     BusDrivingModel model;
     BusDrivingTuning params = tuning();
+    params.lateral_grip = 3.0;
+    params.handbrake_grip_scale = 0.25;
 
-    BusDrivingInput input = tick(0.5);
-    input.throttle = 1.0;
-    input.steer = 1.0;
-    input.handbrake = true;
-    model.step(input, params);
+    for (int i = 0; i < 180; ++i) {
+        BusDrivingInput input = tick(1.0 / 60.0);
+        input.throttle = 1.0;
+        model.step(input, params);
+    }
+
+    BusDrivingInput slide = tick(0.25);
+    slide.steer = 1.0;
+    slide.handbrake = true;
+    const auto pre_reset_frame = model.step(slide, params);
+
+    CHECK(pre_reset_frame.lateral_slip > 0.0);
+    CHECK(pre_reset_frame.grip_scale < 1.0);
 
     model.reset();
     const auto frame = model.step(tick(0.0), params);
