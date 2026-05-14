@@ -48,6 +48,22 @@ void BusController3D::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_high_speed_steering_scale"), &BusController3D::get_high_speed_steering_scale);
     ClassDB::bind_method(D_METHOD("set_turn_rate", "value"), &BusController3D::set_turn_rate);
     ClassDB::bind_method(D_METHOD("get_turn_rate"), &BusController3D::get_turn_rate);
+    ClassDB::bind_method(D_METHOD("set_mass_kg", "value"), &BusController3D::set_mass_kg);
+    ClassDB::bind_method(D_METHOD("get_mass_kg"), &BusController3D::get_mass_kg);
+    ClassDB::bind_method(D_METHOD("set_engine_force", "value"), &BusController3D::set_engine_force);
+    ClassDB::bind_method(D_METHOD("get_engine_force"), &BusController3D::get_engine_force);
+    ClassDB::bind_method(D_METHOD("set_reverse_force", "value"), &BusController3D::set_reverse_force);
+    ClassDB::bind_method(D_METHOD("get_reverse_force"), &BusController3D::get_reverse_force);
+    ClassDB::bind_method(D_METHOD("set_rolling_resistance", "value"), &BusController3D::set_rolling_resistance);
+    ClassDB::bind_method(D_METHOD("get_rolling_resistance"), &BusController3D::get_rolling_resistance);
+    ClassDB::bind_method(D_METHOD("set_air_drag_coefficient", "value"), &BusController3D::set_air_drag_coefficient);
+    ClassDB::bind_method(D_METHOD("get_air_drag_coefficient"), &BusController3D::get_air_drag_coefficient);
+    ClassDB::bind_method(D_METHOD("set_wheelbase_meters", "value"), &BusController3D::set_wheelbase_meters);
+    ClassDB::bind_method(D_METHOD("get_wheelbase_meters"), &BusController3D::get_wheelbase_meters);
+    ClassDB::bind_method(D_METHOD("set_lateral_grip", "value"), &BusController3D::set_lateral_grip);
+    ClassDB::bind_method(D_METHOD("get_lateral_grip"), &BusController3D::get_lateral_grip);
+    ClassDB::bind_method(D_METHOD("set_handbrake_grip_scale", "value"), &BusController3D::set_handbrake_grip_scale);
+    ClassDB::bind_method(D_METHOD("get_handbrake_grip_scale"), &BusController3D::get_handbrake_grip_scale);
     ClassDB::bind_method(D_METHOD("get_current_speed"), &BusController3D::get_current_speed);
     ClassDB::bind_method(D_METHOD("get_current_steering"), &BusController3D::get_current_steering);
 
@@ -74,6 +90,22 @@ void BusController3D::_bind_methods() {
             "set_high_speed_steering_scale", "get_high_speed_steering_scale");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "turn_rate", PROPERTY_HINT_RANGE, "0.01,5.0,0.01,or_greater"),
             "set_turn_rate", "get_turn_rate");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "mass_kg", PROPERTY_HINT_RANGE, "100.0,30000.0,10.0,or_greater"),
+            "set_mass_kg", "get_mass_kg");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "engine_force", PROPERTY_HINT_RANGE, "100.0,200000.0,100.0,or_greater"),
+            "set_engine_force", "get_engine_force");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "reverse_force", PROPERTY_HINT_RANGE, "100.0,120000.0,100.0,or_greater"),
+            "set_reverse_force", "get_reverse_force");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "rolling_resistance", PROPERTY_HINT_RANGE, "0.0,10000.0,10.0,or_greater"),
+            "set_rolling_resistance", "get_rolling_resistance");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "air_drag_coefficient", PROPERTY_HINT_RANGE, "0.0,500.0,1.0,or_greater"),
+            "set_air_drag_coefficient", "get_air_drag_coefficient");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "wheelbase_meters", PROPERTY_HINT_RANGE, "0.5,15.0,0.1,or_greater"),
+            "set_wheelbase_meters", "get_wheelbase_meters");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "lateral_grip", PROPERTY_HINT_RANGE, "0.1,12.0,0.1,or_greater"),
+            "set_lateral_grip", "get_lateral_grip");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "handbrake_grip_scale", PROPERTY_HINT_RANGE, "0.05,1.0,0.01"),
+            "set_handbrake_grip_scale", "get_handbrake_grip_scale");
 }
 
 void BusController3D::_ready() {
@@ -189,6 +221,70 @@ void BusController3D::set_turn_rate(double value) {
 
 double BusController3D::get_turn_rate() const {
     return tuning_.turn_rate;
+}
+
+void BusController3D::set_mass_kg(double value) {
+    tuning_.mass_kg = clamp_min(value, 100.0);
+}
+
+double BusController3D::get_mass_kg() const {
+    return tuning_.mass_kg;
+}
+
+void BusController3D::set_engine_force(double value) {
+    tuning_.engine_force = clamp_min(value, 100.0);
+}
+
+double BusController3D::get_engine_force() const {
+    return tuning_.engine_force;
+}
+
+void BusController3D::set_reverse_force(double value) {
+    tuning_.reverse_force = clamp_min(value, 100.0);
+}
+
+double BusController3D::get_reverse_force() const {
+    return tuning_.reverse_force;
+}
+
+void BusController3D::set_rolling_resistance(double value) {
+    tuning_.rolling_resistance = clamp_min(value, 0.0);
+}
+
+double BusController3D::get_rolling_resistance() const {
+    return tuning_.rolling_resistance;
+}
+
+void BusController3D::set_air_drag_coefficient(double value) {
+    tuning_.air_drag_coefficient = clamp_min(value, 0.0);
+}
+
+double BusController3D::get_air_drag_coefficient() const {
+    return tuning_.air_drag_coefficient;
+}
+
+void BusController3D::set_wheelbase_meters(double value) {
+    tuning_.wheelbase_meters = clamp_min(value, 0.5);
+}
+
+double BusController3D::get_wheelbase_meters() const {
+    return tuning_.wheelbase_meters;
+}
+
+void BusController3D::set_lateral_grip(double value) {
+    tuning_.lateral_grip = clamp_min(value, 0.1);
+}
+
+double BusController3D::get_lateral_grip() const {
+    return tuning_.lateral_grip;
+}
+
+void BusController3D::set_handbrake_grip_scale(double value) {
+    tuning_.handbrake_grip_scale = clamp_range(value, 0.05, 1.0);
+}
+
+double BusController3D::get_handbrake_grip_scale() const {
+    return tuning_.handbrake_grip_scale;
 }
 
 double BusController3D::get_current_speed() const {

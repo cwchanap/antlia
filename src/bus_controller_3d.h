@@ -52,6 +52,30 @@ public:
     void set_turn_rate(double value);
     double get_turn_rate() const;
 
+    void set_mass_kg(double value);
+    double get_mass_kg() const;
+
+    void set_engine_force(double value);
+    double get_engine_force() const;
+
+    void set_reverse_force(double value);
+    double get_reverse_force() const;
+
+    void set_rolling_resistance(double value);
+    double get_rolling_resistance() const;
+
+    void set_air_drag_coefficient(double value);
+    double get_air_drag_coefficient() const;
+
+    void set_wheelbase_meters(double value);
+    double get_wheelbase_meters() const;
+
+    void set_lateral_grip(double value);
+    double get_lateral_grip() const;
+
+    void set_handbrake_grip_scale(double value);
+    double get_handbrake_grip_scale() const;
+
     double get_current_speed() const;
     double get_current_steering() const;
 
