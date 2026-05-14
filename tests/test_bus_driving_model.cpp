@@ -240,25 +240,31 @@ ANTLIA_TEST(aerodynamic_drag_has_stronger_effect_at_high_speed) {
     CHECK(fast_loss > slow_loss);
 }
 
-ANTLIA_TEST(handbrake_decelerates_more_aggressively_than_normal_drag) {
-    BusDrivingModel drag_model;
+ANTLIA_TEST(handbrake_reduces_grip_and_increases_slip) {
+    BusDrivingModel normal_model;
     BusDrivingModel handbrake_model;
     BusDrivingTuning params = tuning();
+    params.lateral_grip = 3.0;
+    params.handbrake_grip_scale = 0.25;
 
-    for (int i = 0; i < 60; ++i) {
+    for (int i = 0; i < 180; ++i) {
         BusDrivingInput input = tick(1.0 / 60.0);
         input.throttle = 1.0;
-        drag_model.step(input, params);
+        normal_model.step(input, params);
         handbrake_model.step(input, params);
     }
 
-    drag_model.step(tick(0.25), params);
+    BusDrivingInput turn = tick(0.25);
+    turn.steer = 1.0;
+    const auto normal_frame = normal_model.step(turn, params);
 
-    BusDrivingInput handbrake = tick(0.25);
-    handbrake.handbrake = true;
-    handbrake_model.step(handbrake, params);
+    BusDrivingInput handbrake_turn = turn;
+    handbrake_turn.handbrake = true;
+    const auto handbrake_frame = handbrake_model.step(handbrake_turn, params);
 
-    CHECK(handbrake_model.speed_mps() < drag_model.speed_mps());
+    CHECK(handbrake_frame.speed_mps < normal_frame.speed_mps);
+    CHECK(handbrake_frame.grip_scale < normal_frame.grip_scale);
+    CHECK(handbrake_frame.lateral_slip > normal_frame.lateral_slip);
 }
 
 ANTLIA_TEST(steering_eases_toward_input) {
@@ -440,6 +446,9 @@ ANTLIA_TEST(non_finite_input_and_tuning_are_sanitized) {
     CHECK(std::isfinite(input_frame.effective_steering));
     CHECK(std::isfinite(input_frame.yaw_delta_radians));
     CHECK(std::isfinite(input_frame.forward_distance_meters));
+    CHECK(std::isfinite(input_frame.longitudinal_acceleration_mps2));
+    CHECK(std::isfinite(input_frame.lateral_slip));
+    CHECK(std::isfinite(input_frame.grip_scale));
 
     BusDrivingModel tuning_model;
     BusDrivingTuning params = tuning();
@@ -454,6 +463,14 @@ ANTLIA_TEST(non_finite_input_and_tuning_are_sanitized) {
     params.max_steering_angle = nan;
     params.high_speed_steering_scale = infinity;
     params.turn_rate = nan;
+    params.mass_kg = nan;
+    params.engine_force = infinity;
+    params.reverse_force = nan;
+    params.rolling_resistance = infinity;
+    params.air_drag_coefficient = nan;
+    params.wheelbase_meters = infinity;
+    params.lateral_grip = nan;
+    params.handbrake_grip_scale = infinity;
 
     BusDrivingInput valid_input = tick(0.25);
     valid_input.throttle = 1.0;
@@ -469,21 +486,29 @@ ANTLIA_TEST(non_finite_input_and_tuning_are_sanitized) {
     CHECK(std::isfinite(tuning_frame.effective_steering));
     CHECK(std::isfinite(tuning_frame.yaw_delta_radians));
     CHECK(std::isfinite(tuning_frame.forward_distance_meters));
+    CHECK(std::isfinite(tuning_frame.longitudinal_acceleration_mps2));
+    CHECK(std::isfinite(tuning_frame.lateral_slip));
+    CHECK(std::isfinite(tuning_frame.grip_scale));
 }
 
-ANTLIA_TEST(reset_clears_speed_and_steering) {
+ANTLIA_TEST(reset_clears_speed_steering_and_next_frame_telemetry) {
     BusDrivingModel model;
     BusDrivingTuning params = tuning();
 
     BusDrivingInput input = tick(0.5);
     input.throttle = 1.0;
     input.steer = 1.0;
+    input.handbrake = true;
     model.step(input, params);
 
     model.reset();
+    const auto frame = model.step(tick(0.0), params);
 
     CHECK_NEAR(model.speed_mps(), 0.0, 0.0001);
     CHECK_NEAR(model.steering_radians(), 0.0, 0.0001);
+    CHECK_NEAR(frame.longitudinal_acceleration_mps2, 0.0, 0.0001);
+    CHECK_NEAR(frame.lateral_slip, 0.0, 0.0001);
+    CHECK_NEAR(frame.grip_scale, 1.0, 0.0001);
 }
 
 int main() {

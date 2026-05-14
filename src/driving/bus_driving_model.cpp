@@ -106,7 +106,7 @@ BusDrivingFrame BusDrivingModel::step(const BusDrivingInput &input, const BusDri
     if (requested_steering_abs > 0.0001 && std::fabs(speed_mps_) > 0.001) {
         const double turn_radius = tuning.wheelbase_meters / std::tan(requested_steering_abs);
         const double lateral_acceleration = (speed_mps_ * speed_mps_) / turn_radius;
-        const double available_grip = tuning.lateral_grip;
+        const double available_grip = tuning.lateral_grip * (input.handbrake ? tuning.handbrake_grip_scale : 1.0);
         grip_scale = clamp(available_grip / std::max(lateral_acceleration, 0.0001), 0.05, 1.0);
         lateral_slip = clamp((lateral_acceleration - available_grip) / std::max(available_grip, 0.0001), 0.0, 1.0);
         effective_steering = requested_steering * grip_scale;
@@ -124,9 +124,9 @@ BusDrivingFrame BusDrivingModel::step(const BusDrivingInput &input, const BusDri
         frame.yaw_delta_radians = yaw_rate * tuning.turn_rate * dt;
     }
     frame.forward_distance_meters = speed_mps_ * dt;
-    frame.longitudinal_acceleration_mps2 = longitudinal_acceleration;
-    frame.lateral_slip = lateral_slip;
-    frame.grip_scale = grip_scale;
+    frame.longitudinal_acceleration_mps2 = finite_or(longitudinal_acceleration, 0.0);
+    frame.lateral_slip = clamp(lateral_slip, 0.0, 1.0);
+    frame.grip_scale = clamp(grip_scale, 0.05, 1.0);
     return frame;
 }
 
