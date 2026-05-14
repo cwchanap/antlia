@@ -291,7 +291,7 @@ ANTLIA_TEST(high_speed_steering_reduces_effective_turning_through_grip_limits) {
     BusDrivingModel slow_model;
     BusDrivingModel fast_model;
     BusDrivingTuning params = tuning();
-    params.lateral_grip = 2.0;
+    params.lateral_grip = 1.0;
 
     BusDrivingInput steer = tick(0.25);
     steer.steer = 1.0;
@@ -307,6 +307,27 @@ ANTLIA_TEST(high_speed_steering_reduces_effective_turning_through_grip_limits) {
     CHECK(std::fabs(fast_frame.effective_steering) < std::fabs(slow_frame.effective_steering));
     CHECK(fast_frame.grip_scale < slow_frame.grip_scale);
     CHECK(fast_frame.lateral_slip > slow_frame.lateral_slip);
+}
+
+ANTLIA_TEST(high_speed_steering_scale_is_linear_before_grip_limits) {
+    BusDrivingModel model;
+    BusDrivingTuning params = tuning();
+    params.lateral_grip = 1000.0;
+
+    for (int i = 0; i < 180; ++i) {
+        BusDrivingInput input = tick(1.0 / 60.0);
+        input.throttle = 1.0;
+        model.step(input, params);
+    }
+
+    BusDrivingInput steer = tick(0.25);
+    steer.steer = 1.0;
+    const auto frame = model.step(steer, params);
+
+    const double speed_ratio = std::fabs(frame.speed_mps) / params.max_forward_speed;
+    const double expected_scale = 1.0 - ((1.0 - params.high_speed_steering_scale) * speed_ratio);
+    CHECK_NEAR(frame.effective_steering, frame.steering_radians * expected_scale, 0.0001);
+    CHECK_NEAR(frame.grip_scale, 1.0, 0.0001);
 }
 
 ANTLIA_TEST(frame_reports_yaw_and_forward_distance_when_moving_and_steering) {

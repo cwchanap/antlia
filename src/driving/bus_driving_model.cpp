@@ -95,8 +95,7 @@ BusDrivingFrame BusDrivingModel::step(const BusDrivingInput &input, const BusDri
     speed_mps_ = clamp(speed_mps_, -tuning.max_reverse_speed, tuning.max_forward_speed);
 
     const double speed_ratio = clamp(std::fabs(speed_mps_) / tuning.max_forward_speed, 0.0, 1.0);
-    const double steering_speed_ratio = speed_ratio * speed_ratio;
-    const double steering_scale = 1.0 - ((1.0 - tuning.high_speed_steering_scale) * steering_speed_ratio);
+    const double steering_scale = 1.0 - ((1.0 - tuning.high_speed_steering_scale) * speed_ratio);
     const double requested_steering = steering_radians_ * steering_scale;
     const double requested_steering_abs = std::fabs(requested_steering);
 
