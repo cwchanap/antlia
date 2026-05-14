@@ -14,7 +14,7 @@ struct BusDrivingTuning {
     double max_forward_speed = 18.0;
     double max_reverse_speed = 5.0;
     double acceleration = 2.5;
-    double brake_force = 90000.0;
+    double brake_force = 9.0;
     double drag = 0.15;
     double handbrake_drag = 5.0;
     double steering_speed = 1.8;

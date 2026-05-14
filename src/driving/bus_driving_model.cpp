@@ -21,6 +21,13 @@ double abs_max(double value, double fallback) {
     return std::max(std::fabs(finite_or(value, safe_fallback)), safe_fallback);
 }
 
+double positive_or(double value, double fallback) {
+    if (std::isfinite(value) && value > 0.0) {
+        return value;
+    }
+    return std::fabs(finite_or(fallback, 0.0));
+}
+
 } // namespace
 
 BusDrivingFrame BusDrivingModel::step(const BusDrivingInput &input, const BusDrivingTuning &raw_tuning) {
@@ -122,7 +129,7 @@ BusDrivingTuning BusDrivingModel::sanitized(BusDrivingTuning tuning) {
     tuning.max_forward_speed = abs_max(tuning.max_forward_speed, 0.1);
     tuning.max_reverse_speed = abs_max(tuning.max_reverse_speed, 0.1);
     tuning.acceleration = abs_max(tuning.acceleration, 0.1);
-    tuning.brake_force = abs_max(tuning.brake_force, 100.0);
+    tuning.brake_force = abs_max(tuning.brake_force, 0.1);
     tuning.drag = std::max(finite_or(tuning.drag, 0.0), 0.0);
     tuning.handbrake_drag = std::max(finite_or(tuning.handbrake_drag, 0.0), 0.0);
     tuning.steering_speed = abs_max(tuning.steering_speed, 0.1);
@@ -131,7 +138,7 @@ BusDrivingTuning BusDrivingModel::sanitized(BusDrivingTuning tuning) {
     tuning.high_speed_steering_scale = clamp(tuning.high_speed_steering_scale, 0.05, 1.0);
     tuning.turn_rate = abs_max(tuning.turn_rate, 0.01);
     tuning.mass_kg = abs_max(tuning.mass_kg, 100.0);
-    tuning.engine_force = abs_max(tuning.engine_force, tuning.mass_kg * tuning.acceleration);
+    tuning.engine_force = positive_or(tuning.engine_force, tuning.mass_kg * tuning.acceleration);
     tuning.reverse_force = abs_max(tuning.reverse_force, tuning.engine_force * kReverseAccelerationScale);
     tuning.rolling_resistance = std::max(finite_or(tuning.rolling_resistance, 0.0), 0.0);
     tuning.air_drag_coefficient = std::max(finite_or(tuning.air_drag_coefficient, 0.0), 0.0);

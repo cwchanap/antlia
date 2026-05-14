@@ -22,7 +22,7 @@ BusDrivingTuning tuning() {
     value.max_forward_speed = 10.0;
     value.max_reverse_speed = 3.0;
     value.acceleration = 2.5;
-    value.brake_force = 60000.0;
+    value.brake_force = 8.0;
     value.drag = 0.15;
     value.handbrake_drag = 5.0;
     value.steering_speed = 2.0;
@@ -93,6 +93,34 @@ ANTLIA_TEST(frame_reports_force_based_longitudinal_acceleration) {
 
     CHECK_NEAR(frame.longitudinal_acceleration_mps2, 3.0, 0.0001);
     CHECK(frame.speed_mps > 0.0);
+}
+
+ANTLIA_TEST(finite_engine_force_is_respected_when_acceleration_tuning_is_higher) {
+    BusDrivingTuning light = tuning();
+    BusDrivingTuning heavy = tuning();
+    light.mass_kg = 12000.0;
+    heavy.mass_kg = 18000.0;
+    light.engine_force = 36000.0;
+    heavy.engine_force = 36000.0;
+    light.acceleration = 99.0;
+    heavy.acceleration = 99.0;
+    light.rolling_resistance = 0.0;
+    heavy.rolling_resistance = 0.0;
+    light.air_drag_coefficient = 0.0;
+    heavy.air_drag_coefficient = 0.0;
+    light.drag = 0.0;
+    heavy.drag = 0.0;
+
+    BusDrivingInput input = tick(0.1);
+    input.throttle = 1.0;
+
+    BusDrivingModel light_model;
+    BusDrivingModel heavy_model;
+    const auto light_frame = light_model.step(input, light);
+    const auto heavy_frame = heavy_model.step(input, heavy);
+
+    CHECK_NEAR(light_frame.longitudinal_acceleration_mps2, 3.0, 0.0001);
+    CHECK_NEAR(heavy_frame.longitudinal_acceleration_mps2, 2.0, 0.0001);
 }
 
 ANTLIA_TEST(braking_reduces_forward_speed) {
