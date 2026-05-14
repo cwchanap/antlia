@@ -74,7 +74,7 @@ void BusController3D::_bind_methods() {
             "set_max_reverse_speed", "get_max_reverse_speed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "acceleration", PROPERTY_HINT_RANGE, "0.1,30.0,0.1,or_greater"),
             "set_acceleration", "get_acceleration");
-    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "brake_force", PROPERTY_HINT_RANGE, "0.1,40.0,0.1,or_greater"),
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "brake_force", PROPERTY_HINT_RANGE, "100.0,200000.0,100.0,or_greater"),
             "set_brake_force", "get_brake_force");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "drag", PROPERTY_HINT_RANGE, "0.0,20.0,0.1,or_greater"), "set_drag",
             "get_drag");
@@ -160,7 +160,7 @@ double BusController3D::get_acceleration() const {
 }
 
 void BusController3D::set_brake_force(double value) {
-    tuning_.brake_force = clamp_min(value, kMinimumPositiveTuning);
+    tuning_.brake_force = clamp_min(value, 100.0);
 }
 
 double BusController3D::get_brake_force() const {

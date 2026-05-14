@@ -6,6 +6,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MAP_SCENE = ROOT / "scenes" / "simple_city_map.tscn"
 DEMO_SCENE = ROOT / "scenes" / "demo_bus_test.tscn"
+BUS_CONTROLLER_CPP = ROOT / "src" / "bus_controller_3d.cpp"
 
 
 class SimpleCityMapSceneTest(unittest.TestCase):
@@ -69,6 +70,26 @@ class SimpleCityMapSceneTest(unittest.TestCase):
         self.assertNotIn('[node name="Ground" type="StaticBody3D" parent="."]', demo)
         self.assertNotIn('BoxShape3D_ground', demo)
         self.assertNotIn('BoxMesh_ground', demo)
+
+    def test_demo_scene_uses_force_scale_bus_braking(self):
+        demo = DEMO_SCENE.read_text(encoding="utf-8")
+        bus_match = re.search(
+            r'\[node name="Bus" type="BusController3D" parent="\."\](?P<body>.*?)(?:\n\[node |\Z)',
+            demo,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(bus_match, "demo scene is missing BusController3D node")
+
+        brake_match = re.search(r"^brake_force = (?P<value>[0-9.]+)$", bus_match.group("body"), re.MULTILINE)
+        self.assertIsNotNone(brake_match, "demo bus should serialize force-scale brake_force")
+        self.assertGreaterEqual(float(brake_match.group("value")), 60000.0)
+
+    def test_bus_controller_brake_inspector_uses_force_scale_range(self):
+        controller = BUS_CONTROLLER_CPP.read_text(encoding="utf-8")
+        self.assertIn(
+            'PropertyInfo(Variant::FLOAT, "brake_force", PROPERTY_HINT_RANGE, "100.0,200000.0,100.0,or_greater")',
+            controller,
+        )
 
 
 if __name__ == "__main__":
