@@ -1,0 +1,14 @@
+.godot/
+bin/
+obj/
+.DS_Store
+*.blend1
+.venv-geodata/
+__pycache__/
+# Renderpeople source models are licensed for game use, not asset redistribution.
+Art/Passengers/
+Art/passengers.blend
+Assets/Models/passenger_*
+# Run evidence and prior asset states are kept locally, not committed.
+evidence/
+Art/before-*/

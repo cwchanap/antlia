@@ -1,0 +1,38 @@
+# Vegetation and street decoration
+
+Created with Blender MCP and the built-in imagegen tool on 12 September 2026.
+
+The banyan model uses tapered branches, buttress roots, hanging aerial roots and 112 static leaf cards with a double-sided alpha-cutout material. The same foliage texture supplies the small planters. Benches and orange litter bins are modeled meshes. All are original approximations for this scene.
+
+The tree silhouette is informed by the [Hong Kong Zoological and Botanical Gardens Chinese banyan description](https://www.hkzbg.gov.hk/en/plants/tree/archsdcw6.html). Generated textures are original images, not photographs of that tree.
+
+## Saved assets
+
+- `Assets/Textures/banyan-leaves.png`: transparent leaf spray, used by the tree and planters.
+- `Assets/Textures/banyan-bark.png`: bark albedo, UVs follow the branch length.
+- `Assets/Textures/park-ground.png`: lawn albedo, two-metre repeat along the park.
+- `Assets/Models/banyan.glb`, `bench.glb`, `bin.glb`, `planter.glb`: exported models, with images embedded where used.
+- `Art/antila-assets.blend`: editable source scene with packed images.
+
+The canopy uses alpha cutouts rather than blended transparency. It is static; there is no wind animation. Props are decorative and do not add collision bodies. Boarding zones remain clear. The lawn is a flat textured surface.
+
+All three saved PNGs are 1254 × 1254. The leaf alpha channel was checked for both transparent and opaque pixels. Exported tree and planter materials were checked for `alphaMode: MASK` and double-sided rendering. The tree has 1,924 triangles. Model exports assert valid, finite UVs. The final in-game views were visually inspected; `evidence/park-before-decoration.png` retains the earlier park for comparison.
+
+## Generation prompts
+
+### banyan-leaves
+
+Use case: photorealistic-natural. Asset type: alpha-cutout foliage texture for layered 3D tree canopy cards in a Hong Kong bus simulator. Create a square photorealistic close view of ONE dense small spray of Chinese banyan foliage, roughly 50 to 70 small oval pointed leathery leaves on slender branching twigs. Natural irregular broad rounded silhouette, with many transparent gaps between leaves and twig stems. Deep olive and medium fresh green leaves, realistic fine veins, subtle waxy highlights, a few lighter new leaves. Flat straight-on botanical photography, diffuse daylight, sharp leaf edges and all leaves in focus. The foliage fills 88 percent of the square, keep a clear margin all around, entire spray visible. IMPORTANT: actual transparent RGBA background and actual transparent gaps between leaves, no checkerboard pattern, no solid background, no ground, no tree trunk, no pot, no text, no shadow outside the leaves. This will be placed on multiple intersecting 3D cards, not used as a picture of a complete tree. Real leaf proportions, not an illustration.
+
+### banyan-bark
+
+Use case: photorealistic-natural. Asset type: seamless repeating albedo bark texture for a modeled Hong Kong Chinese banyan tree trunk and aerial roots. Square photographic surface scan of weathered grey-brown banyan bark, a roughly one-metre wide patch. Fine shallow vertical fissures, subtle sinuous vertical root-like ridges, muted grey and taupe tones, small pale lichen flecks and softly worn patches. Banyan bark is relatively smooth, not chunky pine bark. Perfectly straight-on orthographic flat surface, uniformly lit diffuse daylight, no deep shadows, no glare. Repeat seamlessly horizontally and vertically, no distinctive focal knot, no curved trunk silhouette, no leaves, no background, no text or borders. Photographic realistic albedo, not painted art.
+
+### park-ground
+
+Use case: photorealistic-natural. Asset type: seamless repeating albedo ground texture for a Hong Kong urban park in a 3D bus driving simulator. Square overhead photographic scan of a two by two metre patch of slightly worn subtropical lawn. Short fine medium olive-green grass blades with varied growth direction, occasional tiny brown fallen banyan leaves, small irregular patches of dark earthy soil showing between grass. Restrained natural variation, not a uniformly perfect carpet, not a dry brown field. Flat orthographic top-down view, diffuse cloudy daylight, even exposure and sharp detail throughout. Seamless repeating on all four edges, no large distinctive patch, no tall plants, no flowers, no rocks, no pavement, no objects, no directional shadows, no text or border. Real photographic material, not an illustration.
+
+
+## Verification
+
+The C# build passed with zero warnings and errors. The complete 1.08 km driving check passed all three stops with 26 passengers and no route contacts. The first headless run emitted an intermittent resource warning at shutdown; the verbose follow-up exited cleanly. Both logs are retained in `evidence/`, with `self-test.log` containing the final run. The final five-view capture also exited cleanly.

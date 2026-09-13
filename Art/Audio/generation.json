@@ -1,0 +1,101 @@
+{
+  "provider": "ElevenLabs MCP",
+  "sfx_tool": "text_to_sound_effects",
+  "assets": [
+    {
+      "name": "engine",
+      "duration": 5,
+      "loop": true,
+      "prompt": "A steady modern double-decker city bus diesel engine idling, heard inside the driver cab. Warm low mechanical rumble with subtle turbo whirr, consistent RPM throughout, clean realistic game sound recording. No startup, acceleration, gear changes, speech, music, horn or other traffic. Seamless sustained loop.",
+      "source": "Art/Audio/Source/engine/sfx_A_ste_20260912_175616.mp3",
+      "output": "Assets/Audio/engine.wav",
+      "source_sha256": "8545436ae9268914686e63d1d276823ded5098423566060fdf36d6990f04eca1"
+    },
+    {
+      "name": "rolling",
+      "duration": 5,
+      "loop": true,
+      "prompt": "Steady tire and road noise inside a moving double-decker city bus at moderate urban speed. Soft broadband asphalt hiss and a subtle low suspension rumble, consistent and smooth for a seamless game loop. No bumps, voices, music, engine, horn or siren.",
+      "source": "Art/Audio/Source/rolling/sfx_Stead_20260912_175650.mp3",
+      "output": "Assets/Audio/rolling.wav",
+      "source_sha256": "c81bf1466f95078d58ef7e720c73b2625d2f748be9f3f014c3e7932302b2323e"
+    },
+    {
+      "name": "city",
+      "duration": 5,
+      "loop": true,
+      "prompt": "Subtle daytime Hong Kong street ambience heard from inside a quiet bus: distant flowing road traffic and soft indistinct pedestrian murmur, spacious realistic city atmosphere at a steady level. Seamless background loop, no intelligible speech, music, prominent horns, sirens or sudden events.",
+      "source": "Art/Audio/Source/city/sfx_Subtl_20260912_175645.mp3",
+      "output": "Assets/Audio/city.wav",
+      "source_sha256": "3744bd24cf42c40612360ae6d1372068897a7688f2e3c4ccd6ad7300d662a6f2"
+    },
+    {
+      "name": "door-open",
+      "duration": 1.2,
+      "loop": false,
+      "prompt": "One modern city bus pneumatic passenger door opening. A brief controlled air hiss followed by smooth sliding mechanism and a soft rubber stop. Close dry realistic recording, one event only, no beep, voices, music or background traffic.",
+      "source": "Art/Audio/Source/door-open/sfx_One_m_20260912_175648.mp3",
+      "output": "Assets/Audio/door-open.wav",
+      "source_sha256": "2e5affc71879b325c4a6af83e976646d9747414e2a4d66fb26ff0c7a181eb616"
+    },
+    {
+      "name": "door-close",
+      "duration": 1.2,
+      "loop": false,
+      "prompt": "One modern city bus pneumatic sliding passenger door closing. Smooth mechanical slide, short compressed air release and a soft solid rubber seal clunk at the end. Close dry realistic recording, one event only, no warning beep, speech, music or background.",
+      "source": "Art/Audio/Source/door-close/sfx_One_m_20260912_175643.mp3",
+      "output": "Assets/Audio/door-close.wav",
+      "source_sha256": "cb4670fdcc5b39db3f338fc5e8add01449afc749804a28171f933dfe5ae791ab"
+    },
+    {
+      "name": "air-brake",
+      "duration": 1,
+      "loop": false,
+      "prompt": "One short realistic city bus air brake pressure release after coming to a stop. A crisp controlled psssh of compressed air fading naturally, with a soft mechanical click. Dry close recording, no voices, music, horn, squeal or other ambience.",
+      "source": "Art/Audio/Source/air-brake/sfx_One_s_20260912_175743.mp3",
+      "output": "Assets/Audio/air-brake.wav",
+      "source_sha256": "c5c6de79be4ac547716f7a5f46a27b6802272e74c576e0f9a7bf70424acae538"
+    },
+    {
+      "name": "horn",
+      "duration": 1.2,
+      "loop": false,
+      "prompt": "One firm warm dual-tone electric horn blast from a large city bus, about half a second sustained with a natural short decay. Realistic urban bus horn, clean dry recording, not an emergency siren or ship horn. No traffic, music or voices.",
+      "source": "Art/Audio/Source/horn/sfx_One_f_20260912_175744.mp3",
+      "output": "Assets/Audio/horn.wav",
+      "source_sha256": "1dbaa56f116559dc11ed8876b8bab9c9346652c04350bac07618237279e00aa8"
+    },
+    {
+      "name": "stop-bell",
+      "duration": 1.4,
+      "loop": false,
+      "prompt": "A gentle modern city bus two-note electronic passenger stop-request chime: ding dong, clear rounded sine bell tones with a short warm decay. One isolated chime only, calm and polite, no speech, melody, music or background.",
+      "source": "Art/Audio/Source/stop-bell/sfx_A_gen_20260912_175746.mp3",
+      "output": "Assets/Audio/stop-bell.wav",
+      "source_sha256": "0ef0fc036836bb2a080140aa7636e748168b20a87d1e0ecae11c6ce2ad8fc1cb"
+    },
+    {
+      "name": "contact",
+      "duration": 0.8,
+      "loop": false,
+      "prompt": "One restrained low vehicle body bump against a solid barrier at parking speed. Short dull metal and rubber thud with a tiny loose-panel rattle. Dry close game sound effect, no glass breaking, explosion, people, music or exaggerated crash.",
+      "source": "Art/Audio/Source/contact/sfx_One_r_20260912_175741.mp3",
+      "output": "Assets/Audio/contact.wav",
+      "source_sha256": "4e2fd90b5f3303c66137bf8ec0ba882bd7c8e0fb2e8eaca14e1bfcf5a42583f5"
+    },
+    {
+      "name": "kowloon-drive",
+      "kind": "music",
+      "duration": 90,
+      "loop": true,
+      "model_id": "music_v2",
+      "force_instrumental": true,
+      "prompt": "Original understated instrumental background music for a realistic Hong Kong double-decker bus driving simulator on a bright, hazy weekday morning in Kowloon. Warm electric piano chords, soft rounded bass, brushed drums and a restrained downtempo groove around 84 BPM, subtle airy synth textures and a few delicate plucked notes. Calm, observant, gently forward-moving and urban, polished natural sound. Keep an even quiet arrangement throughout with a modest recurring theme and no dramatic build, drop, ending flourish or long silent intro. Designed to sit beneath diesel engine, road ambience and stop chimes, and to loop smoothly. Instrumental only: no vocals, speech, traffic effects, horns, sirens or recognizable existing melodies.",
+      "source": "Art/Audio/Source/kowloon-drive/music__20260912_183129.mp3",
+      "output": "Assets/Audio/kowloon-drive.ogg",
+      "source_sha256": "f1c0304b365bacb63502fa98bc5cedb64ab37371c60a1cf23d1e3515b494e1da"
+    }
+  ],
+  "sfx_source_format": "mp3_44100_128",
+  "music_tool": "compose_music"
+}
