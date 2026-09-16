@@ -17,6 +17,7 @@ public partial class BusController : CharacterBody3D
     public bool AutomaticTest;
     public float TestThrottle, TestBrake, TestSteer;
     private float _collisionCooldown;
+    private readonly KinematicCollision3D _steeringHit = new();
     private readonly Dictionary<string, AudioStreamPlayer> _audio = new();
     private bool _brakeArmed;
     public bool CabAudio;
@@ -79,15 +80,18 @@ public partial class BusController : CharacterBody3D
             Sound("air-brake");_brakeArmed=false;
         }
         Steering = Mathf.MoveToward(Steering, steer * Mathf.DegToRad(32), dt * 1.0f);
-        // ponytail: flat-ground bicycle model; add suspension/weight transfer when handling needs it.
+        // ponytail: kinematic bicycle model; add suspension/weight transfer when handling needs it.
         float yaw = Speed / 6.0f * Mathf.Tan(Steering) * dt;
         // Test the full body rotation so a stopped bus cannot steer through a wall.
         var prior = Rotation;
-        RotateY(yaw);
-        if (TestMove(GlobalTransform, -GlobalBasis.Z * Speed * dt, null, .01f))
+        var flatForward=new Vector3(-Mathf.Sin(Rotation.Y),0,-Mathf.Cos(Rotation.Y));
+        // Follow the floor grade so the long bus nose cannot catch a rising road triangle.
+        float pitch=IsOnFloor()?Mathf.Asin(flatForward.Slide(GetFloorNormal()).Normalized().Y):Rotation.X;
+        Rotation=new(pitch,Rotation.Y+yaw,0);
+        if (TestMove(GlobalTransform, -GlobalBasis.Z * Speed * dt, _steeringHit, .01f) && Mathf.Abs(_steeringHit.GetNormal().Y)<.6f)
             Rotation = prior;
         var forward = -GlobalBasis.Z;
-        Velocity = forward * Speed + Vector3.Up * (IsOnFloor() ? -.4f : Velocity.Y - 20 * dt);
+        Velocity = (IsOnFloor()?forward:flatForward) * Speed + Vector3.Up * (IsOnFloor() ? -.4f : Velocity.Y - 20 * dt);
         var before = GlobalPosition;
         MoveAndSlide();
         Moved?.Invoke(beforeMove, GlobalTransform);

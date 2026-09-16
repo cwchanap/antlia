@@ -35,20 +35,25 @@ public partial class Hud : Control
         var projection=Game.Map.Project(bus.GlobalPosition);
         Panel(30,28,382,80);
         DrawRect(new(30,28,76,80),new Color("c75236"));
-        Text("H1",44,81,37);
-        Text("KOWLOON",123,61,22);
-        Text("TSIM SHA TSUI  →  JORDAN",124,87,13,_muted);
+        Text(Game.HarbourDrive?"CHT":"H1",Game.HarbourDrive?34:44,81,Game.HarbourDrive?26:37);
+        Text(Game.HarbourDrive?"CROSS-HARBOUR":"KOWLOON",123,61,22);
+        Text(Game.HarbourDrive?"HUNG HOM  ⇄  HONG KONG ISLAND":"TSIM SHA TSUI  →  JORDAN",124,87,13,_muted);
         Panel(1118,28,292,60);
         Text("ANTILA  /  BUS DRIVING",1135,51,16);
         Text("10:24 AM     •     HONG KONG",1135,73,12,_muted);
-        if(!Game.Complete)
+        if(Game.HarbourDrive)
+        {
+            Panel(30,121,382,95);Text("FREE DRIVE  /  REAL-SCALE ALIGNMENT",48,149,12,_mint);
+            Text(Game.CurrentStreet(),48,178,15);Text("Follow signs • M map • R returns to H1",48,200,14,_muted);
+        }
+        else if(!Game.Complete)
         {
             var stop=Game.Map.Stops[Game.StopIndex];
             float metres=Mathf.Max(0,stop.Distance-projection.Distance);
             Panel(30,121,382,113);
             Text($"NEXT STOP   {Game.StopIndex+1} / 3",48,149,12,_mint);
             Text(stop.Name,48,180,25);
-            string instruction=Mathf.Abs(projection.Lateral)>20 ? "Exploring Kowloon • M map / R restart" : Game.IsAtStop() ? bus.DoorsOpen ? "Boarding passengers…" : "Stop & press E to open doors" :
+            string instruction=Mathf.Abs(projection.Lateral)>20 ? "Exploring • M map / T tunnel drive" : Game.IsAtStop() ? bus.DoorsOpen ? "Boarding passengers…" : "Stop & press E to open doors" :
                 projection.Distance>stop.Distance+7 ? "Stop missed — reverse carefully or press R" : $"{metres:0} m   •   Keep left on Nathan Road";
             Text(instruction,48,208,14,_muted);
             if(Game.Boarding>0)
@@ -90,7 +95,7 @@ public partial class Hud : Control
         Panel(330,823,722,44);
         Chip("W","Throttle",346,851);Chip("S","Brake",464,851);Chip("A/D","Steer",568,851);
         Chip("E","Doors",684,851);Chip("C","Camera",788,851);Chip("Q","Gear",912,851);
-        Text("SPACE  Handbrake    H  Horn    V  "+(AudioServer.IsBusMute(0)?"Unmute":"Sound")+"    M  Map    R  Restart    ESC  Pause",382,889,12,_paper);
+        Text("SPACE  Handbrake    H  Horn    V  "+(AudioServer.IsBusMute(0)?"Unmute":"Sound")+"    M  Map    T  Tunnel    R  Restart    ESC  Pause",382,889,12,_paper);
         if(Game.NoticeTime>0 && !Game.Complete)
         {
             float x=Game.CabView?438:350;
@@ -133,16 +138,16 @@ public partial class Hud : Control
         {
             DrawRect(new(0,0,1440,900),new Color(.03f,.08f,.08f,.78f));
             Panel(80,100,1280,700);
-            Text("EXPLORE KOWLOON",112,147,24,_paper);
+            Text("KOWLOON  ⇄  HONG KONG ISLAND",112,147,24,_paper);
             Text("M / ESC  Close map • Driving paused",995,146,15,_muted);
         }
         else
         {
             Panel(1090,553,320,314);
-            Text("KOWLOON   /   M MAP",1109,583,14,_paper);
+            Text("HONG KONG   /   M MAP",1109,583,14,_paper);
         }
         var area=expanded?new Rect2(135,190,1170,540):new Rect2(1106,607,288,218);
-        var bounds=Game.Map.Bounds;
+        var bounds=Game.HarbourBounds;
         float scale=Mathf.Min(area.Size.X/bounds.Size.X,area.Size.Y/bounds.Size.Y);
         var origin=area.GetCenter()-bounds.Size*scale/2;
         Vector2 Point(Vector3 p)=>origin+(new Vector2(p.X,p.Z)-bounds.Position)*scale;
@@ -150,6 +155,12 @@ public partial class Hud : Control
         foreach(var road in Game.Map.SideRoads)
             for(int i=0;i<road.Points.Count-1;i++)
                 DrawLine(Point(road.Points[i]),Point(road.Points[i+1]),new Color("526e67"),expanded?3:1.5f,true);
+        foreach(var road in Game.HarbourRoads)
+            for(int i=0;i<road.Points.Count-1;i++)
+            {
+                if(road.Tunnel && i%5>2)continue;
+                DrawLine(Point(road.Points[i]),Point(road.Points[i+1]),road.Tunnel?new Color("7ed8dc"):new Color("d4b26e"),expanded?3:2,true);
+            }
         for(int i=0;i<Game.Map.Points.Count-1;i++)
         {
             var a=Point(Game.Map.Points[i]);var b=Point(Game.Map.Points[i+1]);
@@ -166,12 +177,13 @@ public partial class Hud : Control
         {
             foreach(var (label,at) in new[]{("CANTON ROAD",new Vector3(-560,0,-600)),
                 ("KOWLOON PARK",new Vector3(-310,0,-740)),("TSIM SHA TSUI EAST",new Vector3(370,0,-290)),
-                ("SCIENCE MUSEUM RD",new Vector3(540,0,-770)),("JORDAN",new Vector3(-420,0,-1110))})
+                ("SCIENCE MUSEUM RD",new Vector3(540,0,-770)),("JORDAN",new Vector3(-420,0,-1110)),
+                ("CROSS-HARBOUR TUNNEL · 1.86 km",new Vector3(10,0,400)),("HONG KONG ISLAND",new Vector3(300,0,1750))})
             {
                 var p=Point(at);Text(label,p.X,p.Y,13,_muted);
             }
             Text($"{bounds.Size.X/1000:0.00} km east–west  ×  {bounds.Size.Y/1000:0.00} km north–south",112,759,16,_paper);
-            Text("H1 service on Nathan Road • Side streets open for exploration",112,784,13,_mint);
+            Text("T  Tunnel free drive (while stopped) • Cyan dashes: tunnel • Gold: approach / return loop",112,784,13,_mint);
         }
         var bus=Point(Game.Bus.GlobalPosition);
         DrawCircle(bus,9,_panel);
@@ -179,6 +191,6 @@ public partial class Hud : Control
         var f=new Vector2(-Mathf.Sin(yaw),-Mathf.Cos(yaw));
         var r=new Vector2(-f.Y,f.X);
         DrawColoredPolygon(new[]{bus+f*10,bus-f*6+r*6,bus-f*6-r*6},new Color("ffd084"));
-        if(!expanded)Text(Game.Map.NearestStreet(Game.Bus.GlobalPosition).Name,1109,850,12,_muted);
+        if(!expanded)Text(Game.CurrentStreet(),1109,850,12,_muted);
     }
 }

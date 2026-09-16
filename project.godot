@@ -24,4 +24,6 @@ anti_aliasing/quality/msaa_3d=1
 environment/defaults/default_clear_color=Color(0.66, 0.77, 0.8, 1)
 
 [physics]
+3d/physics_engine="Jolt Physics"
+jolt_physics_3d/motion_queries/use_enhanced_internal_edge_removal=true
 common/physics_ticks_per_second=60

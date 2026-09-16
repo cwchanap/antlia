@@ -85,3 +85,8 @@ Rebuilt through Blender MCP and verified in Godot: C# build **0 warnings / 0 err
 The building geometry and all 131 collision meshes match the pre-polish version exactly; the layout file only gains pavement-patch metadata. Fingerprints are in `evidence/before-urban-polish/collision-fingerprints.json` and `evidence/urban-polish-collision-parity.json`. This pass did not rerun the complete driving service; the earlier full-route result above belongs to the same collision geometry.
 
 Before renders are in `evidence/before-urban-polish/`; the seven building, eight road and seven footpath views are refreshed in their usual review folders. Source backups are in `Art/before-urban-polish/`. The new facade-scale assertion in `Main.BuildingReview.cs` checks imported mesh geometry and UVs, so future Blender edits cannot silently stretch the windows again.
+
+
+## Cross-Harbour approach clearance
+
+The tunnel extension adds the selected surface approach roads to the existing building exclusion buffers. Original government features and height datums remain intact; approximately 246 m² of derived massing is removed around the new roads, including the previously obstructed Hong Chong Road exit bend. The current layout contains 1,764 visible parts from 1,577 source records, 131 chunks, 723,737 m² of footprint coverage and 228 small pavement patches. See [Cross-Harbour extension](CROSS_HARBOUR.md) for regeneration order and current runtime evidence.

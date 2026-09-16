@@ -28,12 +28,14 @@ public partial class Main : Node3D
     private ShaderMaterial _terrain = null!;
     private readonly List<Vector3> _parkPath = new(){new(-80,0,-430),new(-145,0,-520),new(-180,0,-660),new(-315,0,-720),new(-310,0,-835),new(-100,0,-880)};
     private readonly Dictionary<string, StandardMaterial3D> _materials = new();
+    private readonly Dictionary<string, PackedScene> _assetScenes = new();
+    private static bool _harbourLaunchConsumed;
     private readonly SystemFont _font = new() { FontNames = new[] { "PingFang HK", "Noto Sans CJK TC", "sans-serif" } };
     private Node3D _steeringWheel = null!;
 
     public override void _Ready()
     {
-        SelfTest = OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check");
+        SelfTest = OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check");
         RegisterInput();
         Map = new RoadMap();
         PrepareParkEntrances();
@@ -50,7 +52,7 @@ public partial class Main : Node3D
         Bus = new BusController { Notify = ShowNotice, Moved = CheckSignalCrossing };
         AddChild(Bus);
         Bus.ResetAt(Map.At(22, -7.3f), Map.Heading(22));
-        Camera = new Camera3D { Fov = 62, Far = 1300, Near = .7f, Current = true };
+        Camera = new Camera3D { Fov = 62, Far = 3200, Near = .7f, Current = true };
         AddChild(Camera);
         BuildCab();
         var layer = new CanvasLayer();
@@ -58,6 +60,9 @@ public partial class Main : Node3D
         Hud = new Hud { Game = this };
         layer.AddChild(Hud);
         UpdateCamera(1, true);
+        if(!_harbourLaunchConsumed && OS.GetCmdlineUserArgs().Contains("--harbour"))
+        { _harbourLaunchConsumed=true;StartHarbourDrive(); }
+        if(OS.GetCmdlineUserArgs().Contains("--harbour-review"))CallDeferred(MethodName.CaptureHarbour);
         if (SelfTest) CallDeferred(MethodName.RunChecks);
         if (OS.GetCmdlineUserArgs().Contains("--capture")) CallDeferred(MethodName.CaptureViews);
         if (OS.GetCmdlineUserArgs().Contains("--audio-review")) CallDeferred(MethodName.ReviewAudio);
@@ -71,7 +76,7 @@ public partial class Main : Node3D
         foreach (var (name, key) in new (string, Key)[] {
             ("accelerate", Key.W), ("brake", Key.S), ("steer_left", Key.A), ("steer_right", Key.D),
             ("handbrake", Key.Space), ("doors", Key.E), ("camera", Key.C), ("reverse", Key.Q),
-            ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V) })
+            ("tunnel", Key.T), ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V) })
         {
             if (InputMap.HasAction(name)) continue;
             InputMap.AddAction(name);
@@ -106,7 +111,9 @@ public partial class Main : Node3D
 
     private Node3D Asset(string name, Vector3 at, float heading = 0, Vector3? scale = null)
     {
-        var n = GD.Load<PackedScene>($"res://Assets/Models/{name}.glb").Instantiate<Node3D>();
+        // Retain scene wrappers while instancing repeatedly; avoid a stale Godot/.NET GC handle.
+        if(!_assetScenes.TryGetValue(name,out var scene))_assetScenes[name]=scene=GD.Load<PackedScene>($"res://Assets/Models/{name}.glb");
+        var n = scene.Instantiate<Node3D>();
         n.Position = at;
         n.Rotation = new(0, heading, 0);
         if (scale.HasValue) n.Scale = scale.Value;
@@ -140,7 +147,7 @@ public partial class Main : Node3D
         AddChild(new DirectionalLight3D { RotationDegrees = new(-48,-38,0), LightColor = new("ffe0af"),
             LightEnergy = .65f, ShadowEnabled = true, DirectionalShadowMaxDistance = 170 });
         var bounds=Map.Bounds;
-        var ground=Box(this,new(bounds.GetCenter().X,-.45f,bounds.GetCenter().Y),new(bounds.Size.X+220,.9f,bounds.Size.Y+240),"777e73",true);
+        var ground=BuildHarbour();
         _terrain=new ShaderMaterial {Shader=GD.Load<Shader>("res://Assets/Materials/terrain.gdshader")};
         ground.MaterialOverride=_terrain;
         _terrain.SetShaderParameter("map_origin",bounds.Position);_terrain.SetShaderParameter("map_size",bounds.Size);
@@ -148,14 +155,6 @@ public partial class Main : Node3D
         _terrain.SetShaderParameter("paving",GD.Load<Texture2D>("res://Assets/Textures/paving.png"));
         _terrain.SetShaderParameter("grass",GD.Load<Texture2D>("res://Assets/Textures/park-ground.png"));
         _terrain.SetShaderParameter("stone",GD.Load<Texture2D>("res://Assets/Textures/pavement-stone.png"));
-        Box(this, new(0,-.12f,170), new(2600,.1f,200), "4c8791");
-        var rng = new Random(18);
-        for (int i = 0; i < 48; i++)
-        {
-            float x = -550 + i * 24;
-            float h = rng.Next(30,130);
-            Box(this, new(x,h/2,420+rng.Next(-30,70)), new(rng.Next(16,25),h,25), i%3==0?"849c9e":"728e93");
-        }
 
     }
 
@@ -238,7 +237,19 @@ public partial class Main : Node3D
         foreach(float x in new[]{bounds.Position.X,bounds.End.X})
             Box(this,new(x,.65f,bounds.GetCenter().Y),new(.6f,1.3f,bounds.Size.Y),"bb653f",true);
         foreach(float z in new[]{bounds.Position.Y,bounds.End.Y})
-            Box(this,new(bounds.GetCenter().X,.65f,z),new(bounds.Size.X,1.3f,.6f),"bb653f",true);
+        {
+            float cursor=bounds.Position.X;
+            void Barrier(float start,float end)
+            {
+                if(end>start)Box(this,new((start+end)/2,.65f,z),new(end-start,1.3f,.6f),"bb653f",true);
+            }
+            foreach(var p in HarbourRoads.Where(r=>!r.Tunnel).SelectMany(r=>r.Points).Where(p=>Mathf.Abs(p.Z-z)<8).OrderBy(p=>p.X))
+            {
+                Barrier(cursor,Mathf.Min(p.X-12,bounds.End.X));
+                cursor=Mathf.Max(cursor,p.X+12);
+            }
+            Barrier(cursor,bounds.End.X);
+        }
 
     }
 
@@ -439,6 +450,7 @@ public partial class Main : Node3D
             return;
         }
         if(e.IsActionPressed("map")) { MapOpen=!MapOpen; Bus.SetPaused(Paused || Complete || MapOpen); return; }
+        if(e.IsActionPressed("tunnel")){StartHarbourDrive();return;}
         if(e.IsActionPressed("restart")) { GetTree().ReloadCurrentScene(); return; }
         if(e.IsActionPressed("camera")) { SetCab(!CabView); return; }
         if(e.IsActionPressed("mute")) { AudioServer.SetBusMute(0,!AudioServer.IsBusMute(0)); return; }
@@ -559,9 +571,9 @@ public partial class Main : Node3D
         {
             Elapsed+=dt;
             NoticeTime=Mathf.Max(0,NoticeTime-dt);
-            if(!SelfTest)AdvanceService(dt);
+            if(!SelfTest && !HarbourDrive)AdvanceService(dt);
         }
-        _stopMarker.Visible=!Complete;
+        _stopMarker.Visible=!Complete && !HarbourDrive;
         if(!Complete)_stopMarker.Position=Map.At(Map.Stops[StopIndex].Distance,-7.3f)+Vector3.Up*.08f;
         UpdateCamera(dt,false);
         Hud.QueueRedraw();
@@ -636,7 +648,7 @@ public partial class Main : Node3D
         }
         target=Bus.ToGlobal(new(0,7.6f,15.8f));
         target=snap?target:Camera.GlobalPosition.Lerp(target,1-Mathf.Exp(-5*dt));
-        var origin=Bus.GlobalPosition+Vector3.Up*4.6f;
+        var origin=Bus.GlobalPosition+Vector3.Up*(Bus.Position.Y<-1?3.5f:4.6f);
         _cameraSweep.Transform=new(Basis.Identity,origin);
         _cameraSweep.Motion=target-origin;
         float fraction=GetWorld3D().DirectSpaceState.CastMotion(_cameraSweep)[0];
@@ -708,11 +720,31 @@ public partial class Main : Node3D
         Bus.TestThrottle=0;Bus.TestBrake=0;Bus.TestSteer=0;
     }
 
+    private void CheckStreetClearance()
+    {
+        var roadQuery=new PhysicsShapeQueryParameters3D {
+            Shape=new BoxShape3D {Size=new(2.48f,4.2f,10.55f)},CollisionMask=1,
+            Exclude=new Godot.Collections.Array<Rid>(_traffic.Select(t=>t.Body.GetRid()))};
+        int roadSamples=0;
+        var driveSamples=Map.StreetSamples(10).Select(s=>(s.Point,s.Forward))
+            .Concat(Map.RoadPoints.Take(Map.RoadPoints.Count-1).Select((p,i)=>(p,(Map.RoadPoints[i+1]-p).Normalized())));
+        foreach(var (p,f) in driveSamples)
+        {
+            roadQuery.Transform=new(new Basis(Vector3.Up,Mathf.Atan2(-f.X,-f.Z)),p+Vector3.Up*2.3f);
+            var hits=GetWorld3D().DirectSpaceState.IntersectShape(roadQuery,1);
+            if(hits.Count>0)throw new Exception($"road obstructed near {Map.NearestStreet(p).Name}: {p}; {(hits[0]["collider"].AsGodotObject() as Node)?.GetPath()}");roadSamples++;
+        }
+        GD.Print($"ANTILA_ROAD_AUDIT_OK: {roadSamples} bus-sized road clearance queries, including both former Nathan Road barriers");
+    }
+
     private async void RunChecks()
     {
         try
         {
             void Check(bool ok,string message) { if(!ok)throw new Exception(message); }
+            await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+            CheckStreetClearance();
+            if(OS.GetCmdlineUserArgs().Contains("--harbour-check")){await CheckHarbour();QuitGame();return;}
             CheckRoadMarkings();
             if(OS.GetCmdlineUserArgs().Contains("--road-check")) { QuitGame(); return; }
             await CheckBuildings();
@@ -723,6 +755,7 @@ public partial class Main : Node3D
             await CheckReviewRegressions();
             await CheckTrafficSignals();
             if(OS.GetCmdlineUserArgs().Contains("--signal-check")) { QuitGame(); return; }
+            await CheckHarbour();
             Check(Map.Points.Count==231 && Map.Length==1150,"map geometry");
             Check(Map.Bounds.Size.X>2000 && Map.SourceSections==437,"expanded road extract");
             Check(Map.SideRoads.Any(r=>r.Name=="SCIENCE MUSEUM ROAD") && Map.SideRoads.Any(r=>r.Name=="CANTON ROAD"),"east/west streets");
@@ -747,19 +780,6 @@ public partial class Main : Node3D
             Check(_lots.Count>1500 && _lots.Count(l=>l.Height>75)>70,"government building density and tower variation");
             Check(Map.RoadPoints[0].Z>0 && Map.RoadPoints[^1].Z<-Map.Length,"Nathan Road must reach the surrounding junctions");
             await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
-            var roadQuery=new PhysicsShapeQueryParameters3D {
-                Shape=new BoxShape3D {Size=new(2.48f,4.2f,10.55f)},CollisionMask=1,
-                Exclude=new Godot.Collections.Array<Rid>(_traffic.Select(t=>t.Body.GetRid()))};
-            int roadSamples=0;
-            var driveSamples=Map.StreetSamples(10).Select(s=>(s.Point,s.Forward))
-                .Concat(Map.RoadPoints.Take(Map.RoadPoints.Count-1).Select((p,i)=>(p,(Map.RoadPoints[i+1]-p).Normalized())));
-            foreach(var (p,f) in driveSamples)
-            {
-                roadQuery.Transform=new(new Basis(Vector3.Up,Mathf.Atan2(-f.X,-f.Z)),p+Vector3.Up*2.3f);
-                var hits=GetWorld3D().DirectSpaceState.IntersectShape(roadQuery,1);
-                Check(hits.Count==0,$"road obstructed near {Map.NearestStreet(p).Name}: {p}");roadSamples++;
-            }
-            GD.Print($"ANTILA_ROAD_AUDIT_OK: {roadSamples} bus-sized road clearance queries, including both former Nathan Road barriers");
             Check(_waiting.Count==3 && _waiting.All(group=>group.GetChildCount()==4),"passenger models at every stop");
             float v=0;
             for(int i=0;i<600;i++)v=BusController.IntegrateSpeed(v,1,0,false,false,1f/60);

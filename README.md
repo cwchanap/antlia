@@ -1,8 +1,8 @@
 # Antila — Kowloon Bus
 
-A playable **Godot 4.6 .NET / C#** bus-driving scene across Tsim Sha Tsui and Jordan, Hong Kong. Drive an original cream-and-red double-decker north from Tsim Sha Tsui towards Jordan, serve three H1 stops, and finish the service.
+A playable **Godot 4.6 .NET / C#** bus-driving scene across Tsim Sha Tsui and Jordan, Hong Kong. Drive an original cream-and-red double-decker north from Tsim Sha Tsui towards Jordan, serve three H1 stops, and finish the service. The map now also reaches the **Cross-Harbour Tunnel and Hong Kong Island**, with both tunnel tubes and a Wan Chai return loop.
 
-![Kowloon map](evidence/map.png)
+![Cross-Harbour map](evidence/harbour/map.png)
 
 ![Government-derived Nathan Road buildings](evidence/building-review/nathan-front.png)
 
@@ -25,7 +25,8 @@ On another machine set `GODOT_BIN` to a Godot 4.6 .NET executable. The SDK may r
 | E | Open / close left-side doors, while stopped |
 | Q | Drive / reverse, while stopped |
 | C | Chase / right-hand cab camera |
-| M | Open / close the full Kowloon map; driving pauses while open |
+| M | Open / close the full crossing map; driving pauses while open |
+| T | Start a Cross-Harbour free drive while stopped in an active game |
 | H | Horn |
 | V | Mute / unmute all game audio |
 | Escape | Pause / resume |
@@ -34,15 +35,17 @@ On another machine set `GODOT_BIN` to a Godot 4.6 .NET executable. The SDK may r
 
 Traffic lights control fourteen junctions: ten on Nathan Road from Peking Road to Jordan Road, plus Canton / Haiphong, Canton / Austin, Chatham / Granville and Chatham / Mody. Brake behind the white stop line on red or red-and-amber; amber means stop if safe. The next-signal panel shows the relevant approach and distance from the bus nose. Taxis wait at signals; the bus remains under your control, with red-light crossings recorded in the completion summary.
 
+Press **T** while stopped to start at the tunnel approach in cab view. The tunnel follows government XY geometry at metre scale, with approximately **1.857 km per tube**; its depth and interior dimensions are authored. **M** shows the crossing and island return loop; **R** returns to H1. See [Cross-Harbour data, limits and verification](docs/CROSS_HARBOUR.md).
+
 Turn onto side streets to explore the wider district; **M** shows your position and the H1 stops. The existing three-stop service stays on Nathan Road.
 
 Follow the **leftmost northbound lane**. Pull into the green stop marker, align with the road, stop completely and open the doors. Boarding takes four seconds. Close the doors before accelerating. Complete Middle Road, Kowloon Park and Jordan Road to finish. H1 is a fictional prototype service, not an actual published bus route.
 
 ## What is built
 
-- A **2.06 km east–west × 1.24 km north–south** map extract, 3.6 times the previous data width. A connected network of 58 named side streets reaches Canton Road and Kowloon Park Drive to the west, and Chatham Road, Granville Road and Science Museum Road to the east.
+- A **2.44 km east–west × 3.34 km north–south** overall map with 49 government road sections for the Cross-Harbour approaches, two driveable tubes, island return loop, ceramic walls, lamps and portal signs. The existing detailed Kowloon district remains a **2.06 km east–west × 1.24 km north–south** extract, 3.6 times the previous data width. A connected network of 58 named side streets reaches Canton Road and Kowloon Park Drive to the west, and Chatham Road, Granville Road and Science Museum Road to the east.
 - The original 1.15 km Nathan Road H1 service, with markings, shopfronts, banyan trees, shelters, Chinese signs and ambient taxis.
-- 1,762 visible building parts derived from HK Government footprints and height datums: irregular blocks, podiums, courtyards and towers up to 259 m. Four facade styles, cafe shopfronts and rooftop details cover 723,983 m² of ground; 131 spatial mesh chunks keep rendering and collision practical.
+- 1,764 visible building parts derived from HK Government footprints and height datums: irregular blocks, podiums, courtyards and towers up to 259 m. Four facade styles, cafe shopfronts and rooftop details cover 723,737 m² of ground; 131 spatial mesh chunks keep rendering and collision practical.
 - One terrain surface blends asphalt, paving, park lawns and paths from a generated data mask, avoiding stacked road meshes. Stone kerbs follow roads and park paths, while facade textures keep a consistent window scale. Softer haze improves skyline contrast. Lane paint is batched and stops at crossing roads.
 - Clearer road paint, arterial lane guides, left-hand traffic arrows, three yellow box junctions and labelled bus bays. Parallel source carriageways share a lane layout and crossings span the combined road width. Kowloon Park's bay sits clear of the Granville crossing; road and path edges use fractional pixel coverage.
 - Scattered park trees, connected park paths, and physical outer boundaries. Nathan Road now connects through both former internal barriers to the surrounding junctions.
@@ -55,13 +58,13 @@ Follow the **leftmost northbound lane**. Pull into the green stop marker, align 
 - Textured banyan trees with branching trunks, roots and leaf cutouts, park lawns, planters, benches and orange litter bins.
 - Four detailed scanned passenger groups at each stop, including a parent carrying a child; queues disappear when boarding completes.
 
-This is a **stylized prototype**. Road widths, elevations, streetscape, facade appearance, stop placements and traffic are authored approximations. Road alignments and building massing derive from government data, with pavement/park clearance adaptations; this is not a surveyed 3D reconstruction. Handling uses a flat-ground kinematic body, without suspension, drivetrain simulation or damage. Taxis follow a simple looping southbound path, waiting at red/amber lights and when their movement or loop destination is obstructed; there is no network routing, career saving or licensed operator livery. Traffic-light locations and timings are authored approximations; there are no pedestrian phases or turn-arrow phases. The scanned passengers use fixed poses without walking or boarding animations; cab instruments remain simple.
+This is a **stylized prototype**. Road widths, elevations, streetscape, facade appearance, stop placements and traffic are authored approximations. Road alignments and building massing derive from government data, with pavement/park clearance adaptations; this is not a surveyed 3D reconstruction. Handling uses a kinematic body that follows the road grade, without suspension, drivetrain simulation or damage. Taxis follow a simple looping southbound path, waiting at red/amber lights and when their movement or loop destination is obstructed; there is no network routing, career saving or licensed operator livery. Traffic-light locations and timings are authored approximations; there are no pedestrian phases or turn-arrow phases. The scanned passengers use fixed poses without walking or boarding animations; cab instruments remain simple.
 
 ## Data and art
 
 **Road geometry:** © Hong Kong SAR Government / Transport Department, via [DATA.GOV.HK — Road Network (2nd Generation)](https://data.gov.hk/en-data/dataset/hk-td-tis_15-road-network-v2). Reuse follows the portal's [Terms and Conditions](https://data.gov.hk/en/terms-and-conditions); ownership is acknowledged here, in the data files and in the game HUD. No government endorsement is implied.
 
-`Data/roads.geojson` retains 596 clipped source features in WGS84. `Data/nathan-road.json` contains the unchanged 231 sampled service-route points, 244 samples covering the full Nathan Road surface and 437 connected side-street sections, extract bounds, source URL, original download timestamp, processing timestamp, SHA-256 and coordinate origin. +X is east, -Z is north, one world unit is one metre. This first slice averages carriageway centrelines at 5 m intervals. It does not infer real lane widths or turning permissions from the centreline data. The expansion uses named ground-level streets; unnamed links, pedestrian paths, highway/tunnel approaches and isolated fragments are excluded. Side streets are 12 or 18 m wide in the game. At runtime, unambiguous same-name segments join into 260 polylines; road geometry, pavement and building footprints generate a three-channel terrain mask at three pixels per metre. The original source features remain intact. The playable connected network spans about 1.75 km east–west inside the larger extract; no road is promised at every point within its bounds.
+`Data/roads.geojson` retains 596 clipped source features in WGS84. `Data/nathan-road.json` contains the unchanged 231 sampled service-route points, 244 samples covering the full Nathan Road surface and 437 connected side-street sections, extract bounds, source URL, original download timestamp, processing timestamp, SHA-256 and coordinate origin. +X is east, -Z is north, one world unit is one metre. This first slice averages carriageway centrelines at 5 m intervals. It does not infer real lane widths or turning permissions from the centreline data. The original district extract uses named ground-level streets; unnamed links, pedestrian paths, highway/tunnel approaches and isolated fragments are excluded. Side streets are 12 or 18 m wide in the game. At runtime, unambiguous same-name segments join into 260 polylines; road geometry, pavement and building footprints generate a three-channel terrain mask at three pixels per metre. The original source features remain intact. The playable connected network spans about 1.75 km east–west inside the larger extract; no road is promised at every point within its bounds.
 
 To regenerate using Python's standard library:
 
@@ -69,6 +72,8 @@ To regenerate using Python's standard library:
 curl -L --fail https://static.data.gov.hk/td/road-network-v2/CENTERLINE.kmz -o /tmp/CENTERLINE.kmz
 python3 Tools/import_map.py /tmp/CENTERLINE.kmz
 ```
+
+**Cross-Harbour extension:** `Data/cross-harbour-source.geojson` retains the 49 selected TD features and their original attributes. `Data/cross-harbour.json` adds the metre-scale crossing geometry and provenance without changing the Nathan Road import. `Tools/import_tunnel.py` and Blender MCP `Tools/model_tunnel.py` regenerate it; see `docs/CROSS_HARBOUR.md` for sources, authored depth/width/shoreline limits, texture prompt and checks.
 
 Google Maps imagery, tiles and 3D meshes are not included. The government extract is bundled so gameplay requires neither a map API key nor a network connection.
 
@@ -92,6 +97,8 @@ Google Maps imagery, tiles and 3D meshes are not included. The government extrac
 
 ## Verification
 
+Verified on 13 September 2026: the full self-test passes both tunnel directions, the island return loop, all original city checks, both side-street turns and the complete H1 service without unintended contacts. The crossing has a focused physics check (`./run.command --headless -- --harbour-check`) and a native render review (`./run.command --disable-vsync -- --harbour-review`). Current logs and six renders are under `evidence/harbour/`; see [Cross-Harbour verification and limits](docs/CROSS_HARBOUR.md).
+
 ```sh
 ./run.command --headless -- --self-test
 ./run.command -- --capture
@@ -108,7 +115,7 @@ The traffic-light expansion covers fourteen junctions and 48 approaches. `docs/T
 
 The government-building layout was verified on 13 September 2026 UTC: the full driving checks pass with the new footprints, including both side-street turns and all three service stops. See `docs/GOVERNMENT_BUILDINGS.md` and `evidence/government-building-self-test.log` for the current scene results and shutdown diagnostics.
 
-The building review checks government-derived density, imported render/collision chunks, textured materials and 53 roof collision probes with `./run.command --headless -- --building-check`. `./run.command --disable-vsync -- --building-review` saves seven street/corner/block/skyline views; the full self-test includes the building audit.
+The building review checks government-derived density, imported render/collision chunks, textured materials and 54 roof collision probes with `./run.command --headless -- --building-check`. `./run.command --disable-vsync -- --building-review` saves seven street/corner/block/skyline views; the full self-test includes the building audit.
 
 The pedestrian-area checks run with `./run.command --headless -- --footpath-check` and as part of the full self-test. `./run.command --disable-vsync -- --footpath-review` saves seven pavement, crossing, bus-stop and park views.
 

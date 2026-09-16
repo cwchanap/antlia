@@ -38,6 +38,10 @@ def build():
     for road in roads["side_roads"]:
         width = 18 if road["name"] in WIDE else 12
         buffers.append(LineString(road["points"]).buffer(width/2+3.5, quad_segs=2, join_style="mitre"))
+    harbour = json.loads((ROOT/'Data/cross-harbour.json').read_text())
+    for road in harbour['roads']:
+        if not road['tunnel'] or road.get('ramp',False):
+            buffers.append(LineString([(p[0],p[2]) for p in road['points']]).buffer(max(12,road['width'])/2+3.5,quad_segs=2,join_style='mitre').intersection(box(*roads['bounds'])))
     road_zone = union_all(buffers)
     # The prototype permits a bus turn into Granville: protect the long nose through that tight corner.
     turning_zone = LineString(roads["points"]).interpolate(503).buffer(32, quad_segs=8)
@@ -124,7 +128,7 @@ def build():
             if hole.area > 40 or hole.intersects(PARK):
                 continue
             patch = hole.buffer(.4).intersection(boundary)
-            if patch.geom_type != "Polygon" or patch.intersects(PARK):
+            if patch.geom_type != "Polygon" or patch.is_empty or patch.intersects(PARK):
                 continue
             point = patch.representative_point()
             pavement_patches.append({"center": [point.x,point.y], "polygon": list(patch.exterior.coords)[:-1]})
@@ -140,7 +144,7 @@ def build():
             "source_parts_clipped": clipped, "fallback_height_parts": missing, "footprint_area_m2": round(area),
             "volume_m3": round(sum(p.area*b["height"] for p,b in zip(actual,output))),
             "styles": dict(Counter(b["style"] for b in output)),
-            "note": "Derived game massing, not survey-grade reconstruction. Flat ground; connected-part minimum base datum; upper-envelope podium/tower silhouettes. Road clearance 3.5m beyond authored carriageways, plus 2m within 32m of the Nathan/Granville bus turn; authored park omitted. Missing heights use storeys x 3.2m or 9.6m. Facades are generated artwork, not surveyed photographs."}
+            "note": "Derived game massing, not survey-grade reconstruction. Flat ground; connected-part minimum base datum; upper-envelope podium/tower silhouettes. Road clearance 3.5m beyond authored carriageways including the Cross-Harbour surface approaches, plus 2m within 32m of the Nathan/Granville bus turn; authored park omitted. Missing heights use storeys x 3.2m or 9.6m. Facades are generated artwork, not surveyed photographs."}
     meta["small_pavement_gaps_filled"] = len(pavement_patches)
     (ROOT / "Data/building-layout.json").write_text(json.dumps({"metadata": meta, "buildings": output, "pavement_patches": pavement_patches}, ensure_ascii=False, separators=(",", ":")))
     print("BUILDING_LAYOUT_OK:", json.dumps(meta, ensure_ascii=False))
