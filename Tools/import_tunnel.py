@@ -32,23 +32,57 @@ TUBES = [('Southbound', ['ID_010882','ID_010888']), ('Northbound',['ID_019594','
 RAMPS = {'Southbound':['ID_024204','ID_010882','ID_010888'],
          'Northbound':['ID_019594','ID_06075','ID_024201']}
 
+ISLAND_BOUNDS = (-300,1100,2050,2100)
+ISLAND_STREETS = set("GLOUCESTER ROAD|HENNESSY ROAD|HARBOUR ROAD|CONVENTION AVENUE|EXPO DRIVE|EXPO DRIVE EAST|FLEMING ROAD|TONNOCHY ROAD|MARSH ROAD|JAFFE ROAD|LOCKHART ROAD|JOHNSTON ROAD|PERCIVAL STREET|CANAL ROAD EAST|CANAL ROAD WEST|CAUSEWAY ROAD|YEE WO STREET|FENWICK STREET".split("|"))
+# Negative IDs traverse two-way source sections in reverse.
+SCENIC = [
+    'ID_012023', 'ID_020805', 'ID_020804', 'ID_020806', 'ID_020846', 'ID_018216', '-ID_026889',
+    'ID_025514', 'ID_028222', 'ID_028228', 'ID_028232', 'ID_028223', 'ID_024646', 'ID_024647',
+    'ID_024648', 'ID_015864', 'ID_015762', 'ID_015761', 'ID_015760', 'ID_021189', 'ID_021188',
+    'ID_021181', 'ID_031979', 'ID_032307', 'ID_01967', 'ID_00440', 'ID_02282', 'ID_06283',
+    'ID_06282', 'ID_00185', 'ID_00130', 'ID_00500', 'ID_01582', 'ID_01936', 'ID_01778',
+    'ID_01870', 'ID_01871', 'ID_00993', '-ID_00005', '-ID_00606', 'ID_02920', 'ID_014396',
+    'ID_033303', 'ID_02832', 'ID_02146', 'ID_036465', 'ID_036466', 'ID_01912', 'ID_016037',
+    'ID_015766', 'ID_015765', 'ID_015763', 'ID_015760', 'ID_021189', 'ID_021185', 'ID_015725',
+    'ID_015726', 'ID_033399', 'ID_015890', 'ID_015889', 'ID_015805', 'ID_023176', 'ID_015888',
+    'ID_02968', 'ID_030734', 'ID_030733', 'ID_033109', 'ID_033110', 'ID_026356', 'ID_026357',
+    'ID_010405', 'ID_014865', 'ID_014864', 'ID_01719', 'ID_00809', 'ID_00230', 'ID_01004',
+    'ID_02103', 'ID_01361', 'ID_013379', '-ID_022282', 'ID_02308', 'ID_00440', 'ID_02282',
+    'ID_06283', 'ID_06282', 'ID_00185', 'ID_00130', 'ID_00500', 'ID_01582', 'ID_01936',
+    'ID_01778', 'ID_01870', 'ID_01871', 'ID_00993', '-ID_00005', '-ID_00606', 'ID_02920',
+    'ID_014396', 'ID_033303', '-ID_00331', 'ID_01912', 'ID_016037', 'ID_015766', 'ID_015765',
+    'ID_015764', 'ID_015762', 'ID_015777', 'ID_02171', 'ID_04970', 'ID_035497', 'ID_02104',
+]
+
 
 def build(source):
-    ids = set(SOUTH+ISLAND+NORTH)
+    ids = set(SOUTH+ISLAND+NORTH+[i.lstrip("-") for i in SCENIC])
     records = {}
     with zipfile.ZipFile(source) as archive, archive.open('doc.kml') as stream:
         for _, element in ET.iterparse(stream, events=('end',)):
             if element.tag != f"{{{NS['k']}}}Placemark":
                 continue
             ident = element.get('id')
-            if ident in ids:
-                props = dict(re.findall(r'<td>([A-Z_]+)</td>\s*<td>(.*?)</td>', element.findtext('k:description','',NS)))
+            props = dict(re.findall(r'<td>([A-Z_]+)</td>\s*<td>(.*?)</td>', element.findtext('k:description','',NS)))
+            if ident in ids or (props.get('STREET_ENAME') in ISLAND_STREETS and props.get('ELEVATION')=='0'):
                 coords = [list(map(float,w.split(','))) for w in element.find('.//k:coordinates',NS).text.split()]
-                records[ident] = {'type':'Feature','properties':dict(props, source_id=ident),
-                                  'geometry':{'type':'LineString','coordinates':coords}}
+                if ident in ids or box(*ISLAND_BOUNDS).covers(LineString([local(p) for p in coords]).buffer(12)):
+                    records[ident] = {'type':'Feature','properties':dict(props, source_id=ident),
+                                      'geometry':{'type':'LineString','coordinates':coords}}
             element.clear()
-    assert records.keys() == ids, 'Source road IDs changed; review the extract before rebuilding.'
+    assert ids <= records.keys(), 'Source road IDs changed; review the extract before rebuilding.'
     original = {i:LineString([local(p) for p in f['geometry']['coordinates']]) for i,f in records.items()}
+    # Retain only the connected island street component; source coordinates stay unmodified.
+    nodes = {}
+    for ident,line in original.items():
+        for p in (line.coords[0],line.coords[-1]):nodes.setdefault(tuple(round(v,1) for v in p),set()).add(ident)
+    connected=set(ids);pending=list(ids)
+    while pending:
+        line=original[pending.pop()]
+        for p in (line.coords[0],line.coords[-1]):
+            for ident in nodes[tuple(round(v,1) for v in p)]-connected:connected.add(ident);pending.append(ident)
+    records={i:r for i,r in records.items() if i in connected}
+    original={i:r for i,r in original.items() if i in connected}
     lines = dict(original)
     # One 3.7 m connector is digitised opposite to this trip, but explicitly permits both directions.
     assert records['ID_026889']['properties']['TRAVEL_DIRECTION']=='1'
@@ -84,14 +118,19 @@ def build(source):
                       'points':points})
     by_id = {r['id']:r for r in roads}
     routes = []
-    for name,members in [('Hung Hom → Hong Kong Island',SOUTH),('Wan Chai return loop',ISLAND),('Hong Kong Island → Kowloon',NORTH)]:
+    for name,members in [('Hung Hom → Hong Kong Island',SOUTH),('Wan Chai return loop',ISLAND),('Hong Kong Island → Kowloon',NORTH),('Wan Chai / Causeway Bay scenic drive',SCENIC)]:
         points = []
         for ident in members:
+            reverse=ident.startswith('-');ident=ident.lstrip('-')
             p = by_id[ident]['points']
-            assert not points or math.dist(points[-1],p[0]) < .02, (name,ident,'gap')
+            if reverse:
+                assert records[ident]['properties']['TRAVEL_DIRECTION']=='1', 'Only two-way source sections may be reversed'
+                # ID_026889 is already reversed for the original island route.
+                if ident!='ID_026889':p=p[::-1]
+            assert not points or math.dist(points[-1],p[0]) < .12, (name,ident,'gap')
             points.extend(p if not points else p[1:])
         routes.append({'name':name,'source_ids':members,'points':points})
-    for a,b in zip(routes,routes[1:]):
+    for a,b in zip(routes[:3],routes[1:3]):
         assert math.dist(a['points'][-1],b['points'][0]) < .02, 'Gap between crossing and return loop'
     # Cut only open portals out of the old ground. Deep tunnel sections pass below intact streets.
     cutouts = []
@@ -109,7 +148,7 @@ def build(source):
     bounds = district_data['bounds']
     district = box(bounds[0]-110,bounds[1]-120,bounds[2]+110,bounds[3]+120)
     # Authored land apron around the island roads; shoreline is scenery, not survey data.
-    island = box(330,1100,1350,1890)
+    island = box(*ISLAND_BOUNDS)
     land = unary_union([district,island])
     ground = land.difference(unary_union(cutouts).buffer(.05))
     for street in district_data['side_roads']:
@@ -131,7 +170,7 @@ def build(source):
         'dictionary':'https://static.data.gov.hk/td/road-network-v2/dataspec/rdnet_dataspec.zip',
         'tunnel_reference':'https://www.td.gov.hk/en/transport_in_hong_kong/tunnels_and_bridges_n/location_map/index_t.html',
         'note':'Original XY preserved. ELEVATION is a relative road level, not metres. Depth 32 m, widths, 5.6 m interior height, land aprons and scenery are authored. Selected approach levels are simplified; turn restrictions are not inferred.'}
-    output = {'metadata':metadata,'bounds':[bounds[0],-1400,1430,1940], 'roads':roads,
+    output = {'metadata':metadata,'bounds':[bounds[0],-1400,ISLAND_BOUNDS[2]+80,ISLAND_BOUNDS[3]+50], 'island_bounds':ISLAND_BOUNDS, 'roads':roads,
               'routes':routes,'tubes':tubes,'ground_triangles':ground_triangles,'water_triangles':water_triangles,'surface_triangles':surface_triangles}
     (ROOT/'Data/cross-harbour-source.geojson').write_text(json.dumps({'type':'FeatureCollection','metadata':metadata,'features':list(records.values())},ensure_ascii=False,separators=(',',':')))
     (ROOT/'Data/cross-harbour.json').write_text(json.dumps(output,ensure_ascii=False,separators=(',',':')))

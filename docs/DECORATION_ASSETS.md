@@ -1,5 +1,15 @@
 # Vegetation and street decoration
 
+## Bus and shelter corrections — 20 September 2026
+
+Blender MCP regenerated `bus.glb` and `shelter.glb` using `Tools/model_assets.py` with `ONLY_BUS_STOP=True`; `Art/bus-stop-details.blend` holds these revised editable assets. The generator restores the previous Blender scene even if generation fails. The existing `Art/antila-assets.blend` remains the earlier full collection; rerunning the full generator also includes the corrections.
+
+Both bus entrances now cut through the body and lower glazing, with three modeled steps, yellow nosings, handrails and inset vestibules. The front entrance moves to 4.2 m ahead of the model origin and the front axle to 3.0 m for wheel clearance. Front-door tactile paving follows the new offset. Animated `Door_*` nodes and all six `Wheel_*` nodes remain separate. There is no full passenger cabin or walking/boarding animation.
+
+The shelter uses three single-surface tinted panes, alpha 0.22, with clamp rails and visibility strips. Its separate glass material exports as glTF `BLEND`; the runtime selects Godot's ordinary alpha mode so the panes do not cast opaque shadows. Bus glazing keeps its existing material.
+
+The existing planter mesh is also reused beside the island loop, with street lamps and road-clearance exclusions. Trees and passenger poses are unchanged. See [review follow-up](ASSET_DETAIL_REVIEW.md) for checks and rendered comparisons.
+
 Created with Blender MCP and the built-in imagegen tool on 12 September 2026.
 
 The banyan model uses tapered branches, buttress roots, hanging aerial roots and 112 static leaf cards with a double-sided alpha-cutout material. The same foliage texture supplies the small planters. Benches and orange litter bins are modeled meshes. All are original approximations for this scene.
@@ -36,3 +46,8 @@ Use case: photorealistic-natural. Asset type: seamless repeating albedo ground t
 ## Verification
 
 The C# build passed with zero warnings and errors. The complete 1.08 km driving check passed all three stops with 26 passengers and no route contacts. The first headless run emitted an intermittent resource warning at shutdown; the verbose follow-up exited cleanly. Both logs are retained in `evidence/`, with `self-test.log` containing the final run. The final five-view capture also exited cleanly.
+
+
+## Island street details — 20 September 2026
+
+The island expansion adds a Blender-modeled news kiosk and compact street-tree variant, using the generated kiosk display and existing bark/foliage textures. Runtime placement includes 18 kiosks, 122 trees, 170 lamp posts and 64 posed pedestrians, plus street-name boards and promenade furniture. [Exact prompt, files and verification](ISLAND_EXPANSION.md#street-detail).

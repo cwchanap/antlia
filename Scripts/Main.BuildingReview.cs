@@ -6,7 +6,10 @@ public partial class Main
 {
     private void BuildGovernmentBuildings()
     {
-        using var data=System.Text.Json.JsonDocument.Parse(FileAccess.GetFileAsString("res://Data/building-layout.json"));
+        _city=new Node3D {Name="GovernmentBuildings"};AddChild(_city);
+        foreach(var (layout,asset) in new[]{("building-layout","kowloon-buildings"),("island-building-layout","island-buildings")})
+        {
+        using var data=System.Text.Json.JsonDocument.Parse(FileAccess.GetFileAsString($"res://Data/{layout}.json"));
         foreach(var patch in data.RootElement.GetProperty("pavement_patches").EnumerateArray())
         {
             var center=patch.GetProperty("center");
@@ -23,8 +26,8 @@ public partial class Main
             // Courtyards remain paved; street furniture conservatively avoids the outer ring.
             _lots.Add((new(center[0].GetSingle(),0,center[1].GetSingle()),b.GetProperty("height").GetSingle(),polygon,bounds));
         }
-        _city=GD.Load<PackedScene>("res://Assets/Models/kowloon-buildings.glb").Instantiate<Node3D>();
-        AddChild(_city);
+        _city.AddChild(GD.Load<PackedScene>($"res://Assets/Models/{asset}.glb").Instantiate<Node3D>());
+        }
         foreach(MeshInstance3D mesh in _city.FindChildren("*","MeshInstance3D",true,false))
         {
             foreach(var material in Enumerable.Range(0,mesh.Mesh.GetSurfaceCount()).Select(mesh.Mesh.SurfaceGetMaterial).OfType<StandardMaterial3D>())
@@ -47,7 +50,7 @@ public partial class Main
         var visual=meshes.Where(m=>m.Name.ToString().StartsWith("District")).ToArray();
         var collision=meshes.Where(m=>m.Name.ToString().StartsWith("Collision")).ToArray();
         var materials=visual.SelectMany(m=>Enumerable.Range(0,m.Mesh.GetSurfaceCount()).Select(m.Mesh.SurfaceGetMaterial))
-            .OfType<StandardMaterial3D>().Where(m=>m.ResourceName.StartsWith("CSDI_facade")).Distinct().ToArray();
+            .OfType<StandardMaterial3D>().Where(m=>m.ResourceName.StartsWith("CSDI_facade")).DistinctBy(m=>m.ResourceName).ToArray();
         if(visual.Length<50 || visual.Length!=collision.Length || materials.Length!=4 || materials.Any(m=>m.AlbedoTexture==null)
             || collision.Any(m=>m.Visible || m.FindChildren("*","CollisionShape3D",true,false).Count!=1))
             throw new Exception("Government building chunks need textured facades and matching collision meshes");
@@ -76,10 +79,12 @@ public partial class Main
             }
         if(facadeEdges<5000)throw new Exception("Too few facade edges checked");
         using(var mask=((Texture2D)_terrain.GetShaderParameter("surface_mask").AsGodotObject()).GetImage())
+        using(var harbourMask=((Texture2D)_terrain.GetShaderParameter("harbour_mask").AsGodotObject()).GetImage())
             foreach(var patch in _pavementPatches)
             {
-                var uv=(patch.Center-Map.Bounds.Position)/Map.Bounds.Size;
-                if(mask.GetPixel((int)(uv.X*mask.GetWidth()),(int)(uv.Y*mask.GetHeight())).G<.99f)
+                bool district=Map.Bounds.HasPoint(patch.Center);var bounds=district?Map.Bounds:HarbourBounds;
+                var image=district?mask:harbourMask;var uv=(patch.Center-bounds.Position)/bounds.Size;
+                if(image.GetPixel((int)(uv.X*image.GetWidth()),(int)(uv.Y*image.GetHeight())).G<.99f)
                     throw new Exception("Unpaved gap between building pads at " + patch.Center);
             }
         GD.Print($"ANTILA_PAVING_OK: {_pavementPatches.Count} small enclosed pavement gaps filled");
@@ -95,6 +100,48 @@ public partial class Main
             checkedRoofs++;
         }
         GD.Print($"ANTILA_BUILDINGS_OK: {_lots.Count} derived CSDI parts, {visual.Length} spatial chunks, 4 textured materials, heights {_lots.Min(l=>l.Height):0.0}–{_lots.Max(l=>l.Height):0.0} m, {checkedRoofs} roof collision probes, {facadeEdges} facade edges at consistent window scale");
+    }
+
+    private void CheckAssetDetails()
+    {
+        void Check(bool ok,string message){if(!ok)throw new Exception(message);}
+        Check(_harbour.FindChildren("RoadSurface","MeshInstance3D",true,false).Cast<MeshInstance3D>().All(m=>!m.Visible),
+            "Flat harbour asphalt must share the terrain surface instead of overlapping district roads");
+        var sun=FindChildren("*","DirectionalLight3D",true,false).Cast<DirectionalLight3D>().Single();
+        Check(sun.LightCullMask==1,"Sun must exclude the tunnel render layer");
+        var ceilings=_harbour.FindChildren("Ceiling*","MeshInstance3D",true,false).Cast<MeshInstance3D>().ToArray();
+        Check(ceilings.Length==2 && ceilings.All(m=>m.Layers==2 && m.CastShadow==GeometryInstance3D.ShadowCastingSetting.DoubleSided),"Both tunnel roofs need double-sided shadows and indoor lighting");
+        var original=Bus.Position;
+        foreach(var road in HarbourRoads.Where(r=>r.Tunnel && r.Points.Count>100))
+        {
+            var p=road.Points[road.Points.Count/2];
+            Bus.Position=p;UpdateVehicleLighting();
+            Check(_vehicleMeshes.All(m=>m.Layers==2),"Bus and cab must leave sunlight inside either tube");
+            Check(!InsideTunnel(new(p.X,2,p.Z)),"Surface above tunnel must remain in daylight");
+        }
+        Bus.Position=original;UpdateVehicleLighting();
+        Check(_vehicleMeshes.All(m=>m.Layers==1),"Vehicle daylight must restore on return to H1");
+        var body=Bus.Model.FindChildren("bus_Body*","MeshInstance3D",true,false).Cast<MeshInstance3D>().Single();
+        var triangles=body.Mesh.GetFaces().Concat(Bus.Model.FindChildren("Wheel_*","MeshInstance3D",true,false)
+            .Cast<MeshInstance3D>().SelectMany(m=>m.Mesh.GetFaces().Select(p=>m.Transform*p))).ToArray();
+        bool Intersects(Vector3 from,Vector3 to)
+        {
+            for(int i=0;i<triangles.Length;i+=3)
+                if(Geometry3D.SegmentIntersectsTriangle(from,to,triangles[i],triangles[i+1],triangles[i+2]).VariantType!=Variant.Type.Nil)return true;
+            return false;
+        }
+        foreach(float z in new[]{-4.2f,-.45f})
+        {
+            Check(!Intersects(new(-1.6f,1.35f,z),new(-.3f,1.35f,z)),"Door opening is blocked by body geometry");
+            // Check the entry mouth; the grab rails intentionally occupy the deeper side edges.
+            foreach(float edge in new[]{-.5f,.5f})Check(!Intersects(new(-1.6f,.9f,z+edge),new(-.6f,.9f,z+edge)),"Wheel/body intrudes into the boarding opening");
+            Check(Intersects(new(-1.12f,.8f,z),new(-1.12f,.3f,z)),"Door opening needs a modeled boarding step");
+        }
+        var glass=FindChildren("*","MeshInstance3D",true,false).Cast<MeshInstance3D>()
+            .SelectMany(m=>Enumerable.Range(0,m.Mesh.GetSurfaceCount()).Select(m.Mesh.SurfaceGetMaterial))
+            .OfType<StandardMaterial3D>().Where(m=>m.ResourceName.Contains("shelter tinted glass")).ToArray();
+        Check(glass.Length>=3 && glass.All(m=>m.Transparency==BaseMaterial3D.TransparencyEnum.Alpha && m.AlbedoColor.A<.3f),"Shelter panes must import with blended transparency");
+        GD.Print("ANTILA_ASSET_DETAILS_OK: both tunnel lighting layers, daylight restore, two open vestibules and steps, transparent shelter glazing");
     }
 
     private async void ReviewScenery()

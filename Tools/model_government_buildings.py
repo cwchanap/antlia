@@ -5,12 +5,15 @@ import math
 from pathlib import Path
 
 ROOT = Path('/Users/chanwaichan/workspace/antila')
+ISLAND = globals().get('ISLAND',False)
+ASSET = 'island-buildings' if ISLAND else 'kowloon-buildings'
 
 
 def build():
     global city_scene, previous_scene
     previous_scene = bpy.context.window.scene
-    city_scene = bpy.data.scenes.get('CSDI_Kowloon') or bpy.data.scenes.new('CSDI_Kowloon')
+    scene_name = 'CSDI_Island' if ISLAND else 'CSDI_Kowloon'
+    city_scene = bpy.data.scenes.get(scene_name) or bpy.data.scenes.new(scene_name)
     assert all(o.name.startswith(('District','Collision')) for o in city_scene.objects)
     for obj in list(city_scene.objects):
         mesh = obj.data
@@ -35,17 +38,23 @@ def build():
         material.node_tree.links.new(mix.outputs[0], bsdf.inputs['Base Color'])
         materials.append(material)
     roof = bpy.data.materials.new('CSDI_roof_concrete'); roof.diffuse_color = (.25,.28,.27,1)
-    roof.use_nodes = True; roof.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (.25,.28,.27,1)
-    roof.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = .95
+    roof.use_nodes = True; roof_bsdf = next(n for n in roof.node_tree.nodes if n.type=='BSDF_PRINCIPLED')
+    roof_bsdf.inputs['Base Color'].default_value = (.25,.28,.27,1)
+    roof_bsdf.inputs['Roughness'].default_value = .95
     materials.append(roof)
     shop = bpy.data.materials.new('CSDI_shopfront'); shop.use_nodes = True
     texture = shop.node_tree.nodes.new('ShaderNodeTexImage')
     texture.image = bpy.data.images.load(str(ROOT/'Assets/Textures/cafe-storefront.png'),check_existing=True); texture.image.pack()
-    shop.node_tree.links.new(texture.outputs['Color'],shop.node_tree.nodes['Principled BSDF'].inputs['Base Color'])
-    shop.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = .8
+    shop_bsdf = next(n for n in shop.node_tree.nodes if n.type=='BSDF_PRINCIPLED')
+    shop.node_tree.links.new(texture.outputs['Color'],shop_bsdf.inputs['Base Color'])
+    shop_bsdf.inputs['Roughness'].default_value = .8
     materials.append(shop)
+    variety=shop.copy(); variety.name='CSDI_shopfront_variety'
+    next(n for n in variety.node_tree.nodes if n.type=='TEX_IMAGE').image=bpy.data.images.load(str(ROOT/'Assets/Textures/shopfront-variety.png'),check_existing=True)
+    next(n for n in variety.node_tree.nodes if n.type=='TEX_IMAGE').image.pack()
+    materials.append(variety)
     chunks = {}
-    buildings = json.loads((ROOT / 'Data/building-layout.json').read_text())['buildings']
+    buildings = json.loads((ROOT / ('Data/island-building-layout.json' if ISLAND else 'Data/building-layout.json')).read_text())['buildings']
     for b in buildings:
         key = tuple(math.floor(v/128) for v in b['center'])
         if key not in chunks:
@@ -74,7 +83,17 @@ def build():
                         p = [a[d]+(end[d]-a[d])*start/width for d in (0,1)]
                         q = [a[d]+(end[d]-a[d])*finish/width for d in (0,1)]
                         span = (finish-start)/10
-                        face([vertex(q,0),vertex(p,0),vertex(p,base),vertex(q,base)],[(span,0),(0,0),(0,1),(span,1)],5)
+                        variant=(b['id']+edge_index+col)%5
+                        u,v=(variant%2)*.5,(variant//2)*.5
+                        uv=[(span,0),(0,0),(0,1),(span,1)] if variant==4 else [(u+.002+.496*span,v+.002),(u+.002,v+.002),(u+.002,v+.498),(u+.002+.496*span,v+.498)]
+                        # Recess into the existing footprint; the sill/lintel stay on its boundary.
+                        inset=[-(end[1]-a[1])/width*.18,(end[0]-a[0])/width*.18]
+                        ip=[p[d]+inset[d] for d in (0,1)]; iq=[q[d]+inset[d] for d in (0,1)]
+                        face([vertex(iq,0),vertex(ip,0),vertex(ip,base),vertex(iq,base)],uv,5 if variant==4 else 6)
+                        for outer,inner in [(p,ip),(q,iq)]:
+                            face([vertex(outer,0),vertex(inner,0),vertex(inner,base),vertex(outer,base)],[(0,0)]*4,4)
+                        for h in (0,base):
+                            face([vertex(p,h),vertex(q,h),vertex(iq,h),vertex(ip,h)],[(0,0)]*4,4)
                 columns, rows = max(1,math.ceil(width/6)), max(1,math.ceil((height-base)/6.4))
                 for col in range(columns):
                     start, finish = col*6, min(width,(col+1)*6)
@@ -121,14 +140,18 @@ def export():
         bpy.context.window.scene = city_scene
         bpy.ops.object.select_all(action='DESELECT')
         for obj in city_scene.objects: obj.select_set(True)
-        bpy.ops.export_scene.gltf(filepath=str(ROOT/'Assets/Models/kowloon-buildings.glb'),
+        bpy.ops.export_scene.gltf(filepath=str(ROOT/'Assets/Models'/f'{ASSET}.glb'),
                                   export_format='GLB', use_selection=True, use_active_scene=True, export_yup=True)
-        bpy.data.libraries.write(str(ROOT/'Art/kowloon-buildings.blend'), {city_scene}, fake_user=True)
-        print('BLENDER_CITY_EXPORTED: kowloon-buildings.glb and editable blend')
+        bpy.data.libraries.write(str(ROOT/'Art'/f'{ASSET}.blend'), {city_scene}, fake_user=True)
+        print('BLENDER_CITY_EXPORTED:',ASSET,'and editable blend')
     finally:
         bpy.context.window.scene = current_scene
 
 
 if __name__ == '__main__':
-    build()
-    export()
+    saved_scene=bpy.context.window.scene
+    try:
+        build()
+        export()
+    finally:
+        bpy.context.window.scene=saved_scene

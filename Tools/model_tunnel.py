@@ -24,7 +24,7 @@ try:
     def material(name, color, texture=None, emission=0):
         m = bpy.data.materials.new(name)
         m.use_nodes = True
-        bs = m.node_tree.nodes.get('Principled BSDF')
+        bs = next(n for n in m.node_tree.nodes if n.type=='BSDF_PRINCIPLED')
         bs.inputs['Base Color'].default_value = (*color,1)
         bs.inputs['Roughness'].default_value = .8
         if texture:
@@ -41,6 +41,7 @@ try:
     asphalt = material('CHT_asphalt',(.09,.10,.10),'asphalt.png')
     tiles = material('CHT_ceramic',(.65,.63,.54),'tunnel-tiles.png')
     concrete = material('CHT_concrete',(.19,.21,.20))
+    exterior = material('CHT_exterior_stone',(.42,.45,.42),'pavement-stone.png')
     white = material('CHT_lane_white',(.82,.81,.67))
     lamp = material('CHT_lamp',(.85,.96,1),emission=3)
     amber = material('CHT_reflector',(.94,.57,.08),emission=.7)
@@ -69,7 +70,7 @@ try:
         faces.append((i,i+1,i+2) if (b-a).cross(c-a).y>0 else (i,i+2,i+1))
     mesh('HarbourGround',ground,faces,concrete)
     water = material('CHT_water',(.045,.16,.20))
-    water.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value = .3
+    next(n for n in water.node_tree.nodes if n.type=='BSDF_PRINCIPLED').inputs['Roughness'].default_value = .3
     vertices = [Vector((p[0],-2,p[1])) for tri in data['water_triangles'] for p in tri]
     water_faces=[]
     for i in range(0,len(vertices),3):
@@ -87,8 +88,16 @@ try:
     for tube in data['tubes']:
         parts = [next(r for r in data['roads'] if r['id']==ident) for ident in tube['model_source_ids']]
         model_roads.append(dict(parts[0],points=[p for i,r in enumerate(parts) for p in r['points'][0 if i==0 else 1:]]))
+    endpoints={}
+    for road in model_roads:
+        for p in (road['points'][0],road['points'][-1]):
+            key=(round(p[0],1),round(p[2],1));endpoints[key]=endpoints.get(key,0)+1
+    junctions=[Vector((x,0,z)) for (x,z),count in endpoints.items() if count>2]
     for road in model_roads:
         points = [Vector(p) for p in road['points']]
+        other_tube_edges=[(Vector((a[0],a[2])),Vector((b[0],b[2])),r['width']/2)
+            for r in model_roads if r['tunnel'] and r['id']!=road['id']
+            for a,b in zip(r['points'],r['points'][1:]) if a[0]!=b[0] or a[2]!=b[2]] if road['tunnel'] else []
         if road['tunnel']:
             # Resample across source joins: a tiny final source segment can fold a wide road quad.
             import bisect
@@ -131,6 +140,28 @@ try:
             # Continuous raised service ledges leave a 7.3 m carriageway inside each tube.
             strip('KerbLeft',[(-half,.28),(-3.95,.28)],concrete)
             strip('KerbRight',[(3.95,.28),(half,.28)],concrete)
+            # Exterior concrete stays outside the existing shell and bus clearance envelope.
+            # The interior tiles and roof retain their original geometry and lighting layer.
+            for tag in ['Walls','Roof']:
+                vs,fs=[],[]
+                for i in range(len(points)-1):
+                    if max(points[i].y,points[i+1].y)<(-6.6 if tag=='Walls' else -5.5):continue
+                    for side in ([-1,1] if tag=='Walls' else [1]):
+                        section=[]
+                        for p,r in zip(points[i:i+2],rights[i:i+2]):
+                            lo=min(-.2,p.y) if tag=='Walls' else p.y+5.62
+                            hi=max(.85,p.y+5.95) if tag=='Walls' else p.y+5.95
+                            left,right=(4.62*side,5.35*side) if tag=='Walls' else (-4.62,4.62)
+                            for x,y in [(left,lo),(right,lo),(right,hi),(left,hi)]:
+                                section.append(Vector((p.x,0,p.z))+r*x+Vector((0,y,0)))
+                        # A conservative circle excludes cladding from the adjacent tube at converging portals.
+                        flat=[Vector((p.x,p.z)) for p in section];center=sum(flat,Vector((0,0)))/len(flat)
+                        radius=max((p-center).length for p in flat)
+                        if any((center-a.lerp(b,max(0,min(1,(center-a).dot(b-a)/(b-a).length_squared)))).length<width+radius+.15
+                            for a,b,width in other_tube_edges):continue
+                        k=len(vs);vs.extend(section)
+                        fs.extend(tuple(k+j for j in face) for face in [(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)])
+                mesh('Exterior'+tag+'_'+road['id'],vs,fs,exterior)
         # Repeating paint and fixtures are joined per source section, not individual nodes.
         for tag,mat in [('Paint',white),('Lamps',lamp),('Reflectors',amber)]:
             vs,fs = [],[]
@@ -138,6 +169,7 @@ try:
                 if tag=='Paint':
                     # Solid lane divider inside the tunnel, broken lines on approaches.
                     if not road['tunnel'] and i%3:continue
+                    if not road['tunnel'] and any(((points[i]+points[i+1])/2-p).length<12 for p in junctions):continue
                     specs=[(-.065,.065,.055)]
                     if road['tunnel']:specs += [(-3.78,-3.66,.055),(3.66,3.78,.055)]
                     for left,right,y in specs:
@@ -156,17 +188,18 @@ try:
 
     # Portal frames are authored in the scene using the same world-space endpoints.
     for tube in data['tubes']:
-        section = next(r for r in data['roads'] if r['id']==tube['model_source_ids'][0])
-        p=Vector(section['points'][0]);f=(Vector(section['points'][1])-p).normalized()
+      for end in [0,-1]:
+        section = next(r for r in data['roads'] if r['id']==tube['model_source_ids'][end])
+        p=Vector(section['points'][end]);f=(Vector(section['points'][1 if end==0 else -2])-p).normalized()
         yaw=math.atan2(f.x,-f.z)
         for side in [-1,1]:
             r=Vector((-f.z,0,f.x)).normalized()
             at=p+r*side*5.15+Vector((0,3.05,0))
             bpy.ops.mesh.primitive_cube_add(size=1,location=(at.x,-at.z,at.y))
             obj=bpy.context.object;obj.name='PortalPillar';obj.dimensions=(1.2,3.5,6.1);obj.rotation_euler.z=-yaw
-            obj.data.materials.append(concrete)
+            obj.data.materials.append(exterior)
         bpy.ops.mesh.primitive_cube_add(size=1,location=(p.x,-p.z,6.1))
-        obj=bpy.context.object;obj.name='PortalLintel';obj.dimensions=(11.5,3.5,1);obj.rotation_euler.z=-yaw;obj.data.materials.append(concrete)
+        obj=bpy.context.object;obj.name='PortalLintel';obj.dimensions=(11.5,3.5,1);obj.rotation_euler.z=-yaw;obj.data.materials.append(exterior)
 
     objects=list(scene.objects)
     for obj in objects:obj.select_set(True)

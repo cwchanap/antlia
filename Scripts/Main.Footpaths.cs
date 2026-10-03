@@ -95,7 +95,7 @@ public partial class Main
             for(int tile=-2;tile<=2;tile++)
                 AddFootpathDetail("tactile-paver",p+Map.Forward(distance)*tile*.6f,Map.Heading(distance),new(.299f,.299f));
         }
-        foreach(var stop in Map.Stops)foreach(float door in new[]{.45f,3.95f})foreach(float tile in new[]{-.3f,.3f})
+        foreach(var stop in Map.Stops)foreach(float door in new[]{.45f,4.2f})foreach(float tile in new[]{-.3f,.3f})
             AddFootpathDetail("tactile-paver",Map.At(stop.Distance+door+tile,-10.7f),Map.Heading(stop.Distance),new(.299f,.299f));
 
         foreach(var landing in _crossingLandings)

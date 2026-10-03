@@ -32,15 +32,17 @@ public partial class Main : Node3D
     private static bool _harbourLaunchConsumed;
     private readonly SystemFont _font = new() { FontNames = new[] { "PingFang HK", "Noto Sans CJK TC", "sans-serif" } };
     private Node3D _steeringWheel = null!;
+    private Label3D _cabSpeed = null!, _cabState = null!;
 
     public override void _Ready()
     {
-        SelfTest = OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check");
+        SelfTest = OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--hud-check") || OS.GetCmdlineUserArgs().Contains("--restart-check");
         RegisterInput();
         Map = new RoadMap();
         PrepareParkEntrances();
         BuildEnvironment();
         BuildGovernmentBuildings();
+        BuildHarbourScenery();
         BuildStreet();
         BuildNeighborhoods();
         BuildStops();
@@ -55,6 +57,7 @@ public partial class Main : Node3D
         Camera = new Camera3D { Fov = 62, Far = 3200, Near = .7f, Current = true };
         AddChild(Camera);
         BuildCab();
+        _vehicleMeshes=Bus.Model.FindChildren("*","MeshInstance3D",true,false).Concat(_cab.FindChildren("*","MeshInstance3D",true,false)).Cast<MeshInstance3D>().ToArray();
         var layer = new CanvasLayer();
         AddChild(layer);
         Hud = new Hud { Game = this };
@@ -76,7 +79,7 @@ public partial class Main : Node3D
         foreach (var (name, key) in new (string, Key)[] {
             ("accelerate", Key.W), ("brake", Key.S), ("steer_left", Key.A), ("steer_right", Key.D),
             ("handbrake", Key.Space), ("doors", Key.E), ("camera", Key.C), ("reverse", Key.Q),
-            ("tunnel", Key.T), ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V) })
+            ("tunnel", Key.T), ("island", Key.I), ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V) })
         {
             if (InputMap.HasAction(name)) continue;
             InputMap.AddAction(name);
@@ -114,6 +117,10 @@ public partial class Main : Node3D
         // Retain scene wrappers while instancing repeatedly; avoid a stale Godot/.NET GC handle.
         if(!_assetScenes.TryGetValue(name,out var scene))_assetScenes[name]=scene=GD.Load<PackedScene>($"res://Assets/Models/{name}.glb");
         var n = scene.Instantiate<Node3D>();
+        if(name=="shelter")
+            foreach(var mesh in n.FindChildren("*","MeshInstance3D",true,false).Cast<MeshInstance3D>())
+                foreach(var material in Enumerable.Range(0,mesh.Mesh.GetSurfaceCount()).Select(mesh.Mesh.SurfaceGetMaterial).OfType<StandardMaterial3D>().Where(m=>m.ResourceName.Contains("shelter tinted glass")))
+                    material.Transparency=BaseMaterial3D.TransparencyEnum.Alpha; // glTF's depth-prepass default casts an opaque pane shadow.
         n.Position = at;
         n.Rotation = new(0, heading, 0);
         if (scale.HasValue) n.Scale = scale.Value;
@@ -145,7 +152,7 @@ public partial class Main : Node3D
             FogEnabled = true, FogLightColor = new("a3b8bf"), FogDensity = .00045f,
             FogLightEnergy = .65f, FogSkyAffect = .15f } });
         AddChild(new DirectionalLight3D { RotationDegrees = new(-48,-38,0), LightColor = new("ffe0af"),
-            LightEnergy = .65f, ShadowEnabled = true, DirectionalShadowMaxDistance = 170 });
+            LightEnergy = .65f, LightCullMask = 1, ShadowEnabled = true, DirectionalShadowMaxDistance = 170 });
         var bounds=Map.Bounds;
         var ground=BuildHarbour();
         _terrain=new ShaderMaterial {Shader=GD.Load<Shader>("res://Assets/Materials/terrain.gdshader")};
@@ -344,7 +351,15 @@ public partial class Main : Node3D
         _paint.Clear();
         var pads=_lots.SelectMany(l=>Geometry2D.OffsetPolygon(l.Polygon,3)).Concat(_pavementPatches.Select(p=>p.Polygon));
         using(var mask=Map.CreateSurfaceMask(_park,ParkPaths(),pads))
-            _terrain.SetShaderParameter("surface_mask",ImageTexture.CreateFromImage(mask));
+        {
+            var texture=ImageTexture.CreateFromImage(mask);_terrain.SetShaderParameter("surface_mask",texture);
+            _harbourPaint.SetShaderParameter("district_mask",texture);
+        }
+        var harbourRoads=HarbourRoads.Where(r=>!r.Tunnel).SelectMany(r=>Enumerable.Range(1,r.Points.Count-1)
+            .Select(i=>(new Vector2(r.Points[i-1].X,r.Points[i-1].Z),new Vector2(r.Points[i].X,r.Points[i].Z),6f)));
+        using(var mask=Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),pads.Concat(_harbourPaving),HarbourBounds,harbourRoads,2))
+            _terrain.SetShaderParameter("harbour_mask",ImageTexture.CreateFromImage(mask));
+        _terrain.SetShaderParameter("harbour_origin",HarbourBounds.Position);_terrain.SetShaderParameter("harbour_size",HarbourBounds.Size);
     }
 
     private void BuildNeighborhoods()
@@ -430,7 +445,17 @@ public partial class Main : Node3D
     {
         _cab=new Node3D();Camera.AddChild(_cab);_cab.Visible=false;
         Box(_cab,new(0,-.64f,-1.05f),new(2.6f,.4f,.75f),"293638");
-        Box(_cab,new(.05f,-.43f,-.99f),new(.76f,.20f,.18f),"152829");
+        Box(_cab,new(.05f,-.35f,-.99f),new(.76f,.26f,.18f),"101c1e");
+        Box(_cab,new(.05f,-.35f,-.893f),new(.69f,.21f,.012f),"080f10");
+        _cabSpeed=Label(_cab,"0 km/h",new(-.15f,-.30f,-.88f),.0013f,36);
+        _cabState=Label(_cab,"D  •  READY",new(.15f,-.345f,-.88f),.001f,30);
+        Label(_cab,"ANTILA",new(.15f,-.27f,-.88f),.0008f,24);
+        foreach(float x in new[]{.49f,.58f,.67f})
+        {
+            Box(_cab,new(x,-.465f,-.87f),new(.065f,.055f,.018f),"151d1d");
+            Box(_cab,new(x,-.462f,-.859f),new(.04f,.008f,.005f),"7e9391");
+        }
+        for(int i=0;i<7;i++)Box(_cab,new(-.46f+i*.035f,-.46f,-.88f),new(.012f,.06f,.01f),"111919");
         Box(_cab,new(-.73f,-.34f,-1),new(.18f,.48f,.18f),"263638");
         Box(_cab,new(-.73f,-.22f,-.89f),new(.14f,.16f,.02f),"719d94");
         foreach(float x in new[]{-.87f,1.3f})Box(_cab,new(x,.3f,-1.5f),new(.10f,2.4f,.15f),"cac4ad");
@@ -439,6 +464,13 @@ public partial class Main : Node3D
         _steeringWheel.AddChild(new MeshInstance3D {Mesh=new TorusMesh {InnerRadius=.205f,OuterRadius=.24f,Rings=24,RingSegments=8},MaterialOverride=Material("101c1e")});
         Box(_steeringWheel,Vector3.Zero,new(.43f,.035f,.045f),"313e3e");
         Box(_steeringWheel,new(0,0,.12f),new(.045f,.035f,.20f),"313e3e");
+    }
+
+    private void UpdateCabInstruments()
+    {
+        _cabSpeed.Text=$"{Bus.Kmh:0} km/h";
+        _cabState.Text=$"{(Bus.Reverse?"R":"D")}  •  {(Bus.DoorsOpen?"DOORS OPEN":"READY")}";
+        _cabState.Modulate=new Color(Bus.DoorsOpen?"f3bb55":"9fdbbb");
     }
 
     public override void _UnhandledInput(InputEvent e)
@@ -451,7 +483,13 @@ public partial class Main : Node3D
         }
         if(e.IsActionPressed("map")) { MapOpen=!MapOpen; Bus.SetPaused(Paused || Complete || MapOpen); return; }
         if(e.IsActionPressed("tunnel")){StartHarbourDrive();return;}
-        if(e.IsActionPressed("restart")) { GetTree().ReloadCurrentScene(); return; }
+        if(e.IsActionPressed("island")){StartHarbourDrive(3);return;}
+        if(e.IsActionPressed("restart"))
+        {
+            // As on quit, finish temporary C# wrappers before replacing their native scene/resources.
+            GC.Collect();GC.WaitForPendingFinalizers();
+            GetTree().ReloadCurrentScene();return;
+        }
         if(e.IsActionPressed("camera")) { SetCab(!CabView); return; }
         if(e.IsActionPressed("mute")) { AudioServer.SetBusMute(0,!AudioServer.IsBusMute(0)); return; }
         if(e is InputEventKey { Pressed:true, Keycode:Key.F12 }) { Capture(); return; }
@@ -470,6 +508,7 @@ public partial class Main : Node3D
         Camera.Fov=cab?73:62;
         Camera.Near=cab?.25f:.7f;
         UpdateCamera(1,true);
+        UpdateCabInstruments();
     }
 
     public void ShowNotice(string text) { Notice=text; NoticeTime=4; }
@@ -576,6 +615,8 @@ public partial class Main : Node3D
         _stopMarker.Visible=!Complete && !HarbourDrive;
         if(!Complete)_stopMarker.Position=Map.At(Map.Stops[StopIndex].Distance,-7.3f)+Vector3.Up*.08f;
         UpdateCamera(dt,false);
+        UpdateVehicleLighting();
+        UpdateCabInstruments();
         Hud.QueueRedraw();
     }
 
@@ -743,15 +784,19 @@ public partial class Main : Node3D
         {
             void Check(bool ok,string message) { if(!ok)throw new Exception(message); }
             await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+            if(OS.GetCmdlineUserArgs().Contains("--restart-check")){await CheckRestart();return;}
+            if(OS.GetCmdlineUserArgs().Contains("--hud-check")){CheckHud();await CheckReviewRegressions();QuitGame();return;}
             CheckStreetClearance();
-            if(OS.GetCmdlineUserArgs().Contains("--harbour-check")){await CheckHarbour();QuitGame();return;}
+            if(OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check")){await CheckHarbour();QuitGame();return;}
             CheckRoadMarkings();
             if(OS.GetCmdlineUserArgs().Contains("--road-check")) { QuitGame(); return; }
             await CheckBuildings();
+            CheckAssetDetails();
             await CheckFootpaths();
             if(OS.GetCmdlineUserArgs().Contains("--footpath-check")) { QuitGame(); return; }
             if(OS.GetCmdlineUserArgs().Contains("--building-check")) { QuitGame(); return; }
             await CheckAudio();
+            CheckHud();
             await CheckReviewRegressions();
             await CheckTrafficSignals();
             if(OS.GetCmdlineUserArgs().Contains("--signal-check")) { QuitGame(); return; }
@@ -846,6 +891,59 @@ public partial class Main : Node3D
             QuitGame();
         }
         catch(Exception error) { GD.PushError("ANTILA_SELF_TEST_FAILED: "+error); QuitGame(1); }
+    }
+
+    private void CheckHud()
+    {
+        var failures=new List<string>();
+        void Check(bool ok,string message){if(!ok)failures.Add(message);}
+        var saved=Bus.GlobalTransform;float notice=NoticeTime;bool harbour=HarbourDrive;
+        int stopIndex=StopIndex;StopIndex=0;
+        NoticeTime=0;
+        foreach(bool freeDrive in new[]{false,true})
+        {
+            HarbourDrive=freeDrive;
+            foreach(int node in new[]{709,899})
+            {
+                var points=_harbourRoutes[3].Points;var p=points[node];var f=(points[node+1]-p).Normalized();
+                Bus.GlobalPosition=p-f.Cross(Vector3.Up)*1.8f;
+                Check(!Hud.OncomingLaneWarning,$"False island lane warning at node {node}, free drive {freeDrive}");
+                if(!freeDrive)Check(Hud.ServiceInstruction.StartsWith("Exploring"),$"Island node {node} displays H1 stop distance");
+            }
+            foreach(bool southbound in new[]{false,true})
+                foreach(float lane in new[]{-7.3f,7.3f})
+                {
+                    Bus.GlobalPosition=Map.At(700,lane);Bus.Rotation=new(0,Map.Heading(700)+(southbound?Mathf.Pi:0),0);
+                    bool wrongSide=southbound?lane<0:lane>0;
+                    Check(Hud.OncomingLaneWarning==wrongSide,$"Lane warning: southbound={southbound}, lane={lane}, free drive={freeDrive}");
+                }
+            Bus.GlobalPosition=Map.At(700,7.3f);Bus.Rotation=new(0,Map.Heading(700)+Mathf.Pi/2,0);
+            Check(!Hud.OncomingLaneWarning,"Perpendicular turning pose must not receive a directional lane warning");
+            Bus.Rotation=new(0,Map.Heading(350),0);
+            Bus.GlobalPosition=Map.At(350,7.3f);
+            Check(!Hud.OncomingLaneWarning,"Haiphong junction must allow turning across Nathan Road");
+            Bus.GlobalPosition=Map.At(120,7.3f)+Vector3.Down*32;
+            Check(!Hud.OncomingLaneWarning,"Below-road tunnel pose must not warn about Nathan Road");
+            if(!freeDrive)Check(Hud.ServiceInstruction.StartsWith("Exploring"),"Below-road pose displays H1 service guidance");
+            var south=Map.At(0,7.3f)-Map.Forward(0)*2000;
+            var north=Map.At(Map.Length,7.3f)+Map.Forward(Map.Length)*2000;
+            foreach(var p in new[]{south,north})
+            {
+                Bus.GlobalPosition=p;Check(!Hud.OncomingLaneWarning,"Lane warning extends beyond corridor endpoint");
+                if(!freeDrive)Check(Hud.ServiceInstruction.StartsWith("Exploring"),"Service guidance extends beyond corridor endpoint");
+            }
+        }
+        HarbourDrive=false;
+        Bus.GlobalPosition=Map.At(22,-7.3f);Bus.Rotation=new(0,Map.Heading(22),0);
+        Check(Hud.ServiceInstruction.StartsWith("33 m"),"H1 approach distance changed");
+        Bus.GlobalPosition=Map.At(55,-7.3f);Bus.Rotation=new(0,Map.Heading(55),0);
+        Check(Hud.ServiceInstruction=="Stop & press E to open doors","H1 boarding instruction missing");
+        Bus.ToggleDoors();Check(Hud.ServiceInstruction=="Boarding passengers…","Open-door boarding instruction missing");Bus.ToggleDoors();
+        Bus.GlobalPosition=Map.At(80,-7.3f);
+        Check(Hud.ServiceInstruction.StartsWith("Stop missed"),"H1 missed-stop instruction changed");
+        Bus.GlobalTransform=saved;NoticeTime=notice;HarbourDrive=harbour;StopIndex=stopIndex;
+        if(failures.Count>0)throw new Exception(string.Join("; ",failures));
+        GD.Print("ANTILA_HUD_CHECKS_OK: north/south correct and oncoming lanes in both modes; turning/junction guards; island, depth and endpoint exploration; H1 distance/boarding/missed-stop guidance");
     }
 
     private async System.Threading.Tasks.Task CheckReviewRegressions()

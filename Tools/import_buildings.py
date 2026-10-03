@@ -6,12 +6,17 @@ The flat game terrain preserves relative roof heights, not surveyed ground level
 import hashlib
 import json
 import math
+import datetime
+import sys
+import urllib.parse
+import urllib.request
 from collections import Counter
 from pathlib import Path
 
 from shapely import constrained_delaunay_triangles, make_valid, STRtree, union_all
-from shapely.geometry import Polygon, LineString, box
+from shapely.geometry import Polygon, LineString, Point, box
 from shapely.geometry.polygon import orient
+from shapely.ops import polylabel
 from import_map import local, BBOX, ORIGIN
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,10 +35,36 @@ def polygons(geometry):
             yield from polygons(part)
 
 
-def build():
-    raw = ROOT / "Data/buildings.geojson"
+from import_tunnel import ISLAND_BOUNDS
+ISLAND_BBOX = (ORIGIN[0]+ISLAND_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-ISLAND_BOUNDS[3]/111320,
+               ORIGIN[0]+ISLAND_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-ISLAND_BOUNDS[1]/111320)
+
+
+def download_island():
+    query = dict(geometry=','.join(map(str,ISLAND_BBOX)),geometryType='esriGeometryEnvelope',
+                 inSR=4326,spatialRel='esriSpatialRelIntersects',where='1=1')
+    def request(**params):
+        with urllib.request.urlopen(SOURCE+'?'+urllib.parse.urlencode(query | params),timeout=60) as response:
+            result=json.load(response)
+        if 'error' in result: raise ValueError(result['error'])
+        return result
+    count=request(f='json',returnCountOnly='true')['count']
+    features=[]
+    while len(features)<count:
+        page=request(f='geojson',outSR=4326,outFields='*',orderByFields='OBJECTID',resultOffset=len(features),resultRecordCount=3000)
+        assert page.get('features'), 'Empty building page before count reached'
+        features.extend(page['features'])
+    assert len(features)==count==len({f['properties']['OBJECTID'] for f in features}), 'Incomplete building extract'
+    metadata=dict(source=SOURCE,bbox_wgs84=ISLAND_BBOX,retrieved_utc=datetime.datetime.now(datetime.timezone.utc).isoformat())
+    (ROOT/'Data/island-buildings.geojson').write_text(json.dumps(dict(type='FeatureCollection',metadata=metadata,features=features),ensure_ascii=False,separators=(',',':')))
+    print('ISLAND_BUILDINGS_DOWNLOADED:',count)
+
+
+def build(island=False):
+    raw = ROOT / ("Data/island-buildings.geojson" if island else "Data/buildings.geojson")
     features = json.loads(raw.read_text())["features"]
     roads = json.loads((ROOT / "Data/nathan-road.json").read_text())
+    boundary = box(*(ISLAND_BOUNDS if island else roads['bounds']))
     buffers = [LineString(roads["road_points"]).buffer(13.5, quad_segs=2, join_style="mitre")]
     for road in roads["side_roads"]:
         width = 18 if road["name"] in WIDE else 12
@@ -41,13 +72,12 @@ def build():
     harbour = json.loads((ROOT/'Data/cross-harbour.json').read_text())
     for road in harbour['roads']:
         if not road['tunnel'] or road.get('ramp',False):
-            buffers.append(LineString([(p[0],p[2]) for p in road['points']]).buffer(max(12,road['width'])/2+3.5,quad_segs=2,join_style='mitre').intersection(box(*roads['bounds'])))
+            buffers.append(LineString([(p[0],p[2]) for p in road['points']]).buffer(max(12,road['width'])/2+3.5,quad_segs=2,join_style='mitre').intersection(boundary))
     road_zone = union_all(buffers)
     # The prototype permits a bus turn into Granville: protect the long nose through that tight corner.
     turning_zone = LineString(roads["points"]).interpolate(503).buffer(32, quad_segs=8)
     turn_clearance = road_zone.buffer(2, quad_segs=2, join_style="mitre").intersection(turning_zone)
     exclusion = union_all([PARK, road_zone, turn_clearance])
-    boundary = box(*roads["bounds"])
     source_polys = [make_valid(Polygon([local(p) for p in f["geometry"]["coordinates"][0]],
                       [[local(p) for p in ring] for ring in f["geometry"]["coordinates"][1:]])) for f in features]
     tree = STRtree(source_polys)
@@ -103,6 +133,9 @@ def build():
             triangles = list(constrained_delaunay_triangles(poly).geoms)
             assert abs(sum(t.area for t in triangles)-poly.area) < .01
             point = poly.representative_point()
+            # Difference operations can leave a narrow spur whose midpoint rounds outside the roof.
+            if point.distance(poly.boundary)<.1:point=polylabel(poly,tolerance=.1)
+            assert poly.contains(Point(round(point.x,4),round(point.y,4))), 'Rounded roof probe must remain inside its footprint'
             def coords(ring):
                 return [[x, z] for x, z in list(ring.coords)[:-1]]
             output.append({"id": source_id, "name": props.get("BuildingNameEN") or "",
@@ -132,23 +165,30 @@ def build():
                 continue
             point = patch.representative_point()
             pavement_patches.append({"center": [point.x,point.y], "polygon": list(patch.exterior.coords)[:-1]})
-    assert pavement_patches and all(Polygon(p["polygon"]).is_valid for p in pavement_patches)
+    assert (island or pavement_patches) and all(Polygon(p["polygon"]).is_valid for p in pavement_patches)
     names = {b["name"] for b in output}
-    assert len(features) == 1718 and len(output) > 900 and area > 650000
-    assert any("MASTERPIECE" in n.upper() for n in names)
-    assert min(b["height"] for b in output) > 0 and max(b["height"] for b in output) > 240
+    if not island:
+        assert len(features) == 1718 and len(output) > 900 and area > 650000
+        assert any("MASTERPIECE" in n.upper() for n in names)
+        assert max(b["height"] for b in output) > 240
+    else:
+        assert len(output)>20 and area>10000, 'Island district extract is unexpectedly sparse'
+    assert min(b["height"] for b in output) > 0
     meta = {"provider": "Lands Department, HKSAR Government / CSDI Portal", "source": SOURCE,
-            "terms": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC", "retrieved_utc": "2026-09-13",
-            "source_sha256": hashlib.sha256(raw.read_bytes()).hexdigest(), "bbox_wgs84": BBOX, "origin_wgs84": ORIGIN,
+            "terms": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC", "retrieved_utc": json.loads(raw.read_text()).get('metadata',{}).get('retrieved_utc','2026-09-13'),
+            "source_sha256": hashlib.sha256(raw.read_bytes()).hexdigest(), "bbox_wgs84": ISLAND_BBOX if island else BBOX, "origin_wgs84": ORIGIN,
             "source_parts": len(features), "rendered_parts": len(output), "source_parts_retained": len({b["id"] for b in output}),
             "source_parts_clipped": clipped, "fallback_height_parts": missing, "footprint_area_m2": round(area),
             "volume_m3": round(sum(p.area*b["height"] for p,b in zip(actual,output))),
             "styles": dict(Counter(b["style"] for b in output)),
             "note": "Derived game massing, not survey-grade reconstruction. Flat ground; connected-part minimum base datum; upper-envelope podium/tower silhouettes. Road clearance 3.5m beyond authored carriageways including the Cross-Harbour surface approaches, plus 2m within 32m of the Nathan/Granville bus turn; authored park omitted. Missing heights use storeys x 3.2m or 9.6m. Facades are generated artwork, not surveyed photographs."}
     meta["small_pavement_gaps_filled"] = len(pavement_patches)
-    (ROOT / "Data/building-layout.json").write_text(json.dumps({"metadata": meta, "buildings": output, "pavement_patches": pavement_patches}, ensure_ascii=False, separators=(",", ":")))
+    if island:
+        meta['note'] = 'Derived island corridor massing on the authored land apron, not survey-grade reconstruction. Original WGS84 footprints and relative roof heights; flat ground; connected-part minimum base datum and upper-envelope podium/tower silhouettes. Buildings clipped to the land boundary and 3.5m beyond the surface carriageways. Missing heights use storeys x 3.2m or 9.6m. Facades, paving and vegetation are authored; selected street centrelines come from the Transport Department; the coastline remains authored.'
+    (ROOT / ("Data/island-building-layout.json" if island else "Data/building-layout.json")).write_text(json.dumps({"metadata": meta, "buildings": output, "pavement_patches": pavement_patches}, ensure_ascii=False, separators=(",", ":")))
     print("BUILDING_LAYOUT_OK:", json.dumps(meta, ensure_ascii=False))
 
 
 if __name__ == "__main__":
-    build()
+    if '--download' in sys.argv: download_island()
+    build('--island' in sys.argv)

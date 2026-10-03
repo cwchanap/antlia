@@ -236,15 +236,18 @@ public sealed class RoadMap
         return true;
     }
 
-    public Image CreateSurfaceMask(Vector2[] park,IEnumerable<(Vector3 A,Vector3 B)> paths,IEnumerable<Vector2[]> lots)
+    public Image CreateSurfaceMask(Vector2[] park,IEnumerable<(Vector3 A,Vector3 B)> paths,IEnumerable<Vector2[]> lots,
+        Rect2? region=null,IEnumerable<(Vector2 A,Vector2 B,float HalfWidth)>? roads=null,float resolution=3)
     {
         // RGB is map data: road, pavement, park. One surface avoids coplanar depth fighting.
-        int width=Mathf.CeilToInt(Bounds.Size.X*3),height=Mathf.CeilToInt(Bounds.Size.Y*3);
-        float sx=width/Bounds.Size.X,sy=height/Bounds.Size.Y;
+        var bounds=region??Bounds;
+        int width=Mathf.CeilToInt(bounds.Size.X*resolution),height=Mathf.CeilToInt(bounds.Size.Y*resolution);
+        float sx=width/bounds.Size.X,sy=height/bounds.Size.Y;
         var pixels=new byte[width*height*3];
-        Vector2 Pixel(Vector2 p)=>(p-Bounds.Position)*new Vector2(sx,sy);
+        Vector2 Pixel(Vector2 p)=>(p-bounds.Position)*new Vector2(sx,sy);
         void Polygon(Vector2[] polygon,int channel)
         {
+            if(polygon.Length<3)return;
             var points=polygon.Select(Pixel).ToArray();
             int ymin=Math.Max(0,Mathf.FloorToInt(points.Min(p=>p.Y))),ymax=Math.Min(height-1,Mathf.CeilToInt(points.Max(p=>p.Y)));
             var crossings=new List<float>();
@@ -272,7 +275,7 @@ public sealed class RoadMap
             for(int y=ymin;y<=ymax;y++)
                 for(int x=xmin;x<=xmax;x++)
                 {
-                    var p=Bounds.Position+new Vector2((x+.5f)/sx,(y+.5f)/sy);
+                    var p=bounds.Position+new Vector2((x+.5f)/sx,(y+.5f)/sy);
                     float distance=p.DistanceTo(Closest(p,a,b));
                     int index=(y*width+x)*3;
                     byte Coverage(float radius)=>(byte)Mathf.RoundToInt(Mathf.Clamp((radius-distance)*pixelsPerMetre+.5f,0,1)*255);
@@ -283,7 +286,7 @@ public sealed class RoadMap
         Polygon(park,2);
         foreach(var polygon in lots)Polygon(polygon,1);
         foreach(var (a,b) in paths)Stroke(new(a.X,a.Z),new(b.X,b.Z),-1,1.5f);
-        foreach(var s in _segments)Stroke(s.A,s.B,s.HalfWidth,s.HalfWidth+3);
+        foreach(var s in roads??_segments.Select(s=>(s.A,s.B,s.HalfWidth)))Stroke(s.A,s.B,s.HalfWidth,s.HalfWidth+3);
         var image=Image.CreateFromData(width,height,false,Image.Format.Rgb8,pixels);
         image.GenerateMipmaps();return image;
     }

@@ -1,6 +1,6 @@
 # Cross-Harbour Tunnel extension
 
-The playable crossing follows the two Transport Department tunnel centrelines at the project's metre scale, from Hung Hom to the Hong Kong Island portal. The full map overview covers **2.44 km east–west × 3.34 km north–south**. Nathan Road's H1 service and its original district data stay intact.
+The playable crossing follows the two Transport Department tunnel centrelines at the project's metre scale, from Hung Hom to the Hong Kong Island portal. Following the Wan Chai / Causeway Bay expansion, the full map overview covers **3.14 km east–west × 3.55 km north–south**. Nathan Road's H1 service and its original district data stay intact.
 
 Press **T while stopped** for a cab-view free drive from the Chatham Road approach. Follow the tunnel signs south, use the selected Wan Chai return roads, then take the northbound tube back to Kowloon. **M** shows both directions; **R** restarts H1. The same roads can also be reached through the existing street network. There are no passenger stops on the crossing yet.
 
@@ -11,7 +11,7 @@ Press **T while stopped** for a cab-view free drive from the Chatham Road approa
 - [The current data dictionary](https://static.data.gov.hk/td/road-network-v2/dataspec/rdnet_dataspec.zip), `rdnet_dataspec_kml.pdf`, defines `ELEVATION` as a relative road level: negative values mean underground, positive values mean flyovers. It is **not a height or depth in metres**. `TRAVEL_DIRECTION=3` follows the digitised direction; `1` allows both directions.
 - Reuse: [DATA.GOV.HK terms](https://data.gov.hk/en/terms-and-conditions). Government ownership is acknowledged in this document, the README, data metadata and the HUD; no endorsement is implied.
 
-`Data/cross-harbour-source.geojson` preserves 49 selected original WGS84 features and their source attributes. `Data/cross-harbour.json` contains sampled 3D paths, ground triangles, map bounds and provenance. The original KML altitudes are all zero; they are retained in the source file.
+`Data/cross-harbour-source.geojson` preserves 478 selected original WGS84 features and their source attributes, including the original 49 crossing sections. `Data/cross-harbour.json` contains sampled 3D paths, ground triangles, map bounds and provenance. The original KML altitudes are all zero; they are retained in the source file.
 
 The derived southbound underground alignment is **1,856.8 m** in plan; the northbound alignment is **1,857.5 m**. The original Nathan Road coordinate origin remains `(114.17232° E, 22.2950° N)`, with +X east, −Z north and one unit per metre using the existing local geographic approximation. The crossing is neither compressed nor fitted to an arbitrary game-map size. Four-metre samples interpolate the original polylines; original source IDs remain available for review.
 
@@ -50,7 +50,7 @@ The built-in imagegen tool generated `Assets/Textures/tunnel-tiles.png`. Exact p
 ./run.command -- --harbour
 ```
 
-The importer asserts source IDs, travel direction at the reversed two-way connector, route continuity, tunnel plan lengths, portal opening clearance, continuous ground beneath all original street corridors and ground triangulation area. The in-engine check first repeats all 3,110 original-road clearance probes, exercises the T shortcut and its map/pause guards, tests chase-camera clearance below both tunnel roofs, 1,887 full-bus clearance envelopes across lane centres and road centrelines and drives the portal ramp, the Kowloon exit bend, both crossing directions and the island loop through the same steering/collision system used by the player. It rejects contacts and departures from the road. The full self-test includes the crossing and the original city/service checks.
+The importer asserts source IDs, travel direction at reversed two-way connectors, route continuity, tunnel plan lengths, portal opening clearance, continuous ground beneath all original street corridors and ground triangulation area. The in-engine check first repeats all 3,110 original-road clearance probes, exercises the T and I shortcuts and their map/pause guards, tests chase-camera clearance below both tunnel roofs, 8,358 full-bus clearance envelopes across lane centres and road centrelines and drives the portal ramp, the Kowloon exit bend, both crossing directions, the island loop and the expanded scenic route through the same steering/collision system used by the player. It rejects contacts and departures from the road. The full self-test includes the crossing and the original city/service checks.
 
 Verified on 13 September 2026 with Godot 4.6.2 .NET and a C# build of **0 warnings / 0 errors**:
 
@@ -61,3 +61,26 @@ Verified on 13 September 2026 with Godot 4.6.2 .NET and a C# build of **0 warnin
 - The regenerated Blender GLB contains 70 objects and two continuous tube floors, 7.44 MiB. The importer also checks that all original street corridors retain continuous ground after the portal cuts.
 
 The focused/restart runs printed Godot's ObjectDB/resource-in-use shutdown diagnostics while exiting 0. The final full self-test and native render exited 0 without those diagnostics. `evidence/harbour/play.log` records the game left open at the approach. No performance benchmark is claimed.
+
+## Lighting and scenery correction — 20 September 2026
+
+Both complete tube interiors use render layer 2; the directional sun affects layer 1 only, while tube lamps affect layer 2. The ceiling also casts double-sided shadows. This removes direct sunlight inside the tunnel at distances beyond the 170 m shadow range without increasing that range or darkening the outdoor world. The bus and cab change render layers according to their position inside the tube envelope, restoring outdoor lighting on exit. These are render layers, independent of the existing collision layers. The native mechanism is documented in [Godot Light3D.light_cull_mask](https://docs.godotengine.org/en/4.6/classes/class_light3d.html#class-light3d-property-light-cull-mask).
+
+The authored island blocks now reuse the four-style facade atlas at a fixed 6 m × 6.4 m scale, with roof caps. Street lamps and planters follow the return loop, excluding nearby road branches. The island remains simplified authored scenery; this pass does not import additional government features or alter tunnel/road geometry. The cab now displays live speed, gear and door state. See [asset review follow-up](ASSET_DETAIL_REVIEW.md) for current validation and captures.
+
+## Surrounding-area polish — 20 September 2026
+
+The later area pass replaces that placeholder row with 766 derived island building parts from 731 Lands Department records, using the existing CSDI import/model pipeline and facade atlases. [Source, query, hash and regeneration](GOVERNMENT_BUILDINGS.md#island-corridor--20-september-2026). The selected road paths, ramp depths and island land apron are unchanged.
+
+Flat approach asphalt now shares the terrain surface with the original district roads. The original 3 px/m mask remains intact; a second 2 px/m mask supplies the extension asphalt, three-metre paving margins, building pads and north-side promenade. The terrain shader combines coverage before applying the common materials and kerb edging. Original district markings take precedence over overlapping extension centre lines. The old flat GLB asphalt mesh is hidden; sloped tube floors retain their collision.
+
+Blender MCP added concrete exterior walls and roof caps around the four portal approaches, outside the established tube envelope, and frames at all four ends. Exterior materials receive daylight and use triplanar stone mapping. Internal tiles, lighting layers and road-floor geometry remain unchanged. Existing benches, planters and trees dress the corridor; a textured seawall and coping finish the authored rectangular shoreline. Procedural water ripples are attenuated at subpixel scale. These are visual approximations, not a surveyed interchange, seawall or water simulation.
+
+Cladding is omitted where its footprint could intersect the adjacent tube at the converging island portals; the original tiled walls and ceiling remain continuous there. This also keeps the exterior roof caps out of the neighbouring interior.
+
+`CheckHarbour` additionally samples asphalt and both pavement margins at 112 positions along the surface routes and casts 230 interior wall rays near the portals to reject intrusive exterior cladding. The existing clearance, ramp, tube and return-loop driving checks remain active. Before/after evidence and final verification are recorded in [the area follow-up](AREA_REVIEW.md#implementation-follow-up).
+
+
+## Wan Chai / Causeway Bay streets — 20 September 2026
+
+The island apron is now 2.35 km wide. There are 429 additional government-derived road sections and a fourth, 9.208 km scenic trip. The original 49 road sections, three trips and both tubes keep their existing coordinates. Press I while stopped for island free drive. [Source, regeneration, approximations and verification](ISLAND_EXPANSION.md).

@@ -10,8 +10,9 @@ from mathutils import Vector, Euler
 ROOT = Path('/Users/chanwaichan/workspace/antila')
 previous_scene = bpy.context.window.scene
 only_buildings = globals().get('ONLY_BUILDINGS', False)
+only_bus_stop = globals().get('ONLY_BUS_STOP', False)
+only_street_detail = globals().get('ONLY_STREET_DETAIL', False)
 scene = bpy.data.scenes.new('Antila_Buildings' if only_buildings else 'Antila_Kowloon_Assets')
-bpy.context.window.scene = scene
 
 
 def mat(name, color, metal=0, rough=.55, emission=0):
@@ -19,7 +20,7 @@ def mat(name, color, metal=0, rough=.55, emission=0):
     m = bpy.data.materials.new('Antila_' + name)
     m.diffuse_color = (*color, 1)
     m.use_nodes = True
-    bs = m.node_tree.nodes.get('Principled BSDF')
+    bs = next(n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
     bs.inputs['Base Color'].default_value = (*color, 1)
     bs.inputs['Metallic'].default_value = metal
     bs.inputs['Roughness'].default_value = rough
@@ -31,6 +32,10 @@ def mat(name, color, metal=0, rough=.55, emission=0):
 cream = mat('ivory enamel', (.88,.81,.63), .25,.3)
 red = mat('vermilion enamel', (.66,.09,.045), .3,.3)
 glass = mat('blue smoked glazing', (.035,.105,.13), .5,.18)
+shelter_glass = mat('shelter tinted glass', (.63,.78,.77), rough=.2)
+next(n for n in shelter_glass.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Alpha'].default_value = .22
+shelter_glass.surface_render_method = 'BLENDED'
+shelter_glass.use_backface_culling = False
 black = mat('rubber', (.018,.025,.028), 0,.75)
 steel = mat('brushed steel', (.39,.45,.46), .75,.28)
 white = mat('warm white', (.89,.88,.76))
@@ -46,7 +51,7 @@ def photo_material(name, filename, metres=None):
     texture = material.node_tree.nodes.new('ShaderNodeTexImage')
     texture.image = bpy.data.images.load(str(ROOT/'Assets/Textures'/filename), check_existing=True)
     texture.image.pack()
-    material.node_tree.links.new(texture.outputs['Color'], material.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
+    material.node_tree.links.new(texture.outputs['Color'], next(n for n in material.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'])
     material['texture_metres'] = metres or 0
     return material
 
@@ -63,7 +68,7 @@ assert leaf_image.channels == 4 and min(leaf_image.pixels[3::4]) < .01 and max(l
 leaf_alpha = leaf_nodes.new('ShaderNodeMath')
 leaf_alpha.operation = 'ROUND'  # glTF exports this as alphaMode MASK, cutoff 0.5.
 leaf.node_tree.links.new(next(n for n in leaf_nodes if n.type == 'TEX_IMAGE').outputs['Alpha'], leaf_alpha.inputs[0])
-leaf.node_tree.links.new(leaf_alpha.outputs[0], leaf_nodes.get('Principled BSDF').inputs['Alpha'])
+leaf.node_tree.links.new(leaf_alpha.outputs[0], next(n for n in leaf_nodes if n.type == 'BSDF_PRINCIPLED').inputs['Alpha'])
 wood = mat('weathered bench slats', (.30,.19,.11), rough=.9)
 orange = mat('street bin orange', (.85,.32,.045), rough=.65)
 soil = mat('planter soil', (.12,.10,.065), rough=1)
@@ -158,25 +163,44 @@ def export(name):
 
 def bus():
     begin('DoubleDecker')
-    box('lower body',(0,0,.92),(2.5,10.7,.95),cream,.16)
-    box('red skirt',(0,0,.58),(2.52,10.55,.34),red,.08)
+    lower = [box('lower body',(0,0,.92),(2.5,10.7,.95),cream,.16),
+             box('red skirt',(0,0,.58),(2.52,10.55,.34),red,.08)]
     box('roof',(0,0,4.13),(2.5,10.7,.30),cream,.14)
     box('upper floor',(0,0,2.55),(2.5,10.65,.40),red,.06)
     box('top deck windows',(0,0,3.34),(2.45,10.42,1.12),glass,.09)
-    box('lower deck windows',(0,0,1.89),(2.44,10.4,.91),glass,.06)
+    lower.append(box('lower deck windows',(0,0,1.89),(2.44,10.4,.91),glass,.06))
+    # Cut the body as well as the glazing: the animated leaves need an actual vestibule.
+    for y in (4.2,.45):
+        cutter=box('entrance cutter',(-.88,y,1.39),(1.5,1.2,2.02),black)
+        for part in lower:
+            bpy.context.view_layer.objects.active=part
+            modifier=part.modifiers.new('Entrance opening','BOOLEAN')
+            modifier.operation='DIFFERENCE'; modifier.solver='EXACT'; modifier.object=cutter
+            bpy.ops.object.modifier_move_up(modifier=modifier.name)
+            bpy.ops.object.modifier_apply(modifier=modifier.name)
+        bpy.data.objects.remove(cutter,do_unlink=True)
     for side in (-1,1):
         for y in [-5,-3.7,-2.2,-.7,.8,2.3,3.8,5]:
             box('upper pillar',(side*1.24,y,3.35),(.06,.085,1.25),cream)
-            box('lower pillar',(side*1.24,y,1.9),(.06,.07,1.07),cream)
+            if side==1 or all(abs(y-door)>.64 for door in (4.2,.45)):
+                box('lower pillar',(side*1.24,y,1.9),(.06,.07,1.07),cream)
         box('window trim',(side*1.253,0,2.88),(.045,10.4,.035),steel)
         box('route banner',(side*1.269,-.7,2.56),(.025,5.0,.3),cream)
     # Three axles. Separate tyres keep origins at axle height for animation.
-    for y in (3.25,-2.5,-3.85):
+    for y in (3.0,-2.5,-3.85):
         for side in (-1,1):
             cyl('Wheel_'+str(side)+'_'+str(y),(side*1.21,y,.55),.54,.27,black,(0,math.pi/2,0),24)
             cyl('hub',(side*1.355,y,.55),.29,.026,steel,(0,math.pi/2,0),16)
-    for index,y in enumerate((3.95,.45)):
-        box('left doors',(-1.273,y,1.36),(.035,1.14,1.85),black,.015)
+    for index,y in enumerate((4.2,.45)):
+        box('vestibule back',(-.15,y,1.40),(.06,1.2,1.9),cream)
+        for side in (-1,1):
+            box('entrance reveal',(-.7,y+side*.59,1.4),(1.1,.035,1.95),cream)
+            cyl('yellow grab rail',(-.42,y+side*.48,1.48),.025,1.5,amber)
+        for step in range(3):
+            x=-1.12+step*.32;top=.46+step*.15
+            box('entrance step',(x,y,top-.07),(.34,1.13,.14),black)
+            box('yellow step nosing',(x-.155,y,top+.004),(.035,1.13,.012),amber)
+        box('entrance header',(-1.25,y,2.38),(.10,1.26,.11),cream)
         for side,yy in [('L',-.28),('R',.28)]:
             panel=box('door panel',(-1.31,y+yy,1.36),(.04,.55,1.85),cream,.015)
             pane=box('door glazing',(-1.34,y+yy,1.55),(.02,.47,1.33),glass)
@@ -220,7 +244,7 @@ def building(index):
     tint.inputs[7].default_value=tuple(c/12.92 if c<=.04045 else ((c+.055)/1.055)**2.4 for c in palette)+(1,)
     texture=next(n for n in wall.node_tree.nodes if n.type=='TEX_IMAGE')
     wall.node_tree.links.new(texture.outputs['Color'],tint.inputs[6])
-    wall.node_tree.links.new(tint.outputs[2],wall.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
+    wall.node_tree.links.new(tint.outputs[2],next(n for n in wall.node_tree.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'])
     curtains=mat('closed curtains '+str(index),(.31,.34,.32),rough=.8)
     box('concrete',(0,0,height/2),(width,15,height),wall)
     box('shop glazing',(0,7.53,1.65),(width-.6,.08,2.8),storefront)
@@ -278,7 +302,14 @@ def shelter():
         box('pillar',(x,.65,1.3),(.13,.13,2.6),steel)
     box('roof',(0,0,2.65),(6.7,2.5,.18),red,.05)
     box('roof edge',(0,-1.25,2.62),(6.7,.07,.23),cream)
-    box('glass back',(0,.78,1.4),(6,.06,2.3),glass)
+    # Separate planar panes avoid sorting two coincident transparent box faces.
+    for x in (-2,-.1,1.8):
+        mesh=bpy.data.meshes.new('shelter glass pane')
+        mesh.from_pydata([(x-.87,.78,.3),(x+.87,.78,.3),(x+.87,.78,2.48),(x-.87,.78,2.48)],[],[(0,1,2,3)])
+        mesh.uv_layers.new(); mesh.materials.append(shelter_glass)
+        obj=bpy.data.objects.new('shelter glass pane',mesh); scene.collection.objects.link(obj)
+        for z in (.3,2.48):box('glass clamp rail',(x,.78,z),(1.8,.07,.045),steel)
+        box('glass safety strip',(x,.774,1.12),(1.72,.006,.045),white)
     box('bench',(0,.34,.5),(3.5,.53,.15),steel,.04)
     for x in (-1.4,1.4):
         box('bench leg',(x,.35,.24),(.12,.4,.5),steel)
@@ -360,9 +391,16 @@ def foliage(rng, count, center, spread, card_size):
     mesh.materials.append(leaf)
 
 
-def tree():
+def tree(compact=False):
     begin('Banyan')
     rng = random.Random(104)
+    if compact:
+        branch([(0,0,0),(.08,0,1.7),(0,.1,3.3)],[.18,.13,.06])
+        for i in range(6):
+            a=i*math.tau/6;x,y=math.cos(a),math.sin(a)
+            branch([(0,0,2),(x*.6,y*.6,3),(x*1.35,y*1.35,3.9)],[.10,.055,.012])
+        foliage(rng,64,(0,0,4),(1.8,1.6,1.25),1.35)
+        export('street-tree');return
     branch([(0,0,0),(.12,-.07,.65),(-.08,.12,1.6),(.12,.1,2.8),(0,0,4.5)],[.60,.38,.32,.27,.11])
     for i in range(9):
         a = i*math.tau/9 + rng.uniform(-.15,.15)
@@ -404,23 +442,51 @@ def street_furniture():
     export('planter')
 
 
-if only_buildings:
-    for i in range(3):
-        building(i)
-    for o in scene.objects:
-        o.hide_set(False)
-    bpy.data.libraries.write(str(ROOT/'Art/buildings.blend'), {scene})
-else:
-    bus()
-    for i in range(3):
-        building(i)
-    shelter()
-    taxi()
-    tree()
-    street_furniture()
-    for o in scene.objects:
-        o.hide_set(not o.name.startswith(('bus_', 'Wheel_', 'Door_')))
-    # Save only this scene and its dependencies; do not capture the user's other scenes.
-    bpy.data.libraries.write(str(ROOT/'Art/antila-assets.blend'), {scene})
-bpy.context.window.scene = previous_scene
-print('ANTILA_ASSETS_OK')
+def kiosk():
+    begin('NewsKiosk')
+    display=photo_material('news and magazine display','kiosk-display.png')
+    box('enamel kiosk',(0,0,1.08),(2.8,1.4,2.16),teal,.04)
+    box('display',(0,-.713,1.14),(2.42,.02,1.6),display)
+    for z in (.31,.84,1.38,1.96):box('shelf lip',(0,-.79,z),(2.55,.2,.06),steel,.015)
+    box('counter',(0,-.83,.73),(2.95,.42,.08),steel,.025)
+    for x in (-1.35,1.35):box('canopy support',(x,-.91,1.25),(.055,.055,2.5),steel)
+    for i in range(12):
+        awning=box('striped canopy',(-1.375+i*.25,-.24,2.43),(.255,2,.085),white if i%2 else teal)
+        awning.rotation_euler.x=.10
+    box('sign board',(0,-1.27,2.36),(2.5,.06,.25),teal)
+    text('kiosk sign','NEWS  •  PRESS',(0,-1.305,2.36),.14,white,rotation=(math.pi/2,0,0))
+    export('news-kiosk')
+
+
+try:
+    bpy.context.window.scene = scene
+    if only_street_detail:
+        kiosk();tree(True)
+        for o in scene.objects:o.hide_set(False)
+        bpy.data.libraries.write(str(ROOT/'Art/island-street-details.blend'), {scene})
+    elif only_bus_stop:
+        bus()
+        shelter()
+        for o in scene.objects: o.hide_set(False)
+        bpy.data.libraries.write(str(ROOT/'Art/bus-stop-details.blend'), {scene})
+    elif only_buildings:
+        for i in range(3):
+            building(i)
+        for o in scene.objects:
+            o.hide_set(False)
+        bpy.data.libraries.write(str(ROOT/'Art/buildings.blend'), {scene})
+    else:
+        bus()
+        for i in range(3):
+            building(i)
+        shelter()
+        taxi()
+        tree()
+        street_furniture()
+        for o in scene.objects:
+            o.hide_set(not o.name.startswith(('bus_', 'Wheel_', 'Door_')))
+        # Save only this scene and its dependencies; do not capture the user's other scenes.
+        bpy.data.libraries.write(str(ROOT/'Art/antila-assets.blend'), {scene})
+finally:
+    bpy.context.window.scene = previous_scene
+print("ANTILA_ASSETS_OK")

@@ -1,5 +1,13 @@
 # Photographic surface assets
 
+## Shopfront variety — 20 September 2026
+
+The built-in imagegen tool generated `Assets/Textures/shopfront-variety.png` (2,172 × 724): a 2 × 2 atlas of bakery, pharmacy, shuttered shop and grocery elevations. Blender packs it into `kowloon-buildings.glb`. These four variants alternate with the existing cafe; each spans up to 10 m, with cropped partial bays and 18 cm recessed geometry. They are invented premises, not photographs or surveyed interiors. Exact prompt:
+
+> Use case: photorealistic-natural. Asset type: albedo texture atlas for Hong Kong street-level shopfronts in a 3D bus driving game. Create one wide 3:1 image arranged as an exact 2 by 2 grid of four equal rectangular shopfront elevations; each cell itself has 3:1 proportions. No gutters or borders between cells. Upper left: small bakery with warm bread display cabinets and bronze aluminium framed glazing. Upper right: neighbourhood pharmacy, cool pale green framed glass, shelves of varied generic small boxes, frosted lower glass. Lower left: old closed shop with weathered corrugated grey roller shutters, narrow pedestrian door and muted blue-green metal lintel. Lower right: small grocery with produce crates behind glazing, red aluminium door frame and restrained fluorescent interior. Every cell fills its rectangle edge to edge, identical straight-on orthographic camera, three-bay frontage, one central entrance. Uniform diffuse daylight, restrained glass reflections, detailed real-world wear, natural photographic textures. Facades roughly 10 metres wide and 3.3 metres high. No pavement, no sky, no people, no cars, no exterior perspective, no recognizable brands, no logos, no readable lettering, no captions, no large signboards. Do not show an entire street or buildings; only four flat front elevations. Each image cell must align exactly to the horizontal and vertical midpoint of the atlas.
+
+The matching runtime comparison is in `evidence/asset-fixes-2026-09-20/building-front.png`; see [asset review and follow-up](ASSET_DETAIL_REVIEW.md).
+
 Generated with the **built-in imagegen tool** on 12 September 2026. These are original generated albedo images, not photographs of actual premises. No external image libraries or new runtime dependencies are required.
 
 | File in Assets/Textures | Saved resolution | Application |

@@ -90,3 +90,26 @@ Before renders are in `evidence/before-urban-polish/`; the seven building, eight
 ## Cross-Harbour approach clearance
 
 The tunnel extension adds the selected surface approach roads to the existing building exclusion buffers. Original government features and height datums remain intact; approximately 246 m² of derived massing is removed around the new roads, including the previously obstructed Hong Chong Road exit bend. The current layout contains 1,764 visible parts from 1,577 source records, 131 chunks, 723,737 m² of footprint coverage and 228 small pavement patches. See [Cross-Harbour extension](CROSS_HARBOUR.md) for regeneration order and current runtime evidence.
+
+## Street-front detail — 20 September 2026
+
+The street-facing ground floors now alternate five storefront types: the existing cafe plus a new generated bakery/pharmacy/shutter/grocery atlas. Storefronts sit 18 cm inside the original footprint with modeled side reveals, sills and lintels. Upper-floor UV scale and the government layout data remain unchanged. `Tools/model_government_buildings.py` and `Art/kowloon-buildings.blend` contain the updated generation/source; [surface asset notes](REALISM_ASSETS.md) preserve the exact image prompt. This does not add surveyed shop identities or modeled upper-floor window interiors. [Review follow-up and evidence](ASSET_DETAIL_REVIEW.md).
+
+## Island corridor — 20 September 2026
+
+The same Lands Department layer now supplies the island return-loop surroundings. The query envelope is `114.17552394472202,22.27802191879267,114.18542704659008,22.2851185770751` in WGS84, using the parameters above with `orderByFields=OBJECTID` and pagination. A separate count query returned 731; the downloaded records match that count and have unique source IDs. Download time: `2026-09-20T23:41:34.518802+00:00`. Raw response plus query metadata: `Data/island-buildings.geojson`; SHA-256: `7d0aa077cab8befc7a6a7d5a02c5abb7730255d391bad2172604d6b0f4170a51`.
+
+`Data/island-building-layout.json` retains 721 source IDs as 766 visible parts, 209,077 m² of coverage, heights up to 205.5 m, and 80 small pavement-gap patches. Forty-seven source parts need the existing height fallback. The pipeline uses the same upper-envelope and road-clearance rules as Kowloon, clipped to the existing authored island apron. It does not import additional street connections or surveyed coastline. Facades remain generated artwork.
+
+```sh
+.venv-geodata/bin/python Tools/import_buildings.py --island --download
+# Offline regeneration after the initial download:
+.venv-geodata/bin/python Tools/import_buildings.py --island
+```
+
+Through Blender MCP, execute the existing model script with `ISLAND=True` in its globals. This selects the isolated `CSDI_Island` scene, `Data/island-building-layout.json`, `Assets/Models/island-buildings.glb` and `Art/island-buildings.blend`. The previous Blender scene is restored in `finally`. Island geometry occupies 48 render/collision chunks. Kowloon files are unchanged by this import. Combined runtime totals are 2,530 parts, 179 chunks, 308 pavement patches and 72 sampled roof collision probes. [Area review and current evidence](AREA_REVIEW.md#implementation-follow-up).
+
+
+## Expanded island district — 20 September 2026
+
+The later Wan Chai / Causeway Bay pass expands the island query to 2,048 source records and derives 2,180 island parts. The combined scene has 3,944 parts, 279 chunks and 107 roof probes. Source bounds, hash, height fallbacks and the interior-point correction are recorded in [the expansion notes](ISLAND_EXPANSION.md).
