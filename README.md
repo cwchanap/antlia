@@ -1,8 +1,8 @@
 # Antila — Kowloon Bus
 
-A playable **Godot 4.6 .NET / C#** bus-driving scene across Tsim Sha Tsui and Jordan, Hong Kong. Drive an original cream-and-red double-decker north from Tsim Sha Tsui towards Jordan, serve three H1 stops, and finish the service. The map also reaches the **Cross-Harbour Tunnel, Wan Chai and Causeway Bay**, with both tunnel tubes and an expanded island street network.
+A playable **Godot 4.6 .NET / C#** bus-driving scene across Tsim Sha Tsui and Jordan, Hong Kong. Drive an original cream-and-red double-decker north from Tsim Sha Tsui towards Jordan, serve three H1 stops, and finish the service. The map also reaches the **Cross-Harbour Tunnel, Central, Admiralty, Wan Chai and Causeway Bay**, with both tunnel tubes and an expanded island street network.
 
-![Expanded Cross-Harbour map](evidence/island-expansion-2026-09-20/expanded-map.png)
+![Expanded Cross-Harbour map](evidence/central-expansion-2026-10-05/map.png)
 
 ![Government-derived Nathan Road buildings](evidence/building-review/nathan-front.png)
 
@@ -27,6 +27,7 @@ On another machine set `GODOT_BIN` to a Godot 4.6 .NET executable. The SDK may r
 | C | Chase / right-hand cab camera |
 | M | Open / close the full crossing map; driving pauses while open |
 | I | Start island free drive through Wan Chai / Causeway Bay while stopped |
+| J | Start the Admiralty / Central loop while stopped |
 | T | Start a Cross-Harbour free drive while stopped in an active game |
 | H | Horn |
 | V | Mute / unmute all game audio |
@@ -36,7 +37,7 @@ On another machine set `GODOT_BIN` to a Godot 4.6 .NET executable. The SDK may r
 
 Traffic lights control fourteen junctions: ten on Nathan Road from Peking Road to Jordan Road, plus Canton / Haiphong, Canton / Austin, Chatham / Granville and Chatham / Mody. Brake behind the white stop line on red or red-and-amber; amber means stop if safe. The next-signal panel shows the relevant approach and distance from the bus nose. Taxis wait at signals; the bus remains under your control, with red-light crossings recorded in the completion summary.
 
-Press **T** while stopped to start at the tunnel approach in cab view. The tunnel follows government XY geometry at metre scale, with approximately **1.857 km per tube**; its depth and interior dimensions are authored. **I** starts island free drive. **M** shows the crossing and expanded island streets; **R** returns to H1. See [Cross-Harbour data, limits and verification](docs/CROSS_HARBOUR.md).
+Press **T** while stopped to start at the tunnel approach in cab view. The tunnel follows government XY geometry at metre scale, with approximately **1.857 km per tube**; its depth and interior dimensions are authored. **I** starts Wan Chai / Causeway Bay free drive; **J** starts the Admiralty / Central loop. **M** shows the crossing and expanded island streets; **R** returns to H1. See [Cross-Harbour data, limits and verification](docs/CROSS_HARBOUR.md).
 
 Turn onto side streets to explore the wider district; **M** shows your position and the H1 stops. The existing three-stop service stays on Nathan Road.
 
@@ -44,10 +45,10 @@ Follow the **leftmost northbound lane**. Pull into the green stop marker, align 
 
 ## What is built
 
-- A **3.14 km east–west × 3.55 km north–south** overall map with 478 government road sections across the Cross-Harbour approaches and island streets, two driveable tubes, island return loop, ceramic walls, lamps and portal signs. The existing detailed Kowloon district remains a **2.06 km east–west × 1.24 km north–south** extract, 3.6 times the previous data width. A connected network of 58 named side streets reaches Canton Road and Kowloon Park Drive to the west, and Chatham Road, Granville Road and Science Museum Road to the east.
+- A **4.61 km east–west × 3.55 km north–south** overall map with 898 government road sections across the Cross-Harbour approaches and island streets, two driveable tubes, island return loop, ceramic walls, lamps and portal signs. The existing detailed Kowloon district remains a **2.06 km east–west × 1.24 km north–south** extract, 3.6 times the previous data width. A connected network of 58 named side streets reaches Canton Road and Kowloon Park Drive to the west, and Chatham Road, Granville Road and Science Museum Road to the east.
 - The original 1.15 km Nathan Road H1 service, with markings, shopfronts, banyan trees, shelters, Chinese signs and ambient taxis.
-- 3,944 visible building parts derived from HK Government footprints and height datums: 1,764 in Kowloon and 2,180 around the island corridor. Irregular blocks, podiums, courtyards and towers up to 377 m use four facade styles, five recessed shopfront types and rooftop details. Combined ground coverage is 1,340,938 m² across 279 spatial render/collision chunks.
-- Modeled entrance steps and grab rails, transparent shelter glazing, live cab instruments and corrected tunnel lighting. The island loop has continuous paving, 122 trees, 170 lamps, 64 posed pedestrians, 18 news kiosks, planters and a waterfront promenade. Portals have exterior retaining shells; water has animated, distance-filtered ripples. The island apron is now 2.35 km wide, with 429 additional government road sections and a 9.2 km scenic test drive. See the [island expansion](docs/ISLAND_EXPANSION.md), [asset detail fixes](docs/ASSET_DETAIL_REVIEW.md) and [area review follow-up](docs/AREA_REVIEW.md#implementation-follow-up).
+- 6,191 visible building parts derived from HK Government footprints and height datums: 1,764 in Kowloon and 4,427 around the island corridor. Irregular blocks, podiums, courtyards and towers up to 402 m use four facade styles, five recessed shopfront types and rooftop details. Combined ground coverage is 1,974,060 m² across 408 spatial render/collision chunks.
+- Modeled entrance steps and grab rails, transparent shelter glazing, live cab instruments and corrected tunnel lighting. The island loop has continuous paving, 204 trees, 308 lamps, 112 posed pedestrians, 30 news kiosks, planters and a waterfront promenade. Portals have exterior retaining shells; water has animated, distance-filtered ripples. The island apron is now 4.45 km wide, with a 9.2 km Wan Chai / Causeway Bay scenic drive and a 3.08 km Admiralty / Central loop. The latest westward expansion adds 420 source sections; see [Central expansion and data handling](docs/CENTRAL_EXPANSION.md). See the [island expansion](docs/ISLAND_EXPANSION.md), [asset detail fixes](docs/ASSET_DETAIL_REVIEW.md) and [area review follow-up](docs/AREA_REVIEW.md#implementation-follow-up).
 - One terrain surface blends asphalt, paving, park lawns and paths from a generated data mask, avoiding stacked road meshes. Stone kerbs follow roads and park paths, while facade textures keep a consistent window scale. Softer haze improves skyline contrast. Lane paint is batched and stops at crossing roads.
 - Clearer road paint, arterial lane guides, left-hand traffic arrows, three yellow box junctions and labelled bus bays. Parallel source carriageways share a lane layout and crossings span the combined road width. Kowloon Park's bay sits clear of the Granville crossing; road and path edges use fractional pixel coverage.
 - Scattered park trees, connected park paths, and physical outer boundaries. Nathan Road now connects through both former internal barriers to the surrounding junctions.
@@ -68,20 +69,20 @@ This is a **stylized prototype**. Road widths, elevations, streetscape, facade a
 
 `Data/roads.geojson` retains 596 clipped source features in WGS84. `Data/nathan-road.json` contains the unchanged 231 sampled service-route points, 244 samples covering the full Nathan Road surface and 437 connected side-street sections, extract bounds, source URL, original download timestamp, processing timestamp, SHA-256 and coordinate origin. +X is east, -Z is north, one world unit is one metre. This first slice averages carriageway centrelines at 5 m intervals. It does not infer real lane widths or turning permissions from the centreline data. The original district extract uses named ground-level streets; unnamed links, pedestrian paths, highway/tunnel approaches and isolated fragments are excluded. Side streets are 12 or 18 m wide in the game. At runtime, unambiguous same-name segments join into 260 polylines; road geometry, pavement and building footprints generate a three-channel terrain mask at three pixels per metre. The original source features remain intact. The playable connected network spans about 1.75 km east–west inside the larger extract; no road is promised at every point within its bounds.
 
-To regenerate using Python's standard library:
+The original Kowloon importer expects the WGS84 snapshot recorded in `Data/nathan-road.json`. The current TD KMZ needs an explicit datum conversion; regenerate the crossing/island expansion with:
 
 ```sh
 curl -L --fail https://static.data.gov.hk/td/road-network-v2/CENTERLINE.kmz -o /tmp/CENTERLINE.kmz
-python3 Tools/import_map.py /tmp/CENTERLINE.kmz
+.venv-geodata/bin/python Tools/import_tunnel.py /tmp/CENTERLINE.kmz --hk1980
 ```
 
-**Cross-Harbour extension:** `Data/cross-harbour-source.geojson` retains 478 selected TD features and their original attributes, including the original 49 crossing sections. `Data/cross-harbour.json` adds the metre-scale crossing geometry and provenance without changing the Nathan Road import. `Tools/import_tunnel.py` and Blender MCP `Tools/model_tunnel.py` regenerate it; see `docs/CROSS_HARBOUR.md` and `docs/ISLAND_EXPANSION.md` for sources, authored depth/width/shoreline limits, texture prompts and checks.
+**Cross-Harbour extension:** `Data/cross-harbour-source.geojson` retains 898 selected TD features and their attributes. The original 478 sections remain pinned to their earlier snapshot; 420 additions use the current KMZ, converted from HK1980 geographic coordinates to WGS84. Stable `ROUTE_ID` values resolve changed KML identifiers. `Data/cross-harbour.json` adds the metre-scale crossing geometry and provenance without changing the Nathan Road import. `Tools/import_tunnel.py` and Blender MCP `Tools/model_tunnel.py` regenerate it; see `docs/CENTRAL_EXPANSION.md`, `docs/CROSS_HARBOUR.md` and `docs/ISLAND_EXPANSION.md` for sources, authored depth/width/shoreline limits, texture prompts and checks.
 
 Google Maps imagery, tiles and 3D meshes are not included. The government extract is bundled so gameplay requires neither a map API key nor a network connection.
 
 **Original models:** `Art/antila-assets.blend` is the editable Blender source for ten original GLBs. `Tools/model_assets.py` is the reproducible modeling script executed through Blender MCP. It creates a separate scene, exports only its selected objects and saves that scene's dependencies. The `.gdignore` keeps Godot from importing the source `.blend` as well as the GLBs.
 
-**Government buildings:** Building data © HKSAR Government / Lands Department, via the [CSDI Portal](https://portal.csdi.gov.hk/csdi-webpage/doc/TNC). `Data/buildings.geojson` retains 1,718 original Kowloon building parts; `Data/island-buildings.geojson` retains 2,048 island source records downloaded on 21 September 2026 UTC. `Tools/import_buildings.py` produces the playable layouts. Blender MCP builds the corresponding `kowloon-buildings` and `island-buildings` GLBs and editable blends using the existing imagegen facade atlases. See `docs/GOVERNMENT_BUILDINGS.md` for attribution, source queries, approximations, regeneration and checks. `Art/buildings.blend` and `docs/BUILDING_REVIEW.md` retain the superseded three-model grid.
+**Government buildings:** Building data © HKSAR Government / Lands Department, via the [CSDI Portal](https://portal.csdi.gov.hk/csdi-webpage/doc/TNC). `Data/buildings.geojson` retains 1,718 original Kowloon building parts; `Data/island-buildings.geojson` retains 4,226 island source records downloaded on 5 October 2026 UTC. `Tools/import_buildings.py` produces the playable layouts. Blender MCP builds the corresponding `kowloon-buildings`, `island-buildings` and `central-buildings` GLBs and editable blends using the existing imagegen facade atlases. See `docs/GOVERNMENT_BUILDINGS.md` for attribution, source queries, approximations, regeneration and checks. `Art/buildings.blend` and `docs/BUILDING_REVIEW.md` retain the superseded three-model grid.
 
 **Traffic signals:** `Tools/model_traffic_signal.py` creates the original signal through Blender MCP, with separate red, amber and green lenses. The editable source is `Art/traffic-signal.blend`, exported as `Assets/Models/traffic-signal.glb`. See `docs/TRAFFIC_LIGHTS.md` for coverage, timing and checks.
 
@@ -98,6 +99,8 @@ Google Maps imagery, tiles and 3D meshes are not included. The government extrac
 **Pedestrian areas:** Stone pavement borders, tactile landing/boarding tiles, railings, drainage grates and two connected park entrances are documented in `docs/FOOTPATH_POLISH.md`. The new models were made through Blender MCP (`Art/footpaths.blend`, `Tools/model_footpaths.py`), with an imagegen stone texture at `Assets/Textures/pavement-stone.png`.
 
 ## Verification
+
+Verified on 6 October 2026: the westward expansion passes the complete in-engine suite, including both tunnel directions, the 9.2 km island scenic drive, the new 3.08 km Central loop, both Kowloon side-street turns and all three H1 stops. The build has **0 warnings / 0 errors**; repeated scene reloads and native J/C keyboard checks also pass. See [Central / Admiralty expansion and evidence](docs/CENTRAL_EXPANSION.md). The new `--central-check` provides a focused western-loop check.
 
 The second HUD follow-up makes Nathan Road lane warnings heading-aware and shows exploration guidance off the service corridor. The expanded `--hud-check` passes all four heading/carriageway combinations and preserves H1 service messages; see [guidance fixes and checks](docs/ISLAND_EXPANSION.md#driving-guidance-follow-up--21-september-2026-utc).
 

@@ -1,5 +1,7 @@
 # Government building layout — 13 September 2026
 
+The current island extract and Central/Admiralty extension are documented in [Central expansion](CENTRAL_EXPANSION.md). `Tools/model_government_buildings.py` exports the island geometry as `island-buildings.glb` and `central-buildings.glb`, splitting at a spatial chunk boundary; their shared editable source is the compressed `Art/island-buildings.blend`. The figures below describe the original Kowloon import.
+
 The repeated rectangular building grid has been replaced by derived Lands Department building footprints. The scene now has continuous street frontages, irregular block shapes, courtyards, podiums and towers, with four facade styles, subtle material tints, selected cafe shopfronts and rooftop plant rooms.
 
 ## Source and attribution

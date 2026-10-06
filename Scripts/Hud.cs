@@ -166,7 +166,7 @@ public partial class Hud : Control
         Panel(330,823,722,44);
         Chip("W","Throttle",346,851);Chip("S","Brake",464,851);Chip("A/D","Steer",568,851);
         Chip("E","Doors",684,851);Chip("C","Camera",788,851);Chip("Q","Gear",912,851);
-        Text("SPACE  Handbrake    H  Horn    V  "+(AudioServer.IsBusMute(0)?"Unmute":"Sound")+"    M  Map    T  Tunnel    I  Island    R  Restart    ESC  Pause",382,889,12,_paper);
+        Text("SPACE  Handbrake    H  Horn    V  "+(AudioServer.IsBusMute(0)?"Unmute":"Sound")+"    M  Map    T  Tunnel    I  Island    J  Central    R  Restart    ESC  Pause",382,889,12,_paper);
         if(Game.NoticeTime>0 && !Game.Complete)
         {
             float x=Game.CabView?438:350;
@@ -179,7 +179,7 @@ public partial class Hud : Control
             Panel(420,757,565,46);
             Text("ONCOMING LANE  —  Drive on the left",459,786,17,new Color("f2b16c"));
         }
-        Text("Map / buildings © HKSAR Government · TD / Lands Dept · CSDI",31,889,9,_muted);
+        Text("Roads / buildings © HKSAR Govt · TD / Lands Dept · CSDI",31,889,9,_muted);
         if(Game.Paused || Game.Complete)
         {
             DrawRect(new(0,0,1440,900),new Color(.03f,.08f,.08f,.65f));
@@ -246,12 +246,12 @@ public partial class Hud : Control
             foreach(var (label,at) in new[]{("CANTON ROAD",new Vector3(-560,0,-600)),
                 ("KOWLOON PARK",new Vector3(-310,0,-740)),("TSIM SHA TSUI EAST",new Vector3(370,0,-290)),
                 ("SCIENCE MUSEUM RD",new Vector3(540,0,-770)),("JORDAN",new Vector3(-420,0,-1110)),
-                ("CROSS-HARBOUR TUNNEL · 1.86 km",new Vector3(10,0,400)),("WAN CHAI",new Vector3(-180,0,2020)),("CAUSEWAY BAY",new Vector3(1430,0,2020))})
+                ("CROSS-HARBOUR TUNNEL · 1.86 km",new Vector3(10,0,400)),("CENTRAL",new Vector3(-1800,0,2020)),("ADMIRALTY",new Vector3(-1060,0,2020)),("WAN CHAI",new Vector3(-180,0,2020)),("CAUSEWAY BAY",new Vector3(1430,0,2020))})
             {
                 var p=Point(at);Text(label,p.X,p.Y,13,_muted);
             }
             Text($"{bounds.Size.X/1000:0.00} km east–west  ×  {bounds.Size.Y/1000:0.00} km north–south",112,759,16,_paper);
-            Text("T  Tunnel • I  Island free drive (while stopped) • Cyan dashes: tunnel • Gold: island streets / approaches",112,784,13,_mint);
+            Text("T  Tunnel • I  Island • J  Central (while stopped) • Cyan dashes: tunnel • Gold: island streets / approaches",112,784,13,_mint);
         }
         var bus=Point(Game.Bus.GlobalPosition);
         DrawCircle(bus,9,_panel);

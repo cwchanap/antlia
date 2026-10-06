@@ -1,5 +1,7 @@
 # Wan Chai / Causeway Bay expansion — 20 September 2026
 
+For the current western extent, data conversion and checks, see [Central / Admiralty expansion — 5 October](CENTRAL_EXPANSION.md). The figures below record the September expansion.
+
 The island district now spans 2.35 km east–west and 1 km north–south: an authored land area of 2.35 km², compared with the previous 1.02 × 0.79 km apron. The complete map bounds are about 3.14 × 3.55 km. Press **I while stopped** to start island free drive, **T** for the original tunnel approach, **M** for the map and **R** to return to H1. Island free drive is exploration, without additional passenger-service stops or turn-by-turn navigation.
 
 ## Road and building sources

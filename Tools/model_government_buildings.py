@@ -138,11 +138,15 @@ def export():
     current_scene = bpy.context.window.scene
     try:
         bpy.context.window.scene = city_scene
-        bpy.ops.object.select_all(action='DESELECT')
-        for obj in city_scene.objects: obj.select_set(True)
-        bpy.ops.export_scene.gltf(filepath=str(ROOT/'Assets/Models'/f'{ASSET}.glb'),
-                                  export_format='GLB', use_selection=True, use_active_scene=True, export_yup=True)
-        bpy.data.libraries.write(str(ROOT/'Art'/f'{ASSET}.blend'), {city_scene}, fake_user=True)
+        # Keep each offline GLB below 100 MB.
+        # Split on an existing 128 m chunk boundary, without changing geometry.
+        for asset in ([ASSET,'central-buildings'] if ISLAND else [ASSET]):
+            bpy.ops.object.select_all(action='DESELECT')
+            for obj in city_scene.objects:
+                if not ISLAND or (obj.location.x < -384)==(asset=='central-buildings'):obj.select_set(True)
+            bpy.ops.export_scene.gltf(filepath=str(ROOT/'Assets/Models'/f'{asset}.glb'),
+                                      export_format='GLB', use_selection=True, use_active_scene=True, export_yup=True)
+        bpy.data.libraries.write(str(ROOT/'Art'/f'{ASSET}.blend'), {city_scene}, fake_user=True, compress=True)
         print('BLENDER_CITY_EXPORTED:',ASSET,'and editable blend')
     finally:
         bpy.context.window.scene = current_scene

@@ -27,6 +27,7 @@ public partial class Main
             _lots.Add((new(center[0].GetSingle(),0,center[1].GetSingle()),b.GetProperty("height").GetSingle(),polygon,bounds));
         }
         _city.AddChild(GD.Load<PackedScene>($"res://Assets/Models/{asset}.glb").Instantiate<Node3D>());
+        if(asset=="island-buildings")_city.AddChild(GD.Load<PackedScene>("res://Assets/Models/central-buildings.glb").Instantiate<Node3D>());
         }
         foreach(MeshInstance3D mesh in _city.FindChildren("*","MeshInstance3D",true,false))
         {
