@@ -1,5 +1,11 @@
 # Government building layout — 13 September 2026
 
+The [12–13 October Lai Chi Kok expansion](LAI_CHI_KOK_EXPANSION.md) adds a fourth Kowloon source extract and three building GLBs; current scene totals are 20,832 parts and 1,403 render/collision chunk pairs. Earlier counts below describe their recorded snapshots.
+
+The 8 October 2026 [government-map corrections](GOVERNMENT_MAP_FIXES.md) supersede the earlier island boundary, flattened elevated-road geometry and exact-metre-scale wording below. Earlier verification records apply to their original snapshots.
+
+For the latest northern Kowloon extract, two additional building assets and verification, see [Yau Ma Tei / Mong Kok expansion](KOWLOON_EXPANSION.md).
+
 The current island extract and Central/Admiralty extension are documented in [Central expansion](CENTRAL_EXPANSION.md). `Tools/model_government_buildings.py` exports the island geometry as `island-buildings.glb` and `central-buildings.glb`, splitting at a spatial chunk boundary; their shared editable source is the compressed `Art/island-buildings.blend`. The figures below describe the original Kowloon import.
 
 The repeated rectangular building grid has been replaced by derived Lands Department building footprints. The scene now has continuous street frontages, irregular block shapes, courtyards, podiums and towers, with four facade styles, subtle material tints, selected cafe shopfronts and rooftop plant rooms.
@@ -115,3 +121,41 @@ Through Blender MCP, execute the existing model script with `ISLAND=True` in its
 ## Expanded island district — 20 September 2026
 
 The later Wan Chai / Causeway Bay pass expands the island query to 2,048 source records and derives 2,180 island parts. The combined scene has 3,944 parts, 279 chunks and 107 roof probes. Source bounds, hash, height fallbacks and the interior-point correction are recorded in [the expansion notes](ISLAND_EXPANSION.md).
+
+
+## West Kowloon / Sham Shui Po — 7 October 2026
+
+The latest extension adds 6,084 derived building parts from an 11,816-record LandsD extract, clipped to the sourced western land boundary and excluding both earlier Kowloon regions. Original and northern layouts are regenerated only for clearance beside newly connected streets; island massing is retained. Current totals: **17,372 parts, 1,051 visual/collision chunk pairs, 4,895,549 m² of footprint coverage and 2,041 small paving patches**. Four new GLBs reuse the established imagegen facade/shop textures. Exact source hashes, height fallbacks, Blender splits and evidence are in [West Kowloon expansion](WEST_KOWLOON_EXPANSION.md).
+
+
+## Regional height correction — 11 October 2026
+
+Connected-part base datums now use the combined original, northern and western Kowloon extracts before regional clipping. Duplicate `BuildingCSUID` records join the same group; each region still uses its own footprint and `OBJECTID`. The three source hashes are recorded in every Kowloon layout. Government extracts, flattened terrain and the existing height fallback remain unchanged.
+
+A follow-up fixes regeneration after refreshing just one extract: every region now uses the newest `retrieved_utc` record's `TopHeight` and fallback `Storeys` for each `BuildingCSUID`. The original undated extract uses its recorded 13 September 2026 snapshot date; equal timestamps prefer western, then northern, then original records. The shared connected-part minimum base still includes all three extracts. Rebuild all three layouts after a source refresh, then regenerate any changed building meshes through Blender MCP.
+
+`Tools/check_buildings.py` tests a newer northern snapshot with a revised tower height and a separate missing-height/storeys fallback. It rebuilds all three layouts in an isolated temporary directory and asserts agreement across region boundaries; the shipped government extracts are never edited. Run it with `.venv-geodata/bin/python Tools/check_buildings.py`.
+
+This removes height discrepancies for 26 of the 109 building identities rendered across region boundaries. Ping An Tower's two roof halves now both use 141.5 m; One IGC's use 111.7 m, removing their artificial 2.4 m steps. Heights change for 24 original and 28 northern visible parts. Western massing is geometrically unchanged. All 18,035 world parts, source footprints, road clearances and paving patches are retained. Two small Kowloon Union Church parts have reordered polygon vertices/roof triangles with exactly equal footprints.
+
+Regenerate all three Kowloon layouts together after changing any contributing extract:
+
+```sh
+.venv-geodata/bin/python Tools/import_buildings.py
+.venv-geodata/bin/python Tools/import_buildings.py --north
+.venv-geodata/bin/python Tools/import_buildings.py --west
+# Through Blender MCP: Tools/model_government_buildings.py
+# Repeat with NORTH=True and WEST=True in the script globals.
+```
+
+[Correction evidence and regression checks](GOVERNMENT_MAP_FIXES.md#regional-seams-and-hong-chong-ground--11-october). This remains government-derived massing on flat game terrain, not surveyed absolute roof elevation.
+
+## Building download cache safety — 13 October 2026
+
+The shared downloader now rejects empty/invalid counts, incomplete or duplicate pages, missing persistent identities, malformed polygon coordinates and invalid height/storey inputs before replacing an extract. It accepts repairable source polygons using the builder's existing `make_valid` step. A validated UTF-8 GeoJSON is staged beside the destination and atomically replaced; a failed download, validation, write or replacement preserves the previous cache bytes and removes its temporary file. This applies to island, northern, western, Lai Chi Kok and Kwai Chung refreshes.
+
+`Tools/check_buildings.py` now also exercises successful paginated downloads in all five modes, 17 rejected responses and two interrupted file operations in temporary directories. Its existing regional height checks remain. All six bundled extracts (32,434 features) were replayed through the downloader without changing source data. Fix evidence and commands are in [the cache-safety report](../evidence/building-download-fix-2026-10-13/REPORT.md). No live source refresh or asset regeneration was needed; source geometry, layouts and runtime models are retained.
+
+## Mei Foo / Lai King / Kwai Chung — 13 October 2026
+
+The fifth Kowloon source extract contains 4,690 CSDI building records; the new layout has 3,422 parts, excluding all preceding region rectangles. All five source hashes participate in shared BuildingCSUID base/roof-height reconciliation. Lai Chi Kok becomes 2,795 parts after new road clearance and shared datums; original, north, west and island building/paving arrays remain unchanged. The combined scene has 24,250 parts, 1,842 render/collision chunk pairs and 2,676 paving patches. Three new GLBs split at y=6656 and x=-4864 in Blender coordinates; every file remains below 100 MB. See [source queries, regeneration, model audit and limits](KWAI_CHUNG_EXPANSION.md). The geography uses flat terrain even along real hillside roads.

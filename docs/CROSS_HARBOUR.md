@@ -1,5 +1,7 @@
 # Cross-Harbour Tunnel extension
 
+The 8 October 2026 [government-map corrections](GOVERNMENT_MAP_FIXES.md) supersede the earlier island boundary, flattened elevated-road geometry and exact-metre-scale wording below. Earlier verification records apply to their original snapshots.
+
 The playable crossing follows the two Transport Department tunnel centrelines at the project's metre scale, from Hung Hom to the Hong Kong Island portal. Following the Wan Chai / Causeway Bay expansion, the full map overview covers **3.14 km east–west × 3.55 km north–south**. Nathan Road's H1 service and its original district data stay intact.
 
 Press **T while stopped** for a cab-view free drive from the Chatham Road approach. Follow the tunnel signs south, use the selected Wan Chai return roads, then take the northbound tube back to Kowloon. **M** shows both directions; **R** restarts H1. The same roads can also be reached through the existing street network. There are no passenger stops on the crossing yet.
@@ -84,3 +86,5 @@ Cladding is omitted where its footprint could intersect the adjacent tube at the
 ## Wan Chai / Causeway Bay streets — 20 September 2026
 
 The island apron is now 2.35 km wide. There are 429 additional government-derived road sections and a fourth, 9.208 km scenic trip. The original 49 road sections, three trips and both tubes keep their existing coordinates. Press I while stopped for island free drive. [Source, regeneration, approximations and verification](ISLAND_EXPANSION.md).
+
+The [13 October Mei Foo / Kwai Chung expansion](KWAI_CHUNG_EXPANSION.md) adds 1,191 connected government road sections and a tenth exploration itinerary, retaining all earlier routes and both tunnel profiles. The loaded bounds are now 8.71 × 10.73 km. **B while stopped** enters the 5.358 km route from the prior Lai Chi Kok endpoint.

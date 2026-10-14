@@ -36,7 +36,7 @@ public partial class Main : Node3D
 
     public override void _Ready()
     {
-        SelfTest = OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--hud-check") || OS.GetCmdlineUserArgs().Contains("--restart-check");
+        SelfTest = OS.GetCmdlineUserArgs().Contains("--map-check") || OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--hud-check") || OS.GetCmdlineUserArgs().Contains("--restart-check");
         RegisterInput();
         Map = new RoadMap();
         PrepareParkEntrances();
@@ -79,7 +79,7 @@ public partial class Main : Node3D
         foreach (var (name, key) in new (string, Key)[] {
             ("accelerate", Key.W), ("brake", Key.S), ("steer_left", Key.A), ("steer_right", Key.D),
             ("handbrake", Key.Space), ("doors", Key.E), ("camera", Key.C), ("reverse", Key.Q),
-            ("tunnel", Key.T), ("island", Key.I), ("central", Key.J), ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V) })
+            ("tunnel", Key.T), ("island", Key.I), ("central", Key.J), ("kowloon", Key.K), ("west", Key.L), ("northwest", Key.N), ("kwai_chung", Key.B), ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V) })
         {
             if (InputMap.HasAction(name)) continue;
             InputMap.AddAction(name);
@@ -241,21 +241,23 @@ public partial class Main : Node3D
             Mark(s-7,-5,9,.24f,"e3dfc9");
         }
         var bounds=Map.Bounds.Grow(22);
-        foreach(float x in new[]{bounds.Position.X,bounds.End.X})
-            Box(this,new(x,.65f,bounds.GetCenter().Y),new(.6f,1.3f,bounds.Size.Y),"bb653f",true);
-        foreach(float z in new[]{bounds.Position.Y,bounds.End.Y})
+        foreach(bool vertical in new[]{false,true})
+        foreach(float edge in vertical?new[]{bounds.Position.X,bounds.End.X}:new[]{bounds.Position.Y,bounds.End.Y})
         {
-            float cursor=bounds.Position.X;
+            float low=vertical?bounds.Position.Y:bounds.Position.X,high=vertical?bounds.End.Y:bounds.End.X,cursor=low;
             void Barrier(float start,float end)
             {
-                if(end>start)Box(this,new((start+end)/2,.65f,z),new(end-start,1.3f,.6f),"bb653f",true);
+                if(end<=start)return;
+                Box(this,vertical?new(edge,.65f,(start+end)/2):new((start+end)/2,.65f,edge),
+                    vertical?new(.6f,1.3f,end-start):new(end-start,1.3f,.6f),"bb653f",true);
             }
-            foreach(var p in HarbourRoads.Where(r=>!r.Tunnel).SelectMany(r=>r.Points).Where(p=>Mathf.Abs(p.Z-z)<8).OrderBy(p=>p.X))
+            foreach(var p in HarbourRoads.Where(r=>!r.Tunnel).SelectMany(r=>r.Points)
+                .Where(p=>Mathf.Abs((vertical?p.X:p.Z)-edge)<8).OrderBy(p=>vertical?p.Z:p.X))
             {
-                Barrier(cursor,Mathf.Min(p.X-12,bounds.End.X));
-                cursor=Mathf.Max(cursor,p.X+12);
+                float along=vertical?p.Z:p.X;
+                Barrier(cursor,Mathf.Min(along-12,high));cursor=Mathf.Max(cursor,along+12);
             }
-            Barrier(cursor,bounds.End.X);
+            Barrier(cursor,high);
         }
 
     }
@@ -356,6 +358,7 @@ public partial class Main : Node3D
             _harbourPaint.SetShaderParameter("district_mask",texture);
         }
         var harbourRoads=HarbourRoads.Where(r=>!r.Tunnel).SelectMany(r=>Enumerable.Range(1,r.Points.Count-1)
+            .Where(i=>Mathf.Max(r.Points[i-1].Y,r.Points[i].Y)<.05f)
             .Select(i=>(new Vector2(r.Points[i-1].X,r.Points[i-1].Z),new Vector2(r.Points[i].X,r.Points[i].Z),6f)));
         using(var mask=Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),pads.Concat(_harbourPaving),HarbourBounds,harbourRoads,2))
             _terrain.SetShaderParameter("harbour_mask",ImageTexture.CreateFromImage(mask));
@@ -485,6 +488,10 @@ public partial class Main : Node3D
         if(e.IsActionPressed("tunnel")){StartHarbourDrive();return;}
         if(e.IsActionPressed("island")){StartHarbourDrive(3);return;}
         if(e.IsActionPressed("central")){StartHarbourDrive(4);return;}
+        if(e.IsActionPressed("kowloon")){StartHarbourDrive(5);return;}
+        if(e.IsActionPressed("west")){StartHarbourDrive(6);return;}
+        if(e.IsActionPressed("northwest")){StartHarbourDrive(8);return;}
+        if(e.IsActionPressed("kwai_chung")){StartHarbourDrive(9);return;}
         if(e.IsActionPressed("restart"))
         {
             // As on quit, finish temporary C# wrappers before replacing their native scene/resources.
@@ -785,10 +792,15 @@ public partial class Main : Node3D
         {
             void Check(bool ok,string message) { if(!ok)throw new Exception(message); }
             await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+            foreach(var size in new[]{new Vector2(8200,1),new Vector2(1,8200)})
+                using(var mask=Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),Array.Empty<Vector2[]>(),
+                    new Rect2(Vector2.Zero,size),Array.Empty<(Vector2,Vector2,float)>(),2))
+                    Check(mask.GetWidth()<=16384 && mask.GetHeight()<=16384,"Expanded surface mask exceeds the 16K texture budget");
             if(OS.GetCmdlineUserArgs().Contains("--restart-check")){await CheckRestart();return;}
             if(OS.GetCmdlineUserArgs().Contains("--hud-check")){CheckHud();await CheckReviewRegressions();QuitGame();return;}
+            if(OS.GetCmdlineUserArgs().Contains("--map-check")){CheckGovernmentMap();QuitGame();return;}
             CheckStreetClearance();
-            if(OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check")){await CheckHarbour();QuitGame();return;}
+            if(OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check")){await CheckHarbour();QuitGame();return;}
             CheckRoadMarkings();
             if(OS.GetCmdlineUserArgs().Contains("--road-check")) { QuitGame(); return; }
             await CheckBuildings();
@@ -942,9 +954,28 @@ public partial class Main : Node3D
         Bus.ToggleDoors();Check(Hud.ServiceInstruction=="Boarding passengers…","Open-door boarding instruction missing");Bus.ToggleDoors();
         Bus.GlobalPosition=Map.At(80,-7.3f);
         Check(Hud.ServiceInstruction.StartsWith("Stop missed"),"H1 missed-stop instruction changed");
+
+        Bus.Position=Map.At(220);var street=CurrentStreet();var anchor=Bus.Position;
+        Check(street=="NATHAN ROAD","Initial street lookup must find Nathan Road");
+        for(int i=0;i<20;i++)Check(CurrentStreet()==street,"Stationary street label changed");
+        Bus.Position=anchor+Map.Forward(220);
+        Check(CurrentStreet()==street && _streetLookupPosition==anchor,"Small movements must reuse the street lookup");
+        Bus.Position=anchor+Map.Forward(220)*3.1f;
+        Check(CurrentStreet()==street && _streetLookupPosition==Bus.Position,"Accumulated movement must refresh the street lookup");
+        var tunnel=HarbourRoads.First(r=>r.Tunnel && r.Points.Any(p=>p.Y<-20));
+        var underground=tunnel.Points.First(p=>p.Y<-20);
+        Bus.Position=new(underground.X,0,underground.Z);CurrentStreet();
+        Bus.Position=underground;
+        Check(CurrentStreet()==tunnel.Name && _streetLookupPosition==Bus.Position,"Vertical relocation must refresh the tunnel street");
+        Bus.Position=Map.At(220);
+        Check(CurrentStreet()=="NATHAN ROAD" && _streetLookupPosition==Bus.Position,"Returning from a route jump must refresh the street");
+        Bus.Position+=Vector3.Down*.5f;CurrentStreet();
+        Bus.Position+=Vector3.Down;
+        CurrentStreet();
+        Check(_streetLookupPosition==Bus.Position,"Crossing the below-ground cutoff must bypass the movement threshold");
         Bus.GlobalTransform=saved;NoticeTime=notice;HarbourDrive=harbour;StopIndex=stopIndex;
         if(failures.Count>0)throw new Exception(string.Join("; ",failures));
-        GD.Print("ANTILA_HUD_CHECKS_OK: north/south correct and oncoming lanes in both modes; turning/junction guards; island, depth and endpoint exploration; H1 distance/boarding/missed-stop guidance");
+        GD.Print("ANTILA_HUD_CHECKS_OK: north/south correct and oncoming lanes in both modes; turning/junction guards; island, depth and endpoint exploration; H1 distance/boarding/missed-stop guidance; street cache movement and vertical/route jumps");
     }
 
     private async System.Threading.Tasks.Task CheckReviewRegressions()

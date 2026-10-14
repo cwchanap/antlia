@@ -1,6 +1,6 @@
 """Offline CSDI building massing. Run with .venv-geodata/bin/python Tools/import_buildings.py.
 
-Survey heights are datums: each touching building group shares its lowest base.
+Survey heights are datums: each touching building group shares its lowest base across regional extracts.
 The flat game terrain preserves relative roof heights, not surveyed ground levels.
 """
 import hashlib
@@ -8,13 +8,14 @@ import json
 import math
 import datetime
 import sys
+import tempfile
 import urllib.parse
 import urllib.request
 from collections import Counter
 from pathlib import Path
 
 from shapely import constrained_delaunay_triangles, make_valid, STRtree, union_all
-from shapely.geometry import Polygon, LineString, Point, box
+from shapely.geometry import Polygon, LineString, Point, box, shape
 from shapely.geometry.polygon import orient
 from shapely.ops import polylabel
 from import_map import local, BBOX, ORIGIN
@@ -35,36 +36,93 @@ def polygons(geometry):
             yield from polygons(part)
 
 
-from import_tunnel import ISLAND_BOUNDS
+from import_tunnel import ISLAND_BOUNDS, KOWLOON_BOUNDS, WEST_BOUNDS, NORTHWEST_BOUNDS, KWAI_CHUNG_BOUNDS
 ISLAND_BBOX = (ORIGIN[0]+ISLAND_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-ISLAND_BOUNDS[3]/111320,
                ORIGIN[0]+ISLAND_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-ISLAND_BOUNDS[1]/111320)
 
+KOWLOON_BBOX = (ORIGIN[0]+KOWLOON_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-KOWLOON_BOUNDS[3]/111320,
+                ORIGIN[0]+KOWLOON_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-KOWLOON_BOUNDS[1]/111320)
+WEST_BBOX = (ORIGIN[0]+WEST_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-WEST_BOUNDS[3]/111320,
+             ORIGIN[0]+WEST_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-WEST_BOUNDS[1]/111320)
+NORTHWEST_BBOX = (ORIGIN[0]+NORTHWEST_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-NORTHWEST_BOUNDS[3]/111320,
+                 ORIGIN[0]+NORTHWEST_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-NORTHWEST_BOUNDS[1]/111320)
 
-def download_island():
-    query = dict(geometry=','.join(map(str,ISLAND_BBOX)),geometryType='esriGeometryEnvelope',
+KWAI_CHUNG_BBOX = (ORIGIN[0]+KWAI_CHUNG_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-KWAI_CHUNG_BOUNDS[3]/111320,
+                   ORIGIN[0]+KWAI_CHUNG_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-KWAI_CHUNG_BOUNDS[1]/111320)
+
+def download_island(north=False, west=False, northwest=False, kwai_chung=False):
+    bbox = KWAI_CHUNG_BBOX if kwai_chung else NORTHWEST_BBOX if northwest else WEST_BBOX if west else KOWLOON_BBOX if north else ISLAND_BBOX
+    query = dict(geometry=','.join(map(str,bbox)),geometryType='esriGeometryEnvelope',
                  inSR=4326,spatialRel='esriSpatialRelIntersects',where='1=1')
     def request(**params):
         with urllib.request.urlopen(SOURCE+'?'+urllib.parse.urlencode(query | params),timeout=60) as response:
             result=json.load(response)
+        if not isinstance(result,dict): raise ValueError('Invalid building service response')
         if 'error' in result: raise ValueError(result['error'])
         return result
-    count=request(f='json',returnCountOnly='true')['count']
+    count=request(f='json',returnCountOnly='true').get('count')
+    if type(count) is not int or count<=0: raise ValueError('Expected a positive building count')
     features=[]
     while len(features)<count:
         page=request(f='geojson',outSR=4326,outFields='*',orderByFields='OBJECTID',resultOffset=len(features),resultRecordCount=3000)
-        assert page.get('features'), 'Empty building page before count reached'
+        if page.get('type')!='FeatureCollection' or not isinstance(page.get('features'),list) or not page['features']:
+            raise ValueError('Invalid or empty building page before count reached')
         features.extend(page['features'])
-    assert len(features)==count==len({f['properties']['OBJECTID'] for f in features}), 'Incomplete building extract'
-    metadata=dict(source=SOURCE,bbox_wgs84=ISLAND_BBOX,retrieved_utc=datetime.datetime.now(datetime.timezone.utc).isoformat())
-    (ROOT/'Data/island-buildings.geojson').write_text(json.dumps(dict(type='FeatureCollection',metadata=metadata,features=features),ensure_ascii=False,separators=(',',':')))
-    print('ISLAND_BUILDINGS_DOWNLOADED:',count)
+    ids=set()
+    for feature in features:
+        if not isinstance(feature,dict) or feature.get('type')!='Feature': raise ValueError('Invalid building feature')
+        props=feature.get('properties');geometry=feature.get('geometry')
+        if not isinstance(props,dict) or type(props.get('OBJECTID')) is not int:
+            raise ValueError('Missing or invalid building OBJECTID')
+        for field in ('BuildingCSUID','BuildingBlockType'):
+            if not isinstance(props.get(field),str) or not props[field].strip(): raise ValueError(f'Missing building {field}')
+        for field in ('BaseHeight','TopHeight','Storeys'):
+            value=props.get(field)
+            if value is not None and (type(value) not in (int,float) or not math.isfinite(value)):
+                raise ValueError(f'Invalid building {field}')
+        if props.get('BuildingNameEN') is not None and not isinstance(props['BuildingNameEN'],str):
+            raise ValueError('Invalid building name')
+        if not isinstance(geometry,dict) or geometry.get('type')!='Polygon': raise ValueError('Expected a building Polygon')
+        rings=geometry.get('coordinates')
+        if not isinstance(rings,list) or not rings: raise ValueError('Missing building polygon rings')
+        for ring in rings:
+            if not isinstance(ring,list) or len(ring)<4 or ring[0]!=ring[-1]: raise ValueError('Invalid building polygon ring')
+            for point in ring:
+                if not isinstance(point,list) or len(point) not in (2,3) or any(type(v) not in (int,float) or not math.isfinite(v) for v in point):
+                    raise ValueError('Invalid building polygon coordinate')
+                if not (-180<=point[0]<=180 and -90<=point[1]<=90): raise ValueError('Expected WGS84 building coordinates')
+        # Match the builder's repair step; source polygons need not already be valid.
+        polygon=make_valid(Polygon([local(p) for p in rings[0]],[[local(p) for p in ring] for ring in rings[1:]]))
+        if polygon.is_empty or polygon.area<=0: raise ValueError('Empty building footprint')
+        ids.add(props['OBJECTID'])
+    if len(features)!=count or len(ids)!=count: raise ValueError('Incomplete or duplicate building extract')
+    metadata=dict(source=SOURCE,bbox_wgs84=bbox,retrieved_utc=datetime.datetime.now(datetime.timezone.utc).isoformat())
+    target=ROOT/('Data/kwai-chung-buildings.geojson' if kwai_chung else 'Data/lai-chi-kok-buildings.geojson' if northwest else 'Data/west-kowloon-buildings.geojson' if west else 'Data/kowloon-north-buildings.geojson' if north else 'Data/island-buildings.geojson')
+    contents=json.dumps(dict(type='FeatureCollection',metadata=metadata,features=features),ensure_ascii=False,separators=(',',':'),allow_nan=False)
+    with tempfile.NamedTemporaryFile(dir=target.parent,prefix=target.name+'.',suffix='.part',delete=False) as staged:
+        pending=Path(staged.name)
+    try:
+        pending.write_text(contents,encoding='utf-8')
+        pending.replace(target)
+    finally:pending.unlink(missing_ok=True)
+    print('KWAI_CHUNG_BUILDINGS_DOWNLOADED:' if kwai_chung else 'NORTHWEST_BUILDINGS_DOWNLOADED:' if northwest else 'WEST_BUILDINGS_DOWNLOADED:' if west else 'NORTH_BUILDINGS_DOWNLOADED:' if north else 'ISLAND_BUILDINGS_DOWNLOADED:',count,flush=True)
 
 
-def build(island=False):
-    raw = ROOT / ("Data/island-buildings.geojson" if island else "Data/buildings.geojson")
+def build(island=False, north=False, west=False, northwest=False, kwai_chung=False):
+    raw = ROOT / ("Data/kwai-chung-buildings.geojson" if kwai_chung else "Data/lai-chi-kok-buildings.geojson" if northwest else "Data/west-kowloon-buildings.geojson" if west else "Data/kowloon-north-buildings.geojson" if north else "Data/island-buildings.geojson" if island else "Data/buildings.geojson")
     features = json.loads(raw.read_text())["features"]
     roads = json.loads((ROOT / "Data/nathan-road.json").read_text())
-    boundary = box(*(ISLAND_BOUNDS if island else roads['bounds']))
+    boundary = box(*(KOWLOON_BOUNDS if north else ISLAND_BOUNDS if island else roads['bounds']))
+    if island:boundary=shape(json.loads((ROOT/'Data/island-coast.json').read_text())['land'])
+    if west:
+        coast=json.loads((ROOT/'Data/west-kowloon-coast.json').read_text())
+        boundary=shape(coast['land']).difference(union_all([box(*roads['bounds']),box(*KOWLOON_BOUNDS)]))
+    if northwest:
+        coast=json.loads((ROOT/'Data/lai-chi-kok-coast.json').read_text())
+        boundary=shape(coast['land']).difference(union_all([box(*WEST_BOUNDS),box(*roads['bounds']),box(*KOWLOON_BOUNDS)]))
+    if kwai_chung:
+        coast=json.loads((ROOT/'Data/kwai-chung-coast.json').read_text())
+        boundary=shape(coast['land']).difference(union_all([box(*WEST_BOUNDS),box(*NORTHWEST_BOUNDS),box(*roads['bounds']),box(*KOWLOON_BOUNDS)]))
     buffers = [LineString(roads["road_points"]).buffer(13.5, quad_segs=2, join_style="mitre")]
     for road in roads["side_roads"]:
         width = 18 if road["name"] in WIDE else 12
@@ -80,8 +138,15 @@ def build(island=False):
     exclusion = union_all([PARK, road_zone, turn_clearance])
     source_polys = [make_valid(Polygon([local(p) for p in f["geometry"]["coordinates"][0]],
                       [[local(p) for p in ring] for ring in f["geometry"]["coordinates"][1:]])) for f in features]
-    tree = STRtree(source_polys)
-    parent = list(range(len(features)))
+    base_sources = [raw] if island else [ROOT/'Data'/name for name in
+        ('buildings.geojson','kowloon-north-buildings.geojson','west-kowloon-buildings.geojson','lai-chi-kok-buildings.geojson','kwai-chung-buildings.geojson')]
+    snapshots = [json.loads(path.read_text()) for path in base_sources]
+    snapshots.sort(key=lambda data: datetime.datetime.fromisoformat(data.get('metadata',{}).get('retrieved_utc','2026-09-13T00:00:00+00:00')))
+    base_features = [f for snapshot in snapshots for f in snapshot['features']]
+    base_polys = source_polys if island else [make_valid(Polygon([local(p) for p in f['geometry']['coordinates'][0]],
+        [[local(p) for p in ring] for ring in f['geometry']['coordinates'][1:]])) for f in base_features]
+    tree = STRtree(base_polys)
+    parent = list(range(len(base_features)))
 
     def group(i):
         while parent[i] != i:
@@ -89,26 +154,34 @@ def build(island=False):
             i = parent[i]
         return i
 
-    for i, poly in enumerate(source_polys):
+    by_csuid = {}
+    for i, f in enumerate(base_features):
+        csuid = f['properties']['BuildingCSUID']
+        assert isinstance(csuid,str) and csuid, 'Missing persistent building identity'
+        if csuid in by_csuid:parent[group(i)] = group(by_csuid[csuid])
+        by_csuid[csuid] = i
+    for i, poly in enumerate(base_polys):
         for j in tree.query(poly, predicate="dwithin", distance=.25):
             parent[group(int(j))] = group(i)
     ground = {}
-    for i, f in enumerate(features):
+    for i, f in enumerate(base_features):
         base = f["properties"].get("BaseHeight")
         if isinstance(base, (float, int)) and math.isfinite(base):
             root = group(i)
             ground[root] = min(ground.get(root, base), base)
+    roots = [group(by_csuid[f['properties']['BuildingCSUID']]) for f in features]
 
     candidates = []
     missing = clipped = 0
     for i, (f, poly) in enumerate(zip(features, source_polys)):
-        props = f["properties"]
+        # The newest extract owns height inputs; regional footprints and IDs stay local.
+        props = base_features[by_csuid[f['properties']['BuildingCSUID']]]["properties"]
         top = props.get("TopHeight")
-        if not isinstance(top, (int, float)) or top <= ground.get(group(i), 4):
+        if not isinstance(top, (int, float)) or top <= ground.get(roots[i], 4):
             missing += 1
             height = max(3.2, (props.get("Storeys") or 3)*3.2)
         else:
-            height = top - ground.get(group(i), props.get("BaseHeight") or 4)
+            height = top - ground.get(roots[i], props.get("BaseHeight") or 4)
         playable = poly.intersection(boundary).difference(exclusion)
         if poly.area - playable.area > .1:
             clipped += 1
@@ -118,7 +191,7 @@ def build(island=False):
     occupied = {}
     output = []
     for height, i, playable in candidates:
-        root = group(i)
+        root = roots[i]
         visible = playable.difference(occupied[root]) if root in occupied else playable
         occupied[root] = union_all([occupied[root], playable]) if root in occupied else playable
         props = features[i]["properties"]
@@ -165,9 +238,9 @@ def build(island=False):
                 continue
             point = patch.representative_point()
             pavement_patches.append({"center": [point.x,point.y], "polygon": list(patch.exterior.coords)[:-1]})
-    assert (island or pavement_patches) and all(Polygon(p["polygon"]).is_valid for p in pavement_patches)
+    assert (kwai_chung or northwest or west or north or island or pavement_patches) and all(Polygon(p["polygon"]).is_valid for p in pavement_patches)
     names = {b["name"] for b in output}
-    if not island:
+    if not (island or north or west or northwest or kwai_chung):
         assert len(features) == 1718 and len(output) > 900 and area > 650000
         assert any("MASTERPIECE" in n.upper() for n in names)
         assert max(b["height"] for b in output) > 240
@@ -176,19 +249,26 @@ def build(island=False):
     assert min(b["height"] for b in output) > 0
     meta = {"provider": "Lands Department, HKSAR Government / CSDI Portal", "source": SOURCE,
             "terms": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC", "retrieved_utc": json.loads(raw.read_text()).get('metadata',{}).get('retrieved_utc','2026-09-13'),
-            "source_sha256": hashlib.sha256(raw.read_bytes()).hexdigest(), "bbox_wgs84": ISLAND_BBOX if island else BBOX, "origin_wgs84": ORIGIN,
+            "source_sha256": hashlib.sha256(raw.read_bytes()).hexdigest(), "bbox_wgs84": KWAI_CHUNG_BBOX if kwai_chung else NORTHWEST_BBOX if northwest else WEST_BBOX if west else KOWLOON_BBOX if north else ISLAND_BBOX if island else BBOX, "origin_wgs84": ORIGIN,
             "source_parts": len(features), "rendered_parts": len(output), "source_parts_retained": len({b["id"] for b in output}),
             "source_parts_clipped": clipped, "fallback_height_parts": missing, "footprint_area_m2": round(area),
             "volume_m3": round(sum(p.area*b["height"] for p,b in zip(actual,output))),
             "styles": dict(Counter(b["style"] for b in output)),
             "note": "Derived game massing, not survey-grade reconstruction. Flat ground; connected-part minimum base datum; upper-envelope podium/tower silhouettes. Road clearance 3.5m beyond authored carriageways including the Cross-Harbour surface approaches, plus 2m within 32m of the Nathan/Granville bus turn; authored park omitted. Missing heights use storeys x 3.2m or 9.6m. Facades are generated artwork, not surveyed photographs."}
     meta["small_pavement_gaps_filled"] = len(pavement_patches)
+    if island or north or west or northwest or kwai_chung:
+        meta['note'] = 'Derived expansion corridor massing on the authored land apron, not survey-grade reconstruction. Original WGS84 footprints and relative roof heights; flat ground; connected-part minimum base datum and upper-envelope podium/tower silhouettes. Buildings clipped to the land boundary and 3.5m beyond the surface carriageways. Missing heights use storeys x 3.2m or 9.6m. Facades, paving and vegetation are authored; selected street centrelines come from the Transport Department; the coastline remains authored.'
+    if west or northwest or kwai_chung:meta['note']=meta['note'].replace('authored land apron','government-derived land boundary').replace('the coastline remains authored','the western coastline comes from LandsD iB1000 Shoreline and CartoHydroLine seawall/high-water features, with recorded short gap repairs; prior building regions are excluded to avoid duplicate geometry')
     if island:
-        meta['note'] = 'Derived island corridor massing on the authored land apron, not survey-grade reconstruction. Original WGS84 footprints and relative roof heights; flat ground; connected-part minimum base datum and upper-envelope podium/tower silhouettes. Buildings clipped to the land boundary and 3.5m beyond the surface carriageways. Missing heights use storeys x 3.2m or 9.6m. Facades, paving and vegetation are authored; selected street centrelines come from the Transport Department; the coastline remains authored.'
-    (ROOT / ("Data/island-building-layout.json" if island else "Data/building-layout.json")).write_text(json.dumps({"metadata": meta, "buildings": output, "pavement_patches": pavement_patches}, ensure_ascii=False, separators=(",", ":")))
+        meta['note']=meta['note'].replace('authored land apron','government-derived land boundary').replace('the coastline remains authored','the island shoreline comes from LandsD iB1000 with recorded authored ferry-terminal and tunnel-mouth joins')
+        meta['coast_sha256']=hashlib.sha256((ROOT/'Data/island-coast.json').read_bytes()).hexdigest()
+    else:
+        meta['base_sources_sha256'] = {str(path.relative_to(ROOT)):hashlib.sha256(path.read_bytes()).hexdigest() for path in base_sources}
+        meta['note'] += ' Base datums are reconciled across all five Kowloon extracts before regional clipping; duplicate BuildingCSUID records share one group. TopHeight and fallback Storeys use the newest retrieved_utc record per BuildingCSUID (original undated extract: 2026-09-13 UTC; ties prefer Kwai Chung, northwest, west, north, original). Each region retains its own source footprint and OBJECTID.'
+    (ROOT / ("Data/kwai-chung-layout.json" if kwai_chung else "Data/lai-chi-kok-layout.json" if northwest else "Data/west-kowloon-layout.json" if west else "Data/kowloon-north-layout.json" if north else "Data/island-building-layout.json" if island else "Data/building-layout.json")).write_text(json.dumps({"metadata": meta, "buildings": output, "pavement_patches": pavement_patches}, ensure_ascii=False, separators=(",", ":")))
     print("BUILDING_LAYOUT_OK:", json.dumps(meta, ensure_ascii=False))
 
 
 if __name__ == "__main__":
-    if '--download' in sys.argv: download_island()
-    build('--island' in sys.argv)
+    if '--download' in sys.argv: download_island('--north' in sys.argv, '--west' in sys.argv, '--northwest' in sys.argv, '--kwai-chung' in sys.argv)
+    build('--island' in sys.argv, '--north' in sys.argv, '--west' in sys.argv, '--northwest' in sys.argv, '--kwai-chung' in sys.argv)

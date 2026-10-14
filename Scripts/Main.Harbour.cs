@@ -7,25 +7,37 @@ using System.Threading.Tasks;
 
 public partial class Main
 {
-    public Rect2 HarbourBounds,IslandBounds;
+    public Rect2 HarbourBounds,IslandBounds,KowloonNorthBounds;
+    public Vector2[] KowloonWestLand = Array.Empty<Vector2>();
+    public Vector2[] IslandLand = Array.Empty<Vector2>();
+    public readonly List<Vector2[]> KowloonCoastline = new();
+    public readonly List<Vector2[]> IslandCoastline = new();
     private readonly List<(Vector3 Position,float Radius)> _islandDetails = new();
     public bool HarbourDrive;
-    public readonly List<(string Name,bool Tunnel,List<Vector3> Points)> HarbourRoads = new();
+    public readonly List<(string Name,bool Tunnel,bool Elevated,List<Vector3> Points)> HarbourRoads = new();
     private readonly List<(string Name,List<Vector3> Points)> _harbourRoutes = new();
     private Node3D _harbour = null!;
     private MeshInstance3D[] _vehicleMeshes = Array.Empty<MeshInstance3D>();
     private ShaderMaterial _harbourPaint = null!;
     private readonly List<Vector2[]> _harbourPaving = new();
+    private Vector3 _streetLookupPosition;
+    private string? _streetName;
 
     private MeshInstance3D BuildHarbour()
     {
         using var doc=JsonDocument.Parse(FileAccess.GetFileAsString("res://Data/cross-harbour.json"));
         var root=doc.RootElement;var b=root.GetProperty("bounds");
         var island=root.GetProperty("island_bounds");IslandBounds=new(island[0].GetSingle(),island[1].GetSingle(),island[2].GetSingle()-island[0].GetSingle(),island[3].GetSingle()-island[1].GetSingle());
+        var north=root.GetProperty("kowloon_north_bounds");KowloonNorthBounds=new(north[0].GetSingle(),north[1].GetSingle(),north[2].GetSingle()-north[0].GetSingle(),north[3].GetSingle()-north[1].GetSingle());
+        Vector2[] FlatPoints(JsonElement row)=>row.EnumerateArray().Select(p=>new Vector2(p[0].GetSingle(),p[1].GetSingle())).ToArray();
+        KowloonWestLand=FlatPoints(root.GetProperty("kowloon_west_land").GetProperty("coordinates")[0]);
+        IslandLand=FlatPoints(root.GetProperty("island_land").GetProperty("coordinates")[0]);
+        foreach(var line in root.GetProperty("kowloon_coastline").EnumerateArray())KowloonCoastline.Add(FlatPoints(line));
+        foreach(var line in root.GetProperty("island_coastline").EnumerateArray())IslandCoastline.Add(FlatPoints(line));
         HarbourBounds=new(b[0].GetSingle(),b[1].GetSingle(),b[2].GetSingle()-b[0].GetSingle(),b[3].GetSingle()-b[1].GetSingle());
         List<Vector3> Points(JsonElement row)=>row.GetProperty("points").EnumerateArray().Select(p=>new Vector3(p[0].GetSingle(),p[1].GetSingle(),p[2].GetSingle())).ToList();
         foreach(var road in root.GetProperty("roads").EnumerateArray())
-            HarbourRoads.Add((road.GetProperty("name").GetString()!,road.GetProperty("tunnel").GetBoolean(),Points(road)));
+            HarbourRoads.Add((road.GetProperty("name").GetString()!,road.GetProperty("tunnel").GetBoolean(),road.GetProperty("elevated").GetBoolean(),Points(road)));
         foreach(var route in root.GetProperty("routes").EnumerateArray())_harbourRoutes.Add((route.GetProperty("name").GetString()!,Points(route)));
         _harbour=Asset("cross-harbour",Vector3.Zero);_harbour.Name="CrossHarbour";
         _harbourPaint=new ShaderMaterial {Shader=GD.Load<Shader>("res://Assets/Materials/harbour-paint.gdshader")};
@@ -44,9 +56,9 @@ public partial class Main
             if(name=="RoadSurface")mesh.Visible=false;
             if(name=="HarbourWater")mesh.MaterialOverride=new ShaderMaterial {Shader=GD.Load<Shader>("res://Assets/Materials/harbour-water.gdshader")};
             if(name.StartsWith("Paint") && mesh.Layers==1)mesh.MaterialOverride=_harbourPaint;
-            if(name.StartsWith("Exterior") || name.StartsWith("Portal"))mesh.MaterialOverride=exterior;
+            if(name.StartsWith("Exterior") || name.StartsWith("Portal") || name.StartsWith("Deck") || name.EndsWith("Seawall") || name.EndsWith("Boundary"))mesh.MaterialOverride=exterior;
             if(name=="RoadSurface" || name=="HarbourWater" || name.StartsWith("Paint") || name.StartsWith("Lamps") || name.StartsWith("Reflectors"))continue;
-            var body=new StaticBody3D {Name="Solid",Position=name.StartsWith("Road_")?Vector3.Down*.035f:Vector3.Zero};mesh.AddChild(body);
+            var body=new StaticBody3D {Name="Solid",Position=name.StartsWith("Road_") || name.StartsWith("Deck")?Vector3.Down*.035f:Vector3.Zero};mesh.AddChild(body);
             body.AddChild(new CollisionShape3D {Shape=mesh.Mesh.CreateTrimeshShape()});
         }
         foreach(var road in HarbourRoads.Where(r=>r.Tunnel))
@@ -70,11 +82,15 @@ public partial class Main
 
     private void BuildHarbourScenery()
     {
-        bool Clear(Vector3 p,float margin)=>IslandBounds.Grow(-margin-1).HasPoint(new(p.X,p.Z)) &&
+        bool West(Vector3 p,float margin)=>!Map.Bounds.Grow(margin+2).HasPoint(new(p.X,p.Z)) && Geometry2D.IsPointInPolygon(new(p.X,p.Z),KowloonWestLand) &&
+            !KowloonCoastline.Any(line=>Enumerable.Range(1,line.Length-1).Any(i=>Geometry2D.GetClosestPointToSegment(new(p.X,p.Z),line[i-1],line[i]).DistanceTo(new(p.X,p.Z))<margin+2));
+        bool Island(Vector3 p,float margin)=>Geometry2D.IsPointInPolygon(new(p.X,p.Z),IslandLand) &&
+            !IslandCoastline.Any(line=>Enumerable.Range(1,line.Length-1).Any(i=>Geometry2D.GetClosestPointToSegment(new(p.X,p.Z),line[i-1],line[i]).DistanceTo(new(p.X,p.Z))<margin+2));
+        bool Clear(Vector3 p,float margin)=>((p.Z<0?KowloonNorthBounds.Grow(-margin-1).HasPoint(new(p.X,p.Z)):Island(p,margin)) || West(p,margin)) &&
             !_lots.Any(l=>l.Bounds.Grow(margin).HasPoint(new(p.X,p.Z))) &&
             !_islandDetails.Any(d=>p.DistanceTo(d.Position)<d.Radius+margin+1) &&
             !HarbourRoads.Any(r=>Enumerable.Range(1,r.Points.Count-1).Any(j=>
-                p.DistanceTo(Geometry3D.GetClosestPointToSegment(p,r.Points[j-1],r.Points[j]))<6+margin));
+                new Vector2(p.X,p.Z).DistanceTo(Geometry2D.GetClosestPointToSegment(new(p.X,p.Z),new(r.Points[j-1].X,r.Points[j-1].Z),new(r.Points[j].X,r.Points[j].Z)))<6+margin));
         void Detail(string name,Vector3 p,float yaw,float radius,float scale=1)
         {
             var asset=Asset(name,p,yaw,new(scale,scale,scale));_islandDetails.Add((p,radius));
@@ -87,8 +103,8 @@ public partial class Main
             }
         }
         var rng=new Random(1972);int trees=0,lamps=0,people=0,kiosks=0;
-        var kioskSites=new List<Vector3>();var districtPeople=new int[2];var districtKiosks=new int[2];
-        foreach(var road in HarbourRoads.Where(r=>!r.Tunnel && r.Points[0].Z>1100 && r.Name!="-99"))
+        var kioskSites=new List<Vector3>();var districtPeople=new int[7];var districtKiosks=new int[7];
+        foreach(var road in HarbourRoads.Where(r=>!r.Tunnel && !r.Elevated && (r.Points[0].Z>0 || r.Points[0].Z < KowloonNorthBounds.End.Y || West(r.Points[0],0)) && r.Name!="-99"))
             for(int i=8;i<road.Points.Count-8;i+=22)
             {
                 var p=road.Points[i];var f=(road.Points[i+1]-p).Normalized();var right=f.Cross(Vector3.Up);
@@ -111,7 +127,7 @@ public partial class Main
                     if(Clear(tree,2.7f))
                     {Detail(trees%2==0?"street-tree":"banyan",tree,rng.NextSingle()*Mathf.Tau,2.7f,trees%2==0?1:.7f);trees++;}
                     else if(Clear(at+f*4,1))Detail("planter",at+f*4,yaw,1);
-                    int district=at.X < -300?1:0;
+                    int district=at.X < -4600 || at.Z < -6000?6:at.X < -2700 || at.Z < -4800?5:at.Z<0?(KowloonNorthBounds.HasPoint(new(at.X,at.Z))?2:at.Z < -3350?4:3):at.X < -300?1:0;
                     var pedestrian=at-f*5;
                     if(districtPeople[district]<(district==0?64:48) && lamps%2==0 && Clear(pedestrian,.45f))
                     {Detail(new[]{"passenger_mei","passenger_dennis","passenger_headphones"}[people%3],pedestrian,yaw+.4f,.45f);people++;districtPeople[district]++;}
@@ -131,27 +147,30 @@ public partial class Main
                 if(!Clear(p,3))continue;
                 Detail(trees%2==0?"street-tree":"banyan",p,rng.NextSingle()*Mathf.Tau,3,trees%2==0?1.1f:.8f);trees++;
             }
-        var stone=new StandardMaterial3D {AlbedoTexture=GD.Load<Texture2D>("res://Assets/Textures/pavement-stone.png"),
-            AlbedoColor=new("89948c"),Roughness=.92f,Uv1Triplanar=true,Uv1Scale=new(1.5f,1.5f,1.5f)};
-        foreach(var (a,b) in new[]{(new Vector2(IslandBounds.Position.X,1100),new Vector2(1060,1100)),(new Vector2(1140,1100),new Vector2(IslandBounds.End.X,1100)),
-            (new Vector2(IslandBounds.Position.X,1100),new Vector2(IslandBounds.Position.X,IslandBounds.End.Y)),(new Vector2(IslandBounds.End.X,1100),new Vector2(IslandBounds.End.X,IslandBounds.End.Y)),(new Vector2(IslandBounds.Position.X,IslandBounds.End.Y),new Vector2(IslandBounds.End.X,IslandBounds.End.Y))})
-        {
-            var center=(a+b)/2;var d=b-a;float length=d.Length();float yaw=Mathf.Atan2(-d.X,-d.Y);
-            var edge=new Node3D {Name="Seawall",Position=new(center.X,0,center.Y),Rotation=new(0,yaw,0)};AddChild(edge);
-            var wall=Box(edge,new(0,-.65f,0),new(.75f,3.3f,length),"777e78",true);wall.MaterialOverride=stone;
-            Box(edge,new(0,1.05f,0),new(.95f,.18f,length),"adaf9f");
-        }
-        // Authored promenade stays on the existing land apron and clear of both portal openings.
-        foreach(var (start,end) in new[]{(IslandBounds.Position.X+6,1055f),(1145f,IslandBounds.End.X-6)})
-        {
-            _harbourPaving.Add(new[]{new Vector2(start,1101),new Vector2(end,1101),new Vector2(end,1108),new Vector2(start,1108)});
-            for(float x=start+16;x<end-8;x+=32)
+        // Promenade follows the sourced shore; the land mesh clips paving at tight pier corners.
+        float nextBench=0;
+        foreach(var line in IslandCoastline)
+            for(int i=1;i<line.Length;i++)
             {
-                var p=new Vector3(x,0,1106);if(!Clear(p,2))continue;
-                Detail("bench",p,Mathf.Pi,1.6f);if(Clear(p+Vector3.Right*4,1))Detail("planter",p+Vector3.Right*4,0,1);
+                var a=line[i-1];var b=line[i];var delta=b-a;float length=delta.Length();
+                if(length<.1f)continue;
+                var normal=delta.Orthogonal().Normalized();var midpoint=(a+b)/2;
+                if(!Geometry2D.IsPointInPolygon(midpoint+normal*4,IslandLand))normal=-normal;
+                if(!Geometry2D.IsPointInPolygon(midpoint+normal*4,IslandLand))continue;
+                _harbourPaving.Add(new[]{a+normal,b+normal,b+normal*8,a+normal*8});
+                for(float along=nextBench;along<length;along+=48)
+                {
+                    var q=a+delta*(along/length)+normal*5;var p=new Vector3(q.X,0,q.Y);
+                    if(Clear(p,2))Detail("bench",p,Mathf.Atan2(-normal.X,-normal.Y),1.6f);
+                }
+                nextBench=(nextBench-length)%48;if(nextBench<0)nextBench+=48;
             }
-        }
-        GD.Print($"ANTILA_HARBOUR_SCENERY: {trees} trees, {lamps} lamps, {people} pedestrians, {kiosks} kiosks; government island blocks and promenade");
+        // Outer north/east barriers and the sourced coastline are batched in the harbour GLB.
+        GD.Print($"ANTILA_WEST_KOWLOON_SCENERY: {districtPeople[3]+districtPeople[4]} pedestrians; {districtKiosks[3]+districtKiosks[4]} kiosks; government western shore");
+        GD.Print($"ANTILA_KWAI_CHUNG_SCENERY: {districtPeople[6]} pedestrians; {districtKiosks[6]} kiosks; Mei Foo / Lai King / Kwai Chung");
+        GD.Print($"ANTILA_NORTHWEST_SCENERY: {districtPeople[5]} pedestrians; {districtKiosks[5]} kiosks; Cheung Sha Wan / Lai Chi Kok");
+        GD.Print($"ANTILA_KOWLOON_SCENERY: {_islandDetails.Count(d=>d.Position.Z<KowloonNorthBounds.End.Y)} details; {districtPeople[2]} pedestrians; {districtKiosks[2]} kiosks");
+        GD.Print($"ANTILA_HARBOUR_SCENERY: {trees} trees, {lamps} lamps, {people} pedestrians, {kiosks} kiosks; government expansion blocks and island promenade");
     }
 
     private bool InsideTunnel(Vector3 position)
@@ -175,16 +194,21 @@ public partial class Main
 
     public string CurrentStreet()
     {
-        var nearest=Map.NearestStreet(Bus.Position);float best=nearest.Distance;
+        var position=Bus.Position;
+        // shortcut: street changes may lag by 3 m, use a spatial index if precise junction labels become necessary.
+        if(_streetName!=null && position.DistanceSquaredTo(_streetLookupPosition)<9 &&
+            (position.Y<-1)==(_streetLookupPosition.Y<-1))return _streetName;
+        var nearest=Map.NearestStreet(position);float best=nearest.Distance;
         string name=nearest.Name;
-        if(Bus.Position.Y<-1)best=float.MaxValue;
+        if(position.Y<-1)best=float.MaxValue;
         foreach(var road in HarbourRoads)
             for(int i=1;i<road.Points.Count;i++)
             {
-                float d=Bus.Position.DistanceTo(Geometry3D.GetClosestPointToSegment(Bus.Position,road.Points[i-1],road.Points[i]));
+                float d=position.DistanceTo(Geometry3D.GetClosestPointToSegment(position,road.Points[i-1],road.Points[i]));
                 if(d<best){best=d;name=road.Name=="-99"?"WAN CHAI CONNECTION":road.Name;}
             }
-        return name;
+        _streetLookupPosition=position;_streetName=name;
+        return _streetName;
     }
 
     private void StartHarbourDrive(int route=0)
@@ -194,18 +218,179 @@ public partial class Main
         var p=_harbourRoutes[route].Points;var f=p[1]-p[0];
         Bus.ResetAt(p[0]+f.Normalized().Cross(Vector3.Up)*(route>=3?-1.8f:1.8f),Mathf.Atan2(-f.X,-f.Z));
         Bus.SetPaused(false);SetCab(true);
-        ShowNotice(route==4?"Admiralty / Central • M map • R returns to H1":route==0?"Follow the tunnel signs. M opens the map; R returns to H1.":"Wan Chai / Causeway Bay • M map • R returns to H1");
+        ShowNotice(route==9?"Mei Foo / Lai King / Kwai Chung • M map • R returns to H1":route==8?"Sham Shui Po / Cheung Sha Wan / Lai Chi Kok • M map • R returns to H1":route==6?"West Kowloon / Tai Kok Tsui / Sham Shui Po • M map • R returns to H1":route==5?"Jordan / Yau Ma Tei / Mong Kok • M map • R returns to H1":route==4?"Admiralty / Central • M map • R returns to H1":route==0?"Follow the tunnel signs. M opens the map; R returns to H1.":"Wan Chai / Causeway Bay • M map • R returns to H1");
+    }
+
+    private void CheckGovernmentMap()
+    {
+        var failures=new List<string>();
+        foreach(var p in new[]{new Vector3(549.97f,0,1662.43f),new Vector3(555.78f,0,1663.72f),
+            new Vector3(-1483.04f,0,-2909.95f),new Vector3(-1436.30f,0,-2939.52f),
+            new Vector3(-1523.75f,0,-2972.54f),new Vector3(-1478.03f,0,-3002.60f)})
+        {
+            using var upperRay=PhysicsRayQueryParameters3D.Create(p+Vector3.Up*14,p+Vector3.Up*5.5f,1);
+            using var lowerRay=PhysicsRayQueryParameters3D.Create(p+Vector3.Up*4.8f,p+Vector3.Down,1);
+            var upper=GetWorld3D().DirectSpaceState.IntersectRay(upperRay);
+            var lower=GetWorld3D().DirectSpaceState.IntersectRay(lowerRay);
+            if(upper.Count==0 || Mathf.Abs(upper["position"].AsVector3().Y-7)>.1f || lower.Count==0 || Mathf.Abs(lower["position"].AsVector3().Y)>.1f)
+                failures.Add($"Missing separate elevated deck and ground road at {p}");
+        }
+        using(var ray=PhysicsRayQueryParameters3D.Create(new(-1343.35f,410,1079.88f),new(-1343.35f,390,1079.88f),1))
+        {
+            var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
+            if(hit.Count==0 || Mathf.Abs(hit["position"].AsVector3().Y-402.5f)>.1f)
+                failures.Add("Two IFC tower roof is clipped by the island land boundary");
+        }
+        foreach(var z in new[]{-1310.2907f,-1313.7907f,-1316.2907f})
+        {
+            var p=new Vector3(887.6666f,0,z);
+            using var ray=PhysicsRayQueryParameters3D.Create(p+Vector3.Up*2,p+Vector3.Down*3,1);
+            var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
+            if(hit.Count==0 || Mathf.Abs(hit["position"].AsVector3().Y)>.1f)
+                failures.Add($"Hong Chong Road carriageway lacks ground at {p}");
+        }
+        foreach(var (name,a,b) in new[]{("Ping An Tower",new Vector3(-761.5552f,160,-1164.2289f),new Vector3(-756.2598f,160,-1201.3289f)),
+            ("One IGC",new Vector3(-811.1124f,130,-1181.1583f),new Vector3(-805.3707f,130,-1217.0359f))})
+        {
+            using var rayA=PhysicsRayQueryParameters3D.Create(a,a-Vector3.Up*30,1);
+            using var rayB=PhysicsRayQueryParameters3D.Create(b,b-Vector3.Up*30,1);
+            var roofA=GetWorld3D().DirectSpaceState.IntersectRay(rayA);
+            var roofB=GetWorld3D().DirectSpaceState.IntersectRay(rayB);
+            if(roofA.Count==0 || roofB.Count==0 || Mathf.Abs(roofA["position"].AsVector3().Y-roofB["position"].AsVector3().Y)>.05f)
+                failures.Add($"{name} roof height differs across the regional boundary");
+        }
+        foreach(var p in new[]{new Vector3(1082.488f,0,1260.517f),new Vector3(1096.1724f,0,1260.3794f),
+            new Vector3(840.4762f,0,-778.3663f),new Vector3(816.3204f,0,-699.4204f)})
+        {
+            using var ray=PhysicsRayQueryParameters3D.Create(p+Vector3.Up*1.5f,p+Vector3.Down*2,1);
+            var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
+            if(hit.Count==0 || Mathf.Abs(hit["position"].AsVector3().Y)>.05f)
+                failures.Add($"Tunnel entrance has a ground / floor gap at {p}");
+        }
+        foreach(var p in new[]{new Vector3(508.0855f,7,1592.6369f),new Vector3(-1335.3376f,2.6915f,-3122.6752f),
+            new Vector3(-1531.085f,7,-2965.6006f),new Vector3(-1493.0382f,7,-2905.7468f),
+            new Vector3(-1472.9465f,7,-3006.0779f),new Vector3(-1540.3047f,6.8878f,-2951.683f)})
+        {
+            using var ray=PhysicsRayQueryParameters3D.Create(p+Vector3.Up*.2f,p+Vector3.Down*.2f,1);
+            var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
+            if(hit.Count==0 || Mathf.Abs(hit["position"].AsVector3().Y-p.Y)>.1f)
+                failures.Add($"Raised road join lacks deck support at {p}");
+        }
+        foreach(var (p,land) in new[]{(new Vector3(-1600,0,850),true),(new Vector3(-1600,0,1000),true),
+            (new Vector3(0,0,600),false),(new Vector3(1000,0,900),false)})
+        {
+            using var ray=PhysicsRayQueryParameters3D.Create(p+Vector3.Up,p+Vector3.Down*2,1);
+            if((GetWorld3D().DirectSpaceState.IntersectRay(ray).Count>0)!=land)failures.Add($"Island land / sea collision mismatch at {p}");
+        }
+        int walls=0;
+        foreach(var line in IslandCoastline)
+            for(int i=1;i<line.Length;i+=50)
+            {
+                var a=line[i-1];var b=line[i];if(a.DistanceTo(b)<1)continue;
+                var middle=(a+b)/2;var normal=(b-a).Orthogonal().Normalized();
+                var p=new Vector3(middle.X,.6f,middle.Y);var side=new Vector3(normal.X,0,normal.Y);
+                using var ray=PhysicsRayQueryParameters3D.Create(p+side*1.5f,p-side*1.5f,1);
+                var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
+                if(hit.Count==0 || (hit["collider"].AsGodotObject() as Node)!.GetParent().Name!="IslandSeawall")failures.Add($"Island seawall collision missing at {p}");
+                walls++;
+            }
+        if(walls==0)failures.Add("No island seawall probes ran");
+        if(failures.Count>0)throw new Exception(string.Join("; ",failures));
+        GD.Print($"ANTILA_GOVERNMENT_MAP_OK: six grade-separated crossings retain lower roads; Two IFC roof restored; Hong Chong carriageway supported; 2 regional roof seams level; 4 tunnel entrances supported; 6 raised joins supported; 4 island land / sea and {walls} seawall probes");
+    }
+
+    private async Task CheckNorthwest()
+    {
+        void Check(bool ok,string message){if(!ok)throw new Exception(message);}
+        var initial=Bus.Position;
+        foreach(int state in new[]{0,1,2})
+        {
+            MapOpen=state==0;Paused=state==1;Complete=state==2;
+            _UnhandledInput(new InputEventKey {PhysicalKeycode=Key.N,Pressed=true});
+            Check(!HarbourDrive && Bus.Position==initial,"Northwest shortcut must respect map, pause and completed service");
+        }
+        MapOpen=Paused=Complete=false;
+        Bus.AutomaticTest=true;Bus.TestThrottle=1;
+        for(int i=0;i<45;i++)await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+        Check(Bus.Kmh>.5f,"Northwest moving-shortcut check must move the bus");
+        var moving=Bus.Position;_UnhandledInput(new InputEventKey {PhysicalKeycode=Key.N,Pressed=true});
+        Check(!HarbourDrive && Bus.Position==moving,"Northwest shortcut must not teleport a moving bus");
+        Bus.TestThrottle=0;Bus.AutomaticTest=false;Bus.ResetAt(Map.At(22,-7.3f),Map.Heading(22));
+        _UnhandledInput(new InputEventKey {PhysicalKeycode=Key.N,Pressed=true});
+        Check(HarbourDrive && CabView && Bus.Position.DistanceTo(_harbourRoutes[8].Points[0])<3,"N shortcut must start the Lai Chi Kok drive");
+        HarbourDrive=false;SetCab(false);Bus.ResetAt(Map.At(22,-7.3f),Map.Heading(22));
+        Check(HarbourBounds.Position.X<=-4680 && HarbourBounds.Position.Y<=-6080,"Northwestern map extent missing");
+        Check(_lots.Count(l=>l.Center.X < -2700 || l.Center.Z < -4800)>300,"Lai Chi Kok building coverage missing");
+        Check(_islandDetails.Count(d=>d.Position.X < -2700 || d.Position.Z < -4800)>80,"Lai Chi Kok street detail missing");
+        var route=_harbourRoutes[8].Points;
+        Check(route[0].DistanceTo(_harbourRoutes[7].Points[^1])<.12f && route.Min(p=>p.X)<-3300 && route.Min(p=>p.Z)<-4800,"Northwest drive must connect Sham Shui Po to Lai Chi Kok");
+        int support=0;
+        for(int i=0;i<route.Count-1;i+=7)
+            foreach(float lane in new[]{-1.8f,0,1.8f})
+            {
+                var at=route[i]+(route[i+1]-route[i]).Normalized().Cross(Vector3.Up)*lane;
+                using var ray=PhysicsRayQueryParameters3D.Create(at+Vector3.Up*.2f,at+Vector3.Down*.2f,1);
+                Check(GetWorld3D().DirectSpaceState.IntersectRay(ray).Count>0,$"Northwest route lacks ground support at {at}");support++;
+            }
+        GD.Print($"ANTILA_NORTHWEST_READY_OK: N shortcut and four guards; regional massing/detail; {support} lane-support probes");
+    }
+
+    private async Task CheckKwaiChung()
+    {
+        void Check(bool ok,string message){if(!ok)throw new Exception(message);}
+        var initial=Bus.Position;
+        foreach(int state in new[]{0,1,2})
+        {
+            MapOpen=state==0;Paused=state==1;Complete=state==2;
+            _UnhandledInput(new InputEventKey {PhysicalKeycode=Key.B,Pressed=true});
+            Check(!HarbourDrive && Bus.Position==initial,"Kwai Chung shortcut must respect map, pause and completed service");
+        }
+        MapOpen=Paused=Complete=false;
+        Bus.AutomaticTest=true;Bus.TestThrottle=1;
+        for(int i=0;i<45;i++)await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+        Check(Bus.Kmh>.5f,"Kwai Chung moving-shortcut check must move the bus");
+        var moving=Bus.Position;_UnhandledInput(new InputEventKey {PhysicalKeycode=Key.B,Pressed=true});
+        Check(!HarbourDrive && Bus.Position==moving,"Kwai Chung shortcut must not teleport a moving bus");
+        Bus.TestThrottle=0;Bus.AutomaticTest=false;Bus.ResetAt(Map.At(22,-7.3f),Map.Heading(22));
+        _UnhandledInput(new InputEventKey {PhysicalKeycode=Key.B,Pressed=true});
+        Check(HarbourDrive && CabView && Bus.Position.DistanceTo(_harbourRoutes[9].Points[0])<3,"B shortcut must start the Kwai Chung drive");
+        HarbourDrive=false;SetCab(false);Bus.ResetAt(Map.At(22,-7.3f),Map.Heading(22));
+        Check(HarbourBounds.Position.X<=-6580 && HarbourBounds.Position.Y<=-8580,"Kwai Chung map extent missing");
+        Check(_lots.Count(l=>l.Center.X < -4600 || l.Center.Z < -6000)>300,"Kwai Chung building coverage missing");
+        Check(_islandDetails.Count(d=>d.Position.X < -4600 || d.Position.Z < -6000)>80,"Kwai Chung street detail missing");
+        var route=_harbourRoutes[9].Points;
+        Check(route[0].DistanceTo(_harbourRoutes[8].Points[^1])<.12f && route.Min(p=>p.X)<-4500 && route.Min(p=>p.Z)<-6800,"Kwai Chung drive must connect Mei Foo to Kwai Chung");
+        int support=0;
+        for(int i=0;i<route.Count-1;i+=7)
+            foreach(float lane in new[]{-1.8f,0,1.8f})
+            {
+                var at=route[i]+(route[i+1]-route[i]).Normalized().Cross(Vector3.Up)*lane;
+                using var ray=PhysicsRayQueryParameters3D.Create(at+Vector3.Up*.2f,at+Vector3.Down*.2f,1);
+                Check(GetWorld3D().DirectSpaceState.IntersectRay(ray).Count>0,$"Kwai Chung route lacks ground support at {at}");support++;
+            }
+        GD.Print($"ANTILA_KWAI_CHUNG_READY_OK: B shortcut and four guards; regional massing/detail; {support} lane-support probes");
     }
 
     private async Task CheckHarbour()
     {
+        await CheckKwaiChung();
+        CheckGovernmentMap();
         void Check(bool ok,string message){if(!ok)throw new Exception(message);}
-        Check(HarbourRoads.Count==898 && _harbourRoutes.Count==5,"harbour data count");
+        Check(HarbourRoads.Count==4626 && _harbourRoutes.Count==10,"harbour data count");
+        await CheckNorthwest();
         Check(HarbourBounds.Size.Y>3500 && IslandBounds.Size.X==4450 && HarbourBounds.Position.X<=IslandBounds.Position.X-80,"expanded harbour world extent");
         Check(_harbourRoutes[3].Points.Min(p=>p.X)<-190 && _harbourRoutes[3].Points.Max(p=>p.X)>1750,"Scenic drive must reach both expanded districts");
-        Check(_islandDetails.Count(d=>d.Position.X < -300)>200,"Western street details missing");
+        Check(_islandDetails.Count(d=>d.Position.X < -300 && d.Position.Z>1100)>200,"Western street details missing");
         Check(_lots.Count(l=>l.Center.X < -300 && l.Center.Z>1100)>2000,"Central / Admiralty building massing missing");
         Check(_harbourRoutes[4].Points.Min(p=>p.X)<-1550 && _harbourRoutes[4].Points[0].DistanceTo(_harbourRoutes[4].Points[^1])<.12f,"Central route must reach the west and close");
+        Check(KowloonNorthBounds.Size.Y>2100 && HarbourBounds.Position.Y<=KowloonNorthBounds.Position.Y-80,"North Kowloon extent missing");
+        Check(_lots.Count(l=>l.Center.Z < -1200)>1500 && _islandDetails.Count(d=>d.Position.Z < -1200)>80,"North Kowloon buildings or street details missing");
+        Check(_harbourRoutes[5].Points[0].Z > -1200 && _harbourRoutes[5].Points[^1].Z < -3200,"Kowloon drive must connect Jordan to Mong Kok");
+        Check(HarbourBounds.Position.X<=-2780 && HarbourBounds.Position.Y<=-4880,"Western coastline / Sham Shui Po extent missing");
+        Check(_lots.Count(l=>l.Center.Z < -3350)>3000 && _lots.Count(l=>l.Center.X < -1100 && l.Center.Z < 0)>500,"Western / northern building coverage missing");
+        Check(KowloonCoastline.Count>0 && KowloonCoastline.SelectMany(p=>p).Min(p=>p.X)<-2500,"Sourced western coast missing");
+        Check(_harbourRoutes[6].Points.Min(p=>p.X)<-1800 && _harbourRoutes[6].Points.Min(p=>p.Z)<-3900,"West drive must reach the coast and Sham Shui Po");
+        Check(_harbourRoutes[7].Points[0].DistanceTo(_harbourRoutes[5].Points[^1])<.12f && _harbourRoutes[7].Points.Min(p=>p.Z)<-4000,"Mong Kok continuation must join Sham Shui Po");
         using(var mask=((Texture2D)_terrain.GetShaderParameter("harbour_mask").AsGodotObject()).GetImage())
         {
             Color Surface(Vector3 p)
@@ -214,7 +399,7 @@ public partial class Main
                 return mask.GetPixel((int)(uv.X*mask.GetWidth()),(int)(uv.Y*mask.GetHeight()));
             }
             int paved=0;
-            foreach(var road in HarbourRoads.Where(r=>!r.Tunnel))
+            foreach(var road in HarbourRoads.Where(r=>!r.Tunnel && !r.Elevated))
                 for(int i=1;i<road.Points.Count-1;i+=10)
                 {
                     var p=road.Points[i];var side=(road.Points[i+1]-p).Normalized().Cross(Vector3.Up)*8;
@@ -228,12 +413,20 @@ public partial class Main
         MapOpen=true;_UnhandledInput(new InputEventAction {Action="tunnel",Pressed=true});
         _UnhandledInput(new InputEventAction {Action="island",Pressed=true});
         _UnhandledInput(new InputEventKey {PhysicalKeycode=Key.J,Pressed=true});
+        _UnhandledInput(new InputEventKey {PhysicalKeycode=Key.K,Pressed=true});
+        _UnhandledInput(new InputEventKey {PhysicalKeycode=Key.L,Pressed=true});
         Check(!HarbourDrive && Bus.Position==start,"map must block the tunnel shortcut");
         MapOpen=false;Paused=true;_UnhandledInput(new InputEventAction {Action="tunnel",Pressed=true});
         _UnhandledInput(new InputEventAction {Action="island",Pressed=true});
         _UnhandledInput(new InputEventKey {PhysicalKeycode=Key.J,Pressed=true});
+        _UnhandledInput(new InputEventKey {PhysicalKeycode=Key.K,Pressed=true});
+        _UnhandledInput(new InputEventKey {PhysicalKeycode=Key.L,Pressed=true});
         Check(!HarbourDrive && Bus.Position==start,"pause must block the tunnel shortcut");
-        Paused=false;_UnhandledInput(new InputEventKey {PhysicalKeycode=Key.J,Pressed=true});
+        Paused=false;_UnhandledInput(new InputEventKey {PhysicalKeycode=Key.L,Pressed=true});
+        Check(HarbourDrive && CabView && Bus.Position.DistanceTo(_harbourRoutes[6].Points[0])<3,"West shortcut must start at Austin Road West");
+        HarbourDrive=false;_UnhandledInput(new InputEventKey {PhysicalKeycode=Key.K,Pressed=true});
+        Check(HarbourDrive && CabView && Bus.Position.DistanceTo(_harbourRoutes[5].Points[0])<3,"Kowloon shortcut must start at Jordan");
+        HarbourDrive=false;_UnhandledInput(new InputEventKey {PhysicalKeycode=Key.J,Pressed=true});
         Check(HarbourDrive && CabView && Bus.Position.DistanceTo(_harbourRoutes[4].Points[0])<3,"Central shortcut must start the western loop");
         HarbourDrive=false;_UnhandledInput(new InputEventAction {Action="island",Pressed=true});
         Check(HarbourDrive && CabView && Bus.Position.DistanceTo(_harbourRoutes[3].Points[0])<3,"island shortcut must start at the scenic route");
@@ -241,6 +434,22 @@ public partial class Main
         Check(HarbourDrive && CabView && Bus.Position.DistanceTo(_harbourRoutes[0].Points[0])<3,"tunnel shortcut must start at the approach in cab view");
         HarbourDrive=false;SetCab(false);Bus.ResetAt(Map.At(22,-7.3f),Map.Heading(22));
         await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+        foreach(var (p,land) in new[]{(new Vector3(-1600,0,-700),true),(new Vector3(-700,0,-4000),true),
+            (new Vector3(-2000,0,-800),false),(new Vector3(-2600,0,-1000),false)})
+        {
+            using var ray=PhysicsRayQueryParameters3D.Create(p+Vector3.Up*1,p+Vector3.Down*2,1);
+            Check((GetWorld3D().DirectSpaceState.IntersectRay(ray).Count>0)==land,$"Western land / sea collision mismatch at {p}");
+        }
+        int shoreWalls=0;
+        foreach(var line in KowloonCoastline.Where((_,i)=>i%25==0))
+        {
+            var a=line[0];var b=line[1];var middle=(a+b)/2;var normal=(b-a).Orthogonal().Normalized();
+            var p=new Vector3(middle.X,.6f,middle.Y);var side=new Vector3(normal.X,0,normal.Y);
+            using var ray=PhysicsRayQueryParameters3D.Create(p+side*1.5f,p-side*1.5f,1);
+            var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
+            Check(hit.Count>0 && (hit["collider"].AsGodotObject() as Node)!.GetParent().Name=="KowloonSeawall",$"Western seawall collision missing at {p}");shoreWalls++;
+        }
+        GD.Print($"ANTILA_COAST_COLLISION_OK: 4 land / sea probes; {shoreWalls} seawall probes");
         int walls=0;
         foreach(var road in HarbourRoads.Where(r=>r.Tunnel))
             for(int i=3;i<road.Points.Count-3;i++)
@@ -256,15 +465,17 @@ public partial class Main
             }
         GD.Print($"ANTILA_HARBOUR_WALLS_OK: {walls} interior wall rays clear of exterior cladding");
         var query=new PhysicsShapeQueryParameters3D {Shape=new BoxShape3D {Size=new(2.48f,4.2f,10.55f)},CollisionMask=1};
-        int samples=0;
+        int samples=0;var obstructions=new List<string>();
         foreach(var road in HarbourRoads)
             for(int i=2;i<road.Points.Count-2;i+=3)
-            foreach(float lane in new[]{-1.8f,0,1.8f})
+            foreach(float lane in road.Elevated?new[]{-1.4f,0,1.4f}:new[]{-1.8f,0,1.8f})
             {
                 var p=road.Points[i];var f=(road.Points[i+1]-p).Normalized();
-                query.Transform=new(new Basis(Vector3.Up,Mathf.Atan2(-f.X,-f.Z)),p+f.Cross(Vector3.Up)*lane+Vector3.Up*2.55f);
+                // Match the bus's floor-following pitch when probing a raised approach.
+                var basis=new Basis(Vector3.Up,Mathf.Atan2(-f.X,-f.Z))*new Basis(Vector3.Right,Mathf.Asin(f.Y));
+                query.Transform=new(basis,p+f.Cross(Vector3.Up).Normalized()*lane+basis.Y*2.55f);
                 var hit=GetWorld3D().DirectSpaceState.IntersectShape(query,1);
-                Check(hit.Count==0,$"Harbour obstruction: {road.Name} at {p}; {(hit.Count>0?(hit[0]["collider"].AsGodotObject() as Node)?.GetPath():null)}");samples++;
+                if(hit.Count>0)obstructions.Add($"{road.Name} at {p}; {(hit[0]["collider"].AsGodotObject() as Node)?.GetPath()}");samples++;
             }
         var cameraProbe=new PhysicsShapeQueryParameters3D {Shape=new SphereShape3D {Radius=.4f},CollisionMask=1};
         foreach(var tube in HarbourRoads.Where(r=>r.Tunnel && r.Points.Count>100))
@@ -276,16 +487,25 @@ public partial class Main
             Check(GetWorld3D().DirectSpaceState.IntersectShape(cameraProbe,1).Count==0,"Chase camera intersects tunnel shell");
             Check(Camera.Position.Y<p.Y+5,"Chase camera must stay below the tunnel roof");
         }
-        GD.Print($"ANTILA_HARBOUR_CLEARANCE_OK: {samples} full bus envelope queries");
+        GD.Print(obstructions.Count==0?$"ANTILA_HARBOUR_CLEARANCE_OK: {samples} full bus envelope queries":$"ANTILA_HARBOUR_OBSTRUCTIONS ({obstructions.Count}): "+string.Join("; ",obstructions.Distinct()));
         SetPhysicsProcess(false);HarbourDrive=true;Bus.AutomaticTest=true;Engine.TimeScale=4;
+        var raisedPoints=HarbourRoads.Where(r=>r.Elevated).SelectMany(r=>r.Points).ToHashSet();
+        float LaneWidth(Vector3 p)=>raisedPoints.Contains(p)?1.4f:1.8f;
         var ramp=_harbourRoutes[0].Points.Where(p=>p.Z>1080 && p.Z<1300).ToList();
-        foreach(var route in new[]{(Name:"South portal ramp",Points:ramp),(Name:"Hung Hom exit bend",Points:_harbourRoutes[2].Points.Skip(780).ToList())}.Concat(_harbourRoutes)
+        var flyovers=HarbourRoads.Where(r=>r.Name=="HOI FAI ROAD" && r.Points.Count>=18 && r.Points.All(p=>p.Y>6.9f))
+            .Select((r,i)=>(Name:$"Hoi Fai flyover {i+1}",Points:r.Points));
+        // Check the newest districts first, before repeating the longer established drives.
+        foreach(var route in flyovers.Concat(new[]{(Name:"Hung Hing ramp bend",Points:_harbourRoutes[3].Points.Skip(130).Take(90).ToList()),(Name:"Wan Chai ramp bend",Points:_harbourRoutes[1].Points.Skip(130).Take(90).ToList()),(Name:"Lin Cheung ramp entry",Points:_harbourRoutes[6].Points.Skip(730).Take(200).ToList()),(Name:"South portal ramp",Points:ramp),(Name:"Hung Hom exit bend",Points:_harbourRoutes[2].Points.Skip(780).ToList())}).Concat(_harbourRoutes.AsEnumerable().Reverse())
             .Where(r=>(!OS.GetCmdlineUserArgs().Contains("--island-check") || r.Name==_harbourRoutes[3].Name) &&
-                (!OS.GetCmdlineUserArgs().Contains("--central-check") || r.Name==_harbourRoutes[4].Name)))
+                (!OS.GetCmdlineUserArgs().Contains("--central-check") || r.Name==_harbourRoutes[4].Name) &&
+                (!OS.GetCmdlineUserArgs().Contains("--kowloon-check") || r.Name==_harbourRoutes[5].Name) &&
+                (!OS.GetCmdlineUserArgs().Contains("--west-check") || r.Name==_harbourRoutes[6].Name || r.Name==_harbourRoutes[7].Name) &&
+                (!OS.GetCmdlineUserArgs().Contains("--northwest-check") || r.Name==_harbourRoutes[8].Name) &&
+                (!OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || r.Name==_harbourRoutes[9].Name)))
         {
             var path=route.Points;var f=(path[1]-path[0]).Normalized();
-            bool scenic=route.Name==_harbourRoutes[3].Name || route.Name==_harbourRoutes[4].Name;float lane=scenic?-1.8f:1.8f;
-            Bus.ResetAt(path[0]+f.Cross(Vector3.Up)*lane,Mathf.Atan2(-f.X,-f.Z));
+            bool scenic=_harbourRoutes.Skip(3).Any(r=>r.Name==route.Name) || route.Name is "Lin Cheung ramp entry" or "Hung Hing ramp bend";float side=scenic?-1:1;
+            Bus.ResetAt(path[0]+f.Cross(Vector3.Up)*side*LaneWidth(path[0]),Mathf.Atan2(-f.X,-f.Z));
             Bus.TestThrottle=Bus.TestBrake=Bus.TestSteer=0;
             for(int frame=0;frame<10;frame++)await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
             int contacts=Bus.Collisions,closest=0;float driven=Bus.DistanceDriven,minY=0;
@@ -300,7 +520,7 @@ public partial class Main
                 bool underground=path[closest].Y<-1;
                 int index=Mathf.Min(path.Count-2,closest+(underground?4:scenic?3:2));
                 var direction=(path[index+1]-path[index]).Normalized();
-                var target=path[index]+direction.Cross(Vector3.Up)*lane;
+                var target=path[index]+direction.Cross(Vector3.Up)*side*LaneWidth(path[index]);
                 var delta=target-Bus.Position;float error=Mathf.AngleDifference(Bus.Rotation.Y,Mathf.Atan2(-delta.X,-delta.Z));
                 Bus.TestSteer=Mathf.Clamp(Mathf.Atan(12*Mathf.Sin(error)/Mathf.Max(6,delta.Length()))/Mathf.DegToRad(32),-1,1);
                 float speed=Mathf.Abs(error)>.22f?4.5f:underground?11:6;
@@ -308,13 +528,14 @@ public partial class Main
                 minY=Mathf.Min(minY,Bus.Position.Y);
                 if(tick%1500==0)GD.Print($"ANTILA_HARBOUR_PROGRESS: {route.Name} {closest}/{path.Count}, speed {Bus.Kmh:0} km/h");
                 Check(Bus.Collisions==contacts,$"Harbour contact on {route.Name}: {Bus.Position}, node {closest}, road {path[closest]}, off-centre {best}, pitch {Bus.Rotation.X}");
-                Check(best<8 && Bus.Position.Y>-40,$"Harbour road departure {route.Name}: {Bus.Position}, node {closest}");
+                Check(best<8 && Bus.Position.Y>-40 && Mathf.Abs(Bus.Position.Y-path[closest].Y)<1.5f,$"Harbour road departure {route.Name}: {Bus.Position}, node {closest}, road {path[closest]}, off-centre {best}, pitch {Bus.Rotation.X}");
                 await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
             }
             Check(Bus.Position.DistanceTo(path[^1])<18 && Bus.Collisions==contacts,$"Harbour drive failed {route.Name}: {Bus.Position}, {closest}/{path.Count}, contacts {Bus.Collisions-contacts}");
-            if(route.Name.Contains('→'))Check(minY<-30,"bus must descend through the harbour tunnel");
+            if(route.Name==_harbourRoutes[0].Name || route.Name==_harbourRoutes[2].Name)Check(minY<-30,"bus must descend through the harbour tunnel");
             GD.Print($"ANTILA_HARBOUR_DRIVE_OK: {route.Name}; {Bus.DistanceDriven-driven:0} m; minimum y={minY:0.0}; no contacts");
         }
+        Check(obstructions.Count==0,$"Harbour obstructions ({obstructions.Count}): "+string.Join("; ",obstructions.Distinct()));
         Bus.TestThrottle=Bus.TestBrake=Bus.TestSteer=0;Bus.AutomaticTest=false;HarbourDrive=false;Engine.TimeScale=1;
         Bus.ResetAt(Map.At(22,-7.3f),Map.Heading(22));SetPhysicsProcess(true);
     }

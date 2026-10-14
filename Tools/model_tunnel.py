@@ -77,6 +77,16 @@ try:
         a,b,c=vertices[i:i+3]
         water_faces.append((i,i+1,i+2) if (b-a).cross(c-a).y>0 else (i,i+2,i+1))
     mesh('HarbourWater',vertices,water_faces,water)
+    # Coast XY comes from LandsD iB1000; wall height and rectangular map cuts are authored.
+    for tag,key in [('KowloonSeawall','kowloon_coastline'),('KowloonBoundary','kowloon_boundary'),('IslandSeawall','island_coastline'),('IslandBoundary','island_boundary')]:
+        vs,fs=[],[]
+        for line in data[key]:
+            for a,b in zip(line,line[1:]):
+                a=Vector((a[0],0,a[1]));b=Vector((b[0],0,b[1]));side=(b-a).cross(Vector((0,1,0))).normalized()*.3
+                k=len(vs)
+                vs.extend(p+side*s+Vector((0,h,0)) for p in (a,b) for s,h in [(-1,-2.2),(1,-2.2),(1,1),(-1,1)])
+                fs.extend(tuple(k+j for j in face) for face in [(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)])
+        mesh(tag,vs,fs,exterior)
     vertices = [Vector((p[0],.035,p[1])) for tri in data['surface_triangles'] for p in tri]
     faces=[]
     for i in range(0,len(vertices),3):
@@ -93,26 +103,45 @@ try:
         for p in (road['points'][0],road['points'][-1]):
             key=(round(p[0],1),round(p[2],1));endpoints[key]=endpoints.get(key,0)+1
     junctions=[Vector((x,0,z)) for (x,z),count in endpoints.items() if count>2]
+    sections=[];raised_ends={}
     for road in model_roads:
         points = [Vector(p) for p in road['points']]
-        other_tube_edges=[(Vector((a[0],a[2])),Vector((b[0],b[2])),r['width']/2)
-            for r in model_roads if r['tunnel'] and r['id']!=road['id']
-            for a,b in zip(r['points'],r['points'][1:]) if a[0]!=b[0] or a[2]!=b[2]] if road['tunnel'] else []
-        if road['tunnel']:
+        if road['tunnel'] or road.get('elevated',False):
             # Resample across source joins: a tiny final source segment can fold a wide road quad.
             import bisect
             arc=[0]
             for a,b in zip(points,points[1:]):arc.append(arc[-1]+(b-a).length)
             sampled=[]
-            for d in [min(i*4,arc[-1]) for i in range(math.ceil(arc[-1]/4)+1)]:
+            count=math.ceil(arc[-1]/4)
+            for d in [i*arc[-1]/count if road.get('elevated',False) else min(i*4,arc[-1]) for i in range(count+1)]:
                 j=min(len(points)-2,max(0,bisect.bisect_right(arc,d)-1))
                 sampled.append(points[j].lerp(points[j+1],(d-arc[j])/(arc[j+1]-arc[j])))
+            if road.get('elevated',False):sampled[0],sampled[-1]=points[0],points[-1]
             points=sampled
-        half = road['width']/2
         rights = []
         for i,p in enumerate(points):
             direction = points[min(i+1,len(points)-1)]-points[max(0,i-1)]
             rights.append(Vector((-direction.z,0,direction.x)).normalized())
+        sections.append((road,points,rights))
+        if road.get('elevated',False):
+            for i,sign in [(0,1),(-1,-1)]:
+                if points[i].y>.01:raised_ends.setdefault(tuple(points[i]),[]).append((road,rights,i,sign))
+    for ends in raised_ends.values():
+        if len(ends)!=2:continue
+        (road_a,ra,ia,sa),(road_b,rb,ib,sb)=ends
+        assert road_a['width']==road_b['width'], ('unequal raised join widths',road_a['id'],road_b['id'])
+        a,b=ra[ia]*sa,rb[ib]*sb
+        axis=(a-b).normalized()
+        assert axis.dot(a)>.5, ('raised join turns too sharply',road_a['id'],road_b['id'])
+        # One shared miter keeps both road edges and slab walls joined without moving the centreline.
+        miter=axis/axis.dot(a)
+        ra[ia],rb[ib]=miter*sa,-miter*sb
+    print('ANTILA_RAISED_JOINS:',sum(len(ends)==2 for ends in raised_ends.values()),'shared cross-sections')
+    for road,points,rights in sections:
+        half = road['width']/2
+        other_tube_edges=[(Vector((a[0],a[2])),Vector((b[0],b[2])),r['width']/2)
+            for r in model_roads if r['tunnel'] and r['id']!=road['id']
+            for a,b in zip(r['points'],r['points'][1:]) if a[0]!=b[0] or a[2]!=b[2]] if road['tunnel'] else []
         distance = [0]
         for a,b in zip(points,points[1:]): distance.append(distance[-1]+(b-a).length)
 
@@ -120,19 +149,30 @@ try:
             vs,fs,uvs = [],[],[]
             for i,(p,r) in enumerate(zip(points,rights)):
                 for x,y in offsets:
+                    # Blend the slab into ground at ramp entries instead of a wheel-catching vertical edge.
+                    if name in ('DeckLeft','DeckRight') and y==-.65 and p.y<.65:
+                        x+=math.copysign(1-p.y/.65,x);y=-p.y
                     vs.append(p+r*x+Vector((0,y,0)))
                     uvs.append((distance[i]/2,(y if 'Wall' in name else x)/2))
             for i in range(len(points)-1):
                 face=(2*i,2*i+1,2*i+3,2*i+2)
                 fs.append(tuple(reversed(face)) if reverse else face)
-            if name=='Road' and road['tunnel']:
+            if name=='Road' and (road['tunnel'] or road.get('elevated',False)):
                 for a,b,c,d in fs:
                     for i,j,k in [(a,b,c),(a,c,d)]:
                         normal=(vs[j]-vs[i]).cross(vs[k]-vs[i])
                         assert normal.y > normal.length*.97, (road['id'],'folded or steep floor triangle',i)
+            if name in ('DeckLeft','DeckRight'):
+                for i,(a,b,c,d) in enumerate(fs):
+                    if max(points[i].y,points[i+1].y)<.3:
+                        assert (vs[b]-vs[a]).cross(vs[c]-vs[a]).y>0, (road['id'],'inverted ramp shoulder')
             mesh(name+'_'+road['id'],vs,fs,mat,uvs)
 
-        if road['tunnel']:strip('Road',[(-half,.035),(half,.035)],asphalt)
+        if road['tunnel'] or road.get('elevated',False):strip('Road',[(-half,.035),(half,.035)],asphalt)
+        if road.get('elevated',False):
+            strip('DeckSoffit',[(-half,-.65),(half,-.65)],exterior,True)
+            strip('DeckLeft',[(-half,.035),(-half,-.65)],exterior,True)
+            strip('DeckRight',[(half,-.65),(half,.035)],exterior,True)
         if road['tunnel']:
             strip('WallLeft',[(-half,5.6),(-half,.035)],tiles)
             strip('WallRight',[(half,.035),(half,5.6)],tiles)

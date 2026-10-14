@@ -6,13 +6,17 @@ from pathlib import Path
 
 ROOT = Path('/Users/chanwaichan/workspace/antila')
 ISLAND = globals().get('ISLAND',False)
-ASSET = 'island-buildings' if ISLAND else 'kowloon-buildings'
+NORTH = globals().get('NORTH',False)
+WEST = globals().get('WEST',False)
+NORTHWEST = globals().get('NORTHWEST',False)
+KWAI_CHUNG = globals().get('KWAI_CHUNG',False)
+ASSET = 'kwai-chung-buildings' if KWAI_CHUNG else 'lai-chi-kok-buildings' if NORTHWEST else 'west-kowloon-buildings' if WEST else 'kowloon-north-buildings' if NORTH else 'island-buildings' if ISLAND else 'kowloon-buildings'
 
 
 def build():
     global city_scene, previous_scene
     previous_scene = bpy.context.window.scene
-    scene_name = 'CSDI_Island' if ISLAND else 'CSDI_Kowloon'
+    scene_name = 'CSDI_KwaiChung' if KWAI_CHUNG else 'CSDI_LaiChiKok' if NORTHWEST else 'CSDI_KowloonWest' if WEST else 'CSDI_KowloonNorth' if NORTH else 'CSDI_Island' if ISLAND else 'CSDI_Kowloon'
     city_scene = bpy.data.scenes.get(scene_name) or bpy.data.scenes.new(scene_name)
     assert all(o.name.startswith(('District','Collision')) for o in city_scene.objects)
     for obj in list(city_scene.objects):
@@ -54,7 +58,7 @@ def build():
     next(n for n in variety.node_tree.nodes if n.type=='TEX_IMAGE').image.pack()
     materials.append(variety)
     chunks = {}
-    buildings = json.loads((ROOT / ('Data/island-building-layout.json' if ISLAND else 'Data/building-layout.json')).read_text())['buildings']
+    buildings = json.loads((ROOT / ('Data/kwai-chung-layout.json' if KWAI_CHUNG else 'Data/lai-chi-kok-layout.json' if NORTHWEST else 'Data/west-kowloon-layout.json' if WEST else 'Data/kowloon-north-layout.json' if NORTH else 'Data/island-building-layout.json' if ISLAND else 'Data/building-layout.json')).read_text())['buildings']
     for b in buildings:
         key = tuple(math.floor(v/128) for v in b['center'])
         if key not in chunks:
@@ -140,10 +144,21 @@ def export():
         bpy.context.window.scene = city_scene
         # Keep each offline GLB below 100 MB.
         # Split on an existing 128 m chunk boundary, without changing geometry.
-        for asset in ([ASSET,'central-buildings'] if ISLAND else [ASSET]):
+        for asset in (['kwai-chung-buildings','kwai-chung-east-buildings','lai-king-buildings'] if KWAI_CHUNG else ['lai-chi-kok-west-buildings','lai-chi-kok-buildings','cheung-sha-wan-buildings'] if NORTHWEST else ['west-kowloon-buildings','tai-kok-tsui-buildings','sham-shui-po-west-buildings','sham-shui-po-east-buildings'] if WEST else ['yau-ma-tei-buildings','mong-kok-buildings'] if NORTH else [ASSET,'central-buildings'] if ISLAND else [ASSET]):
             bpy.ops.object.select_all(action='DESELECT')
             for obj in city_scene.objects:
-                if not ISLAND or (obj.location.x < -384)==(asset=='central-buildings'):obj.select_set(True)
+                if KWAI_CHUNG:
+                    district=('kwai-chung-buildings' if obj.location.x < -4864 else 'kwai-chung-east-buildings') if obj.location.y >= 6656 else 'lai-king-buildings'
+                    if asset==district:obj.select_set(True)
+                elif NORTHWEST:
+                    district='lai-chi-kok-west-buildings' if obj.location.x < -3456 else 'lai-chi-kok-buildings' if obj.location.x < -2304 else 'cheung-sha-wan-buildings'
+                    if asset==district:obj.select_set(True)
+                elif WEST:
+                    district=('sham-shui-po-west-buildings' if obj.location.x < -1024 else 'sham-shui-po-east-buildings') if obj.location.y>=3328 else 'tai-kok-tsui-buildings' if obj.location.y>=1920 else 'west-kowloon-buildings'
+                    if asset==district:obj.select_set(True)
+                elif NORTH:
+                    if (obj.location.y >= 2304)==(asset=='mong-kok-buildings'):obj.select_set(True)
+                elif not ISLAND or (obj.location.x < -384)==(asset=='central-buildings'):obj.select_set(True)
             bpy.ops.export_scene.gltf(filepath=str(ROOT/'Assets/Models'/f'{asset}.glb'),
                                       export_format='GLB', use_selection=True, use_active_scene=True, export_yup=True)
         bpy.data.libraries.write(str(ROOT/'Art'/f'{ASSET}.blend'), {city_scene}, fake_user=True, compress=True)

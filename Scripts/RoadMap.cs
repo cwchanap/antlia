@@ -241,7 +241,9 @@ public sealed class RoadMap
     {
         // RGB is map data: road, pavement, park. One surface avoids coplanar depth fighting.
         var bounds=region??Bounds;
-        int width=Mathf.CeilToInt(bounds.Size.X*resolution),height=Mathf.CeilToInt(bounds.Size.Y*resolution);
+        // Cap large expansions at a 16K texture while retaining world-space placement below.
+        resolution=Mathf.Min(resolution,16384f/Mathf.Max(bounds.Size.X,bounds.Size.Y));
+        int width=Math.Min(16384,Mathf.CeilToInt(bounds.Size.X*resolution)),height=Math.Min(16384,Mathf.CeilToInt(bounds.Size.Y*resolution));
         float sx=width/bounds.Size.X,sy=height/bounds.Size.Y;
         var pixels=new byte[width*height*3];
         Vector2 Pixel(Vector2 p)=>(p-bounds.Position)*new Vector2(sx,sy);

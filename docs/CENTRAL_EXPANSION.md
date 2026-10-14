@@ -1,5 +1,9 @@
 # Central / Admiralty expansion — 5 October 2026
 
+The 8 October 2026 [government-map corrections](GOVERNMENT_MAP_FIXES.md) supersede the earlier island boundary, flattened elevated-road geometry and exact-metre-scale wording below. Earlier verification records apply to their original snapshots.
+
+For the later northern Kowloon extension and current overall bounds, see [Yau Ma Tei / Mong Kok expansion](KOWLOON_EXPANSION.md). The figures below record the Central expansion.
+
 The island apron extends 2.10 km west, from 2.35 to **4.45 km east–west**, at one world unit per metre. Overall map bounds are **4.61 × 3.55 km**. The connected street network reaches Central and Admiralty through Queensway, Des Voeux Road Central, Queen’s Road Central, Pedder Street, Chater Road, Connaught Road Central and Harcourt Road. The rectangular bounds include buildings and open space; not every point is a driveable road.
 
 Press **J while stopped** for the new **3.080 km Admiralty / Central loop**, **I** for Wan Chai / Causeway Bay, **T** for the crossing, **M** for the map, and **R** to restart H1. **C** remains the camera switch. Free drive adds no passenger-service stops or turn-by-turn navigation; the named loop is also the physical test itinerary. The western loop joins Hennessy Road, Queensway, Des Voeux Road Central, Pedder Street and Queen’s Road Central. It avoids the compact northern Des Voeux turnaround, which failed the long-bus driving check.
