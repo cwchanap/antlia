@@ -30,7 +30,9 @@ def check_download():
         modes=[('island',{},importer.ISLAND_BBOX),('kowloon-north',dict(north=True),importer.KOWLOON_BBOX),
                ('west-kowloon',dict(west=True),importer.WEST_BBOX),
                ('lai-chi-kok',dict(northwest=True),importer.NORTHWEST_BBOX),
-               ('kwai-chung',dict(kwai_chung=True),importer.KWAI_CHUNG_BBOX)]
+               ('kwai-chung',dict(kwai_chung=True),importer.KWAI_CHUNG_BBOX),
+               ('tsuen-wan',dict(tsuen_wan=True),importer.TSUEN_WAN_BBOX),
+               ('west-coast',dict(west_coast=True),importer.WEST_COAST_BBOX)]
         for name,mode,bbox in modes:
             target=trial/f'Data/{name}-buildings.geojson';target.write_bytes(saved)
             queries=refresh([dict(count=2),page(features[:1]),page(features[1:])],**mode)
@@ -76,7 +78,7 @@ def check_download():
                 else:raise AssertionError(f'{operation}: file failure was swallowed')
             assert target.read_bytes()==saved,f'{operation}: file failure replaced the previous cache'
             assert not list((trial/'Data').glob('*.part')),f'{operation}: temporary file leaked'
-    print(f'ANTILA_BUILDING_DOWNLOAD_OK: five regional paginated refreshes; {len(rejected)} rejected responses and two file failures preserve cache bytes')
+    print(f'ANTILA_BUILDING_DOWNLOAD_OK: seven regional paginated refreshes; {len(rejected)} rejected responses and two file failures preserve cache bytes')
 
 
 def check():
@@ -87,7 +89,7 @@ def check():
         trial = Path(directory)
         (trial/'Data').mkdir()
         for name in ('nathan-road.json','cross-harbour.json','west-kowloon-coast.json',
-                     'island-coast.json','buildings.geojson','west-kowloon-buildings.geojson','lai-chi-kok-buildings.geojson','kwai-chung-buildings.geojson'):
+                     'island-coast.json','buildings.geojson','west-kowloon-buildings.geojson','lai-chi-kok-buildings.geojson','kwai-chung-buildings.geojson','tsuen-wan-buildings.geojson','west-coast-buildings.geojson'):
             (trial/'Data'/name).symlink_to(root/'Data'/name)
         raw = json.loads((root/'Data/kowloon-north-buildings.geojson').read_text())
         for feature in raw['features']:

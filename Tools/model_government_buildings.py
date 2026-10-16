@@ -10,13 +10,15 @@ NORTH = globals().get('NORTH',False)
 WEST = globals().get('WEST',False)
 NORTHWEST = globals().get('NORTHWEST',False)
 KWAI_CHUNG = globals().get('KWAI_CHUNG',False)
-ASSET = 'kwai-chung-buildings' if KWAI_CHUNG else 'lai-chi-kok-buildings' if NORTHWEST else 'west-kowloon-buildings' if WEST else 'kowloon-north-buildings' if NORTH else 'island-buildings' if ISLAND else 'kowloon-buildings'
+TSUEN_WAN = globals().get('TSUEN_WAN',False)
+WEST_COAST = globals().get('WEST_COAST',False)
+ASSET = 'west-coast-buildings' if WEST_COAST else 'tsuen-wan-buildings' if TSUEN_WAN else 'kwai-chung-buildings' if KWAI_CHUNG else 'lai-chi-kok-buildings' if NORTHWEST else 'west-kowloon-buildings' if WEST else 'kowloon-north-buildings' if NORTH else 'island-buildings' if ISLAND else 'kowloon-buildings'
 
 
 def build():
     global city_scene, previous_scene
     previous_scene = bpy.context.window.scene
-    scene_name = 'CSDI_KwaiChung' if KWAI_CHUNG else 'CSDI_LaiChiKok' if NORTHWEST else 'CSDI_KowloonWest' if WEST else 'CSDI_KowloonNorth' if NORTH else 'CSDI_Island' if ISLAND else 'CSDI_Kowloon'
+    scene_name = 'CSDI_WestCoast' if WEST_COAST else 'CSDI_TsuenWan' if TSUEN_WAN else 'CSDI_KwaiChung' if KWAI_CHUNG else 'CSDI_LaiChiKok' if NORTHWEST else 'CSDI_KowloonWest' if WEST else 'CSDI_KowloonNorth' if NORTH else 'CSDI_Island' if ISLAND else 'CSDI_Kowloon'
     city_scene = bpy.data.scenes.get(scene_name) or bpy.data.scenes.new(scene_name)
     assert all(o.name.startswith(('District','Collision')) for o in city_scene.objects)
     for obj in list(city_scene.objects):
@@ -58,7 +60,7 @@ def build():
     next(n for n in variety.node_tree.nodes if n.type=='TEX_IMAGE').image.pack()
     materials.append(variety)
     chunks = {}
-    buildings = json.loads((ROOT / ('Data/kwai-chung-layout.json' if KWAI_CHUNG else 'Data/lai-chi-kok-layout.json' if NORTHWEST else 'Data/west-kowloon-layout.json' if WEST else 'Data/kowloon-north-layout.json' if NORTH else 'Data/island-building-layout.json' if ISLAND else 'Data/building-layout.json')).read_text())['buildings']
+    buildings = json.loads((ROOT / ('Data/west-coast-layout.json' if WEST_COAST else 'Data/tsuen-wan-layout.json' if TSUEN_WAN else 'Data/kwai-chung-layout.json' if KWAI_CHUNG else 'Data/lai-chi-kok-layout.json' if NORTHWEST else 'Data/west-kowloon-layout.json' if WEST else 'Data/kowloon-north-layout.json' if NORTH else 'Data/island-building-layout.json' if ISLAND else 'Data/building-layout.json')).read_text())['buildings']
     for b in buildings:
         key = tuple(math.floor(v/128) for v in b['center'])
         if key not in chunks:
@@ -144,10 +146,13 @@ def export():
         bpy.context.window.scene = city_scene
         # Keep each offline GLB below 100 MB.
         # Split on an existing 128 m chunk boundary, without changing geometry.
-        for asset in (['kwai-chung-buildings','kwai-chung-east-buildings','lai-king-buildings'] if KWAI_CHUNG else ['lai-chi-kok-west-buildings','lai-chi-kok-buildings','cheung-sha-wan-buildings'] if NORTHWEST else ['west-kowloon-buildings','tai-kok-tsui-buildings','sham-shui-po-west-buildings','sham-shui-po-east-buildings'] if WEST else ['yau-ma-tei-buildings','mong-kok-buildings'] if NORTH else [ASSET,'central-buildings'] if ISLAND else [ASSET]):
+        for asset in ([ASSET] if WEST_COAST else ['tsuen-wan-buildings','tsuen-wan-west-buildings','kwai-chung-north-buildings'] if TSUEN_WAN else ['kwai-chung-buildings','kwai-chung-east-buildings','lai-king-buildings'] if KWAI_CHUNG else ['lai-chi-kok-west-buildings','lai-chi-kok-buildings','cheung-sha-wan-buildings'] if NORTHWEST else ['west-kowloon-buildings','tai-kok-tsui-buildings','sham-shui-po-west-buildings','sham-shui-po-east-buildings'] if WEST else ['yau-ma-tei-buildings','mong-kok-buildings'] if NORTH else [ASSET,'central-buildings'] if ISLAND else [ASSET]):
             bpy.ops.object.select_all(action='DESELECT')
             for obj in city_scene.objects:
-                if KWAI_CHUNG:
+                if TSUEN_WAN:
+                    district='kwai-chung-north-buildings' if obj.location.x >= -5632 else 'tsuen-wan-west-buildings' if obj.location.x < -6784 else 'tsuen-wan-buildings'
+                    if asset==district:obj.select_set(True)
+                elif KWAI_CHUNG:
                     district=('kwai-chung-buildings' if obj.location.x < -4864 else 'kwai-chung-east-buildings') if obj.location.y >= 6656 else 'lai-king-buildings'
                     if asset==district:obj.select_set(True)
                 elif NORTHWEST:

@@ -36,7 +36,7 @@ public partial class Main : Node3D
 
     public override void _Ready()
     {
-        SelfTest = OS.GetCmdlineUserArgs().Contains("--map-check") || OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--hud-check") || OS.GetCmdlineUserArgs().Contains("--restart-check");
+        SelfTest = OS.GetCmdlineUserArgs().Contains("--map-check") || OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--west-coast-check") || OS.GetCmdlineUserArgs().Contains("--tsuen-wan-check") || OS.GetCmdlineUserArgs().Contains("--hud-check") || OS.GetCmdlineUserArgs().Contains("--restart-check");
         RegisterInput();
         Map = new RoadMap();
         PrepareParkEntrances();
@@ -79,7 +79,7 @@ public partial class Main : Node3D
         foreach (var (name, key) in new (string, Key)[] {
             ("accelerate", Key.W), ("brake", Key.S), ("steer_left", Key.A), ("steer_right", Key.D),
             ("handbrake", Key.Space), ("doors", Key.E), ("camera", Key.C), ("reverse", Key.Q),
-            ("tunnel", Key.T), ("island", Key.I), ("central", Key.J), ("kowloon", Key.K), ("west", Key.L), ("northwest", Key.N), ("kwai_chung", Key.B), ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V) })
+            ("tunnel", Key.T), ("island", Key.I), ("central", Key.J), ("kowloon", Key.K), ("west", Key.L), ("northwest", Key.N), ("kwai_chung", Key.B), ("tsuen_wan", Key.U), ("west_coast", Key.O), ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V) })
         {
             if (InputMap.HasAction(name)) continue;
             InputMap.AddAction(name);
@@ -492,6 +492,8 @@ public partial class Main : Node3D
         if(e.IsActionPressed("west")){StartHarbourDrive(6);return;}
         if(e.IsActionPressed("northwest")){StartHarbourDrive(8);return;}
         if(e.IsActionPressed("kwai_chung")){StartHarbourDrive(9);return;}
+        if(e.IsActionPressed("tsuen_wan")){StartHarbourDrive(10);return;}
+        if(e.IsActionPressed("west_coast")){StartHarbourDrive(11);return;}
         if(e.IsActionPressed("restart"))
         {
             // As on quit, finish temporary C# wrappers before replacing their native scene/resources.
@@ -800,7 +802,7 @@ public partial class Main : Node3D
             if(OS.GetCmdlineUserArgs().Contains("--hud-check")){CheckHud();await CheckReviewRegressions();QuitGame();return;}
             if(OS.GetCmdlineUserArgs().Contains("--map-check")){CheckGovernmentMap();QuitGame();return;}
             CheckStreetClearance();
-            if(OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check")){await CheckHarbour();QuitGame();return;}
+            if(OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--west-coast-check") || OS.GetCmdlineUserArgs().Contains("--tsuen-wan-check")){await CheckHarbour();QuitGame();return;}
             CheckRoadMarkings();
             if(OS.GetCmdlineUserArgs().Contains("--road-check")) { QuitGame(); return; }
             await CheckBuildings();
@@ -973,9 +975,18 @@ public partial class Main : Node3D
         Bus.Position+=Vector3.Down;
         CurrentStreet();
         Check(_streetLookupPosition==Bus.Position,"Crossing the below-ground cutoff must bypass the movement threshold");
+        var unnamed=HarbourRoads.Where(r=>r.Name is "-99" or "&lt;Null&gt;").ToArray();
+        Check(unnamed.Count(r=>r.Name=="&lt;Null&gt;")==2,"Both Ting Kau unnamed connectors must be covered");
+        foreach(var road in unnamed)
+        {
+            Bus.Position=road.Points[road.Points.Count/2];
+            Check(CurrentStreet()=="UNNAMED CONNECTION",$"Missing source street name leaked into HUD at {Bus.Position}");
+        }
+        Bus.Position=Map.At(220);
+        Check(CurrentStreet()=="NATHAN ROAD","Named street must restore after an unnamed connector");
         Bus.GlobalTransform=saved;NoticeTime=notice;HarbourDrive=harbour;StopIndex=stopIndex;
         if(failures.Count>0)throw new Exception(string.Join("; ",failures));
-        GD.Print("ANTILA_HUD_CHECKS_OK: north/south correct and oncoming lanes in both modes; turning/junction guards; island, depth and endpoint exploration; H1 distance/boarding/missed-stop guidance; street cache movement and vertical/route jumps");
+        GD.Print($"ANTILA_HUD_CHECKS_OK: north/south correct and oncoming lanes in both modes; turning/junction guards; island, depth and endpoint exploration; H1 distance/boarding/missed-stop guidance; street cache movement and vertical/route jumps; {unnamed.Length} unnamed links including both Ting Kau connectors and named-street restore");
     }
 
     private async System.Threading.Tasks.Task CheckReviewRegressions()

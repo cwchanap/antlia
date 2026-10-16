@@ -7,7 +7,7 @@ public partial class Main
     private void BuildGovernmentBuildings()
     {
         _city=new Node3D {Name="GovernmentBuildings"};AddChild(_city);
-        foreach(var (layout,asset) in new[]{("building-layout","kowloon-buildings"),("island-building-layout","island-buildings"),("kowloon-north-layout","yau-ma-tei-buildings"),("west-kowloon-layout","west-kowloon-buildings"),("lai-chi-kok-layout","lai-chi-kok-buildings"),("kwai-chung-layout","kwai-chung-buildings")})
+        foreach(var (layout,asset) in new[]{("building-layout","kowloon-buildings"),("island-building-layout","island-buildings"),("kowloon-north-layout","yau-ma-tei-buildings"),("west-kowloon-layout","west-kowloon-buildings"),("lai-chi-kok-layout","lai-chi-kok-buildings"),("kwai-chung-layout","kwai-chung-buildings"),("tsuen-wan-layout","tsuen-wan-buildings"),("west-coast-layout","west-coast-buildings")})
         {
         using var data=System.Text.Json.JsonDocument.Parse(FileAccess.GetFileAsString($"res://Data/{layout}.json"));
         foreach(var patch in data.RootElement.GetProperty("pavement_patches").EnumerateArray())
@@ -30,6 +30,7 @@ public partial class Main
         if(asset=="yau-ma-tei-buildings")_city.AddChild(GD.Load<PackedScene>("res://Assets/Models/mong-kok-buildings.glb").Instantiate<Node3D>());
         if(asset=="island-buildings")_city.AddChild(GD.Load<PackedScene>("res://Assets/Models/central-buildings.glb").Instantiate<Node3D>());
         if(asset=="west-kowloon-buildings")foreach(var name in new[]{"tai-kok-tsui-buildings","sham-shui-po-west-buildings","sham-shui-po-east-buildings"})_city.AddChild(GD.Load<PackedScene>($"res://Assets/Models/{name}.glb").Instantiate<Node3D>());
+        if(asset=="tsuen-wan-buildings")foreach(var name in new[]{"tsuen-wan-west-buildings","kwai-chung-north-buildings"})_city.AddChild(GD.Load<PackedScene>($"res://Assets/Models/{name}.glb").Instantiate<Node3D>());
         if(asset=="kwai-chung-buildings")foreach(var name in new[]{"kwai-chung-east-buildings","lai-king-buildings"})_city.AddChild(GD.Load<PackedScene>($"res://Assets/Models/{name}.glb").Instantiate<Node3D>());
         if(asset=="lai-chi-kok-buildings")foreach(var name in new[]{"lai-chi-kok-west-buildings","cheung-sha-wan-buildings"})_city.AddChild(GD.Load<PackedScene>($"res://Assets/Models/{name}.glb").Instantiate<Node3D>());
         }

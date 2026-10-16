@@ -122,7 +122,7 @@ public partial class Hud : Control
         DrawRect(new(30,28,76,80),new Color("c75236"));
         Text(Game.HarbourDrive?"HK":"H1",Game.HarbourDrive?34:44,81,Game.HarbourDrive?26:37);
         Text(Game.HarbourDrive?"FREE DRIVE":"KOWLOON",123,61,22);
-        Text(Game.HarbourDrive?"KOWLOON · KWAI CHUNG · HK ISLAND":"TSIM SHA TSUI  →  JORDAN",124,87,13,_muted);
+        Text(Game.HarbourDrive?"KOWLOON · WEST COAST · HK ISLAND":"TSIM SHA TSUI  →  JORDAN",124,87,13,_muted);
         Panel(1118,28,292,60);
         Text("ANTILA  /  BUS DRIVING",1135,51,16);
         Text("10:24 AM     •     HONG KONG",1135,73,12,_muted);
@@ -172,7 +172,7 @@ public partial class Hud : Control
         Panel(330,823,722,44);
         Chip("W","Throttle",346,851);Chip("S","Brake",464,851);Chip("A/D","Steer",568,851);
         Chip("E","Doors",684,851);Chip("C","Camera",788,851);Chip("Q","Gear",912,851);
-        Text("SPACE Handbrake  H Horn  V "+(AudioServer.IsBusMute(0)?"Unmute":"Sound")+"  M Map  T Tunnel  I Island  J Central  K Nathan  L West  N Lai Chi Kok  B Kwai Chung  R Restart  ESC Pause",382,889,12,_paper);
+        Text("SPACE Handbrake  H Horn  V "+(AudioServer.IsBusMute(0)?"Unmute":"Sound")+"  M Map  T Tunnel  I Island  J Central  K Nathan  L West  N Lai Chi Kok  B Kwai Chung  U Tsuen Wan  O Coast  R Restart  ESC Pause",382,889,11,_paper);
         if(Game.NoticeTime>0 && !Game.Complete)
         {
             float x=Game.CabView?438:350;
@@ -185,7 +185,7 @@ public partial class Hud : Control
             Panel(420,757,565,46);
             Text("ONCOMING LANE  —  Drive on the left",459,786,17,new Color("f2b16c"));
         }
-        Text("Roads / buildings / coast © HKSAR Govt · TD / LandsD · 13 Oct 2026",31,889,9,_muted);
+        Text("Roads / buildings / coast © HKSAR Govt · TD / LandsD · 15 Oct 2026",31,889,9,_muted);
         if(Game.Paused || Game.Complete)
         {
             DrawRect(new(0,0,1440,900),new Color(.03f,.08f,.08f,.65f));
@@ -215,7 +215,7 @@ public partial class Hud : Control
         {
             DrawRect(new(0,0,1440,900),new Color(.03f,.08f,.08f,.78f));
             Panel(80,100,1280,700);
-            Text("KOWLOON · KWAI CHUNG · HONG KONG ISLAND",112,147,24,_paper);
+            Text("KOWLOON · TSUEN WAN · WEST COAST · HONG KONG ISLAND",112,147,24,_paper);
             Text("M / ESC  Close map • Driving paused",995,146,15,_muted);
         }
         else
@@ -245,15 +245,23 @@ public partial class Hud : Control
         {
             var stop=Game.Map.Stops[i];var p=Point(Game.Map.At(stop.Distance));
             DrawCircle(p,expanded?6:4,i<Game.StopIndex?_mint:_paper);
-            if(expanded)Text($"H1 · {stop.Name}",p.X+13,p.Y+5,15,i==Game.StopIndex?_paper:_muted);
+            if(expanded)
+            {
+                var labelAt=new Vector2(1085,600+(2-i)*28);
+                DrawLine(p,labelAt+new Vector2(-8,-4),new Color(.55f,.66f,.62f,.6f),1,true);
+                Text($"H1 · {stop.Name}",labelAt.X,labelAt.Y,13,i==Game.StopIndex?_paper:_muted);
+            }
         }
         if(expanded)
         {
             foreach(var (label,at,offset) in new[]{
+                ("SHAM TSENG",new Vector3(-11720,0,-7940),new Vector2(-100,65)),
+                ("TING KAU",new Vector3(-9400,0,-8260),new Vector2(-110,50)),
+                ("TSUEN WAN",new Vector3(-6250,0,-8870),new Vector2(-150,-5)),
                 ("KWAI CHUNG",new Vector3(-4630,0,-7300),new Vector2(80,-10)),
-                ("LAI KING",new Vector3(-4400,0,-6250),new Vector2(-170,0)),
-                ("MEI FOO",new Vector3(-3500,0,-5100),new Vector2(-205,-28)),
-                ("LAI CHI KOK",new Vector3(-3370,0,-4830),new Vector2(-185,-20)),
+                ("LAI KING",new Vector3(-4400,0,-6250),new Vector2(-202,-17)),
+                ("MEI FOO",new Vector3(-3500,0,-5100),new Vector2(-239,-29)),
+                ("LAI CHI KOK",new Vector3(-3370,0,-4830),new Vector2(-244,-5)),
                 ("CHEUNG SHA WAN",new Vector3(-2190,0,-4770),new Vector2(80,-50)),
                 ("SHAM SHUI PO",new Vector3(-1180,0,-4000),new Vector2(-255,-12)),
                 ("TAI KOK TSUI",new Vector3(-1000,0,-2850),new Vector2(-245,0)),
@@ -262,12 +270,12 @@ public partial class Hud : Control
                 ("YAU MA TEI",new Vector3(-140,0,-1940),new Vector2(135,0)),
                 ("JORDAN",new Vector3(-70,0,-1110),new Vector2(205,-20)),
                 ("TSIM SHA TSUI",new Vector3(-180,0,-470),new Vector2(-200,10)),
-                ("TSIM SHA TSUI EAST",new Vector3(590,0,-460),new Vector2(170,10)),
-                ("CROSS-HARBOUR TUNNEL · 1.86 km",new Vector3(975,0,400),new Vector2(45,0)),
-                ("CENTRAL",new Vector3(-1700,0,1680),new Vector2(-100,32)),
+                ("TSIM SHA TSUI EAST",new Vector3(590,0,-460),new Vector2(170,62)),
+                ("CROSS-HARBOUR TUNNEL · 1.86 km",new Vector3(975,0,400),new Vector2(100,55)),
+                ("CENTRAL",new Vector3(-1700,0,1680),new Vector2(-125,32)),
                 ("ADMIRALTY",new Vector3(-850,0,1680),new Vector2(-65,32)),
                 ("WAN CHAI",new Vector3(150,0,1680),new Vector2(35,32)),
-                ("CAUSEWAY BAY",new Vector3(1570,0,1680),new Vector2(50,32))})
+                ("CAUSEWAY BAY",new Vector3(1570,0,1680),new Vector2(65,32))})
             {
                 var p=Point(at);var labelAt=p+offset;
                 float width=_font.GetStringSize(label,HorizontalAlignment.Left,-1,13).X;
@@ -275,7 +283,7 @@ public partial class Hud : Control
                 Text(label,labelAt.X,labelAt.Y,13,_muted);
             }
             Text($"Approx. {bounds.Size.X/1000:0.00} km east–west  ×  {bounds.Size.Y/1000:0.00} km north–south",112,759,16,_paper);
-            Text("T Tunnel • I Island • J Central • K Nathan • L West • N Lai Chi Kok • B Kwai Chung (stopped) • Gold streets / blue coast",112,784,13,_mint);
+            Text("T Tunnel • I Island • J Central • K Nathan • L West • N Lai Chi Kok • B Kwai Chung • U Tsuen Wan • O Coast (stopped)",112,784,13,_mint);
         }
         var bus=Point(Game.Bus.GlobalPosition);
         DrawCircle(bus,9,_panel);

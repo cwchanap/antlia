@@ -38,6 +38,8 @@ KOWLOON_BOUNDS = (-900,-3350,650,-1191.124)
 WEST_BOUNDS = (-2700,-4800,650,50)
 NORTHWEST_BOUNDS = (-4600,-6000,0,-3900)
 KWAI_CHUNG_BOUNDS = (-6500,-8500,-3100,-4400)
+TSUEN_WAN_BOUNDS = (-8500,-11000,-3900,-6900)
+WEST_COAST_BOUNDS = (-13800,-11200,-6400,-6900)
 KOWLOON_STREETS = set('ARGYLE STREET|ARTHUR STREET|BATTERY STREET|BUTE STREET|CANTON ROAD|CHANGSHA STREET|CHI WO STREET|DUNDAS STREET|FA YUEN STREET|FIFE STREET|GASCOIGNE ROAD|HAK PO STREET|HAMILTON STREET|JORDAN ROAD|KANSU STREET|KWONG WA STREET|MAN CHEONG STREET|MAN MING LANE|MAN SING STREET|MAN WAI STREET|MAN YING STREET|MAN YUEN STREET|MARKET STREET|MAU LAM STREET|MONG KOK ROAD|NANKING STREET|NATHAN ROAD|NELSON STREET|NING PO STREET|PAK HOI STREET|PARKES STREET|PITT STREET|PORTLAND STREET|PRINCE EDWARD ROAD WEST|PUBLIC SQUARE STREET|RECLAMATION STREET|SAI YEE STREET|SAI YEUNG CHOI STREET SOUTH|SAIGON STREET|SHANGHAI STREET|SHANTUNG STREET|SHEK LUNG STREET|SOY STREET|TAK CHEONG LANE|TAK CHEONG STREET|TEMPLE STREET|TUNG CHOI STREET|TUNG KUN STREET|WAI CHING STREET|WATERLOO ROAD|WING SING LANE|WOOSUNG STREET|YIM PO FONG STREET|YIN CHONG STREET'.split("|"))
 KOWLOON = ['TD_104673', 'TD_104583', 'TD_104627', 'TD_105179', 'TD_104554', '-TD_104684', '-TD_104685', 'TD_104623', 'TD_104963', 'TD_104966', 'TD_104591', 'TD_104822', 'TD_104866', 'TD_104865', 'TD_104821', 'TD_104852', '-TD_104868', '-TD_104869', 'TD_104873', 'TD_104872', 'TD_104871', 'TD_105196', 'TD_105757', 'TD_106742', 'TD_106741', 'TD_105849', 'TD_105760', '-TD_105850', '-TD_105852', 'TD_106985', 'TD_105836', 'TD_105867', 'TD_105871', 'TD_105890']
 ISLAND_STREETS = set("GLOUCESTER ROAD|HENNESSY ROAD|HARBOUR ROAD|CONVENTION AVENUE|EXPO DRIVE|EXPO DRIVE EAST|FLEMING ROAD|TONNOCHY ROAD|MARSH ROAD|JAFFE ROAD|LOCKHART ROAD|JOHNSTON ROAD|PERCIVAL STREET|CANAL ROAD EAST|CANAL ROAD WEST|CAUSEWAY ROAD|YEE WO STREET|FENWICK STREET".split("|"))
@@ -78,6 +80,10 @@ LAI_CHI_KOK = ['TD_106264', 'TD_106374', 'TD_106373', 'TD_106375', 'TD_115929', 
 
 KWAI_CHUNG = ['-TD_8649', 'TD_8642', '-TD_65324', '-TD_65325', 'TD_9625', 'TD_7680', '-TD_271769', '-TD_271768', '-TD_271765', '-TD_271766', '-TD_284304', '-TD_8372', '-TD_271767', '-TD_9109', '-TD_9716', '-TD_7434', '-TD_8099', '-TD_272049', '-TD_7421', '-TD_272246', '-TD_7757', '-TD_284844', '-TD_284462', 'TD_65149', 'TD_268542', 'TD_65148', '-TD_65146', 'TD_9739', 'TD_8063', 'TD_8747', 'TD_7822', 'TD_59597', 'TD_57351', 'TD_57350', 'TD_64614', 'TD_64615', 'TD_57349', 'TD_56902', '-TD_57353', '-TD_58246', 'TD_59623', 'TD_58626', '-TD_57610', 'TD_64700', 'TD_57160', 'TD_57609', '-TD_58053', '-TD_57159', 'TD_59443', '-TD_57603', 'TD_59576', 'TD_60105', 'TD_56923', 'TD_59193', 'TD_59640', 'TD_57617', 'TD_59559', '-TD_65200', 'TD_59154']
 
+TSUEN_WAN = ['-TD_59580', 'TD_60092', 'TD_57811', 'TD_60091', 'TD_60090', 'TD_276664', 'TD_58197', 'TD_58666', 'TD_58689', 'TD_59610', '-TD_56927', '-TD_56928', 'TD_57334', 'TD_59618', 'TD_58228', 'TD_58695', 'TD_56926', 'TD_57355', '-TD_57817', 'TD_59211', 'TD_58661', 'TD_56954', 'TD_60099', 'TD_58705', 'TD_93377', 'TD_283753', 'TD_283752', 'TD_93378', 'TD_93374', 'TD_96024', 'TD_59149', 'TD_58683', 'TD_57758', 'TD_58237', '-TD_58660', 'TD_59182', 'TD_64267', '-TD_93402', '-TD_93339', 'TD_93347', '-TD_93341', '-TD_93342', 'TD_111741', '-TD_111740', 'TD_111736', 'TD_116769', 'TD_93252', '-TD_93408', 'TD_93010', 'TD_93410', 'TD_93113', 'TD_271773', 'TD_92993']
+
+WEST_COAST = ['TD_271771', 'TD_271772', 'TD_261429', 'TD_92931', 'TD_92932', 'TD_92933', 'TD_92936', 'TD_93220', 'TD_272364', '-TD_271771', '-TD_92993', '-TD_271773', '-TD_93113', 'TD_93409', '-TD_93010', 'TD_93408', 'TD_93456', 'TD_93398', 'TD_111730', 'TD_111904', 'TD_111903', 'TD_93222', 'TD_93088', 'TD_96854', 'TD_93012', 'TD_93013', 'TD_93015', 'TD_93201', 'TD_265762', 'TD_164214', 'TD_93016', 'TD_93078', 'TD_93077', 'TD_93205', '-TD_96546', 'TD_96551', 'TD_96550', 'TD_93296', 'TD_93298', 'TD_93297', 'TD_93424', 'TD_93423', 'TD_165439', 'TD_93212', 'TD_110626', 'TD_110628', 'TD_110603', 'TD_110596', 'TD_110592', 'TD_110589', 'TD_110575', 'TD_110581', 'TD_110605', 'TD_110604', 'TD_110617', 'TD_110615', 'TD_93631', 'TD_93754', 'TD_93753', 'TD_93752', 'TD_93751', 'TD_93655', 'TD_93654', 'TD_93515', 'TD_93744', 'TD_116022', 'TD_93750', 'TD_93742', 'TD_93746', 'TD_93799', 'TD_96621', 'TD_98692', 'TD_93745', 'TD_93748', 'TD_93749']
+
 def build(source):
     coast_data=json.loads((ROOT/'Data/west-kowloon-coast.json').read_text())
     northwest_coast=json.loads((ROOT/'Data/lai-chi-kok-coast.json').read_text())
@@ -88,12 +94,20 @@ def build(source):
     prior_region=unary_union([box(*WEST_BOUNDS),box(*NORTHWEST_BOUNDS)])
     west_land=unary_union([west_land,shape(kwai_chung_coast['land']).difference(prior_region)])
     assert west_land.is_valid and west_land.geom_type=='Polygon', 'Kwai Chung land must join the existing mainland'
+    tsuen_wan_coast=json.loads((ROOT/'Data/tsuen-wan-coast.json').read_text())
+    kwai_region=unary_union([prior_region,box(*KWAI_CHUNG_BOUNDS)])
+    west_land=unary_union([west_land,shape(tsuen_wan_coast['land']).difference(kwai_region)])
+    assert west_land.is_valid and west_land.geom_type=='Polygon', 'Tsuen Wan land must join the existing mainland'
+    west_coast=json.loads((ROOT/'Data/west-coast-coast.json').read_text())
+    tsuen_region=unary_union([kwai_region,box(*TSUEN_WAN_BOUNDS)])
+    west_land=unary_union([west_land,shape(west_coast['land']).difference(tsuen_region)])
+    assert west_land.is_valid and west_land.geom_type=='Polygon', 'West coast land must join the existing mainland'
     island_coast=json.loads((ROOT/'Data/island-coast.json').read_text())
     island=shape(island_coast['land'])
     district_data=json.loads((ROOT/'Data/nathan-road.json').read_text())
     old_district=box(*district_data['bounds'])
     old_kowloon=unary_union([old_district,box(*KOWLOON_BOUNDS)])
-    ids = set(SOUTH+ISLAND+NORTH+[i.lstrip("-") for i in SCENIC+CENTRAL+KOWLOON+WEST+SHAM_SHUI_PO+LAI_CHI_KOK+KWAI_CHUNG])
+    ids = set(SOUTH+ISLAND+NORTH+[i.lstrip("-") for i in SCENIC+CENTRAL+KOWLOON+WEST+SHAM_SHUI_PO+LAI_CHI_KOK+KWAI_CHUNG+TSUEN_WAN+WEST_COAST])
     # Current TD KMZ uses HK1980 geographic coordinates and renumbers KML IDs.
     # ROUTE_ID is the stable source key. Pin old sections to their source snapshot
     # and validate the datum against shared geometry before connecting new roads.
@@ -112,7 +126,7 @@ def build(source):
             props = dict(re.findall(r'<td>([A-Z_]+)</td>\s*<td>(.*?)</td>', element.findtext('k:description','',NS)))
             prior = existing.get(props.get('ROUTE_ID'))
             ident = prior['properties']['source_id'] if prior else 'TD_'+props['ROUTE_ID']
-            if prior or ident in ids or props.get('ELEVATION')=='0':
+            if prior or ident in ids or props.get('ELEVATION')=='0' or (props.get('ELEVATION')=='1' and props.get('STREET_ENAME','').startswith('CASTLE PEAK ROAD')):
                 coords = [list(map(float,w.split(','))) for w in element.find('.//k:coordinates',NS).text.split()]
                 if transform:coords = [[*transform.transform(*p[:2]),p[2]] for p in coords]
                 if prior:
@@ -124,7 +138,7 @@ def build(source):
                 line=LineString([local(p) for p in coords])
                 north=props.get('STREET_ENAME') in KOWLOON_STREETS and line.bounds[1]<KOWLOON_BOUNDS[3] and box(KOWLOON_BOUNDS[0],KOWLOON_BOUNDS[1],KOWLOON_BOUNDS[2],-1130).covers(line.buffer(12))
                 name=props.get('STREET_ENAME','')
-                west=props.get('ELEVATION')=='0' and props.get('TRAVEL_DIRECTION')!='4' and name not in ('','-99','&lt;Null&gt;') and not any(s in name for s in ('HIGHWAY','CROSSING','CORRIDOR','FLYOVER','INTERCHANGE')) and west_land.covers(line.buffer(12)) and line.difference(old_kowloon).length>1
+                west=(props.get('ELEVATION')=='0' or (props.get('ELEVATION')=='1' and name.startswith('CASTLE PEAK ROAD') and line.bounds[2]<TSUEN_WAN_BOUNDS[0])) and props.get('TRAVEL_DIRECTION')!='4' and name not in ('','-99','&lt;Null&gt;','TUEN MUN ROAD','TSUEN WAN ROAD') and not any(s in name for s in ('HIGHWAY','CROSSING','CORRIDOR','FLYOVER','INTERCHANGE')) and west_land.covers(line.buffer(12)) and line.difference(old_kowloon).length>1
                 if ident in ids or prior or north or west or (name in ISLAND_STREETS and island.covers(line.buffer(12))):
                     records[ident] = prior if prior else {'type':'Feature','properties':dict(props, source_id=ident, source_sha256=source_hash),
                                       'geometry':{'type':'LineString','coordinates':coords}}
@@ -227,12 +241,12 @@ def build(source):
                       'points':points})
     by_id = {r['id']:r for r in roads}
     routes = []
-    for name,members in [('Hung Hom → Hong Kong Island',SOUTH),('Wan Chai return loop',ISLAND),('Hong Kong Island → Kowloon',NORTH),('Wan Chai / Causeway Bay scenic drive',SCENIC),('Admiralty / Central loop',CENTRAL),('Jordan → Yau Ma Tei → Mong Kok',KOWLOON),('West Kowloon → Tai Kok Tsui → Sham Shui Po',WEST),('Mong Kok → Sham Shui Po',SHAM_SHUI_PO),('Sham Shui Po → Cheung Sha Wan → Lai Chi Kok',LAI_CHI_KOK),('Mei Foo → Lai King → Kwai Chung',KWAI_CHUNG)]:
+    for name,members in [('Hung Hom → Hong Kong Island',SOUTH),('Wan Chai return loop',ISLAND),('Hong Kong Island → Kowloon',NORTH),('Wan Chai / Causeway Bay scenic drive',SCENIC),('Admiralty / Central loop',CENTRAL),('Jordan → Yau Ma Tei → Mong Kok',KOWLOON),('West Kowloon → Tai Kok Tsui → Sham Shui Po',WEST),('Mong Kok → Sham Shui Po',SHAM_SHUI_PO),('Sham Shui Po → Cheung Sha Wan → Lai Chi Kok',LAI_CHI_KOK),('Mei Foo → Lai King → Kwai Chung',KWAI_CHUNG),('Kwai Chung → Tsuen Wan',TSUEN_WAN),('Tsuen Wan → Ting Kau → Sham Tseng',WEST_COAST)]:
         points = []
         for ident in members:
             reverse=ident.startswith('-');ident=ident.lstrip('-')
             p = by_id[ident]['points']
-            if members in (WEST,SHAM_SHUI_PO,LAI_CHI_KOK,KWAI_CHUNG):
+            if members in (WEST,SHAM_SHUI_PO,LAI_CHI_KOK,KWAI_CHUNG,TSUEN_WAN,WEST_COAST):
                 assert records[ident]['properties']['TRAVEL_DIRECTION'] in (('1','2') if reverse else ('1','3')), 'New drive violates source travel direction'
             if reverse:
                 assert records[ident]['properties']['TRAVEL_DIRECTION'] in ('1','2'), 'Source direction forbids reversing this section'
@@ -241,7 +255,7 @@ def build(source):
             assert not points or math.dist(points[-1],p[0]) < .12, (name,ident,'gap')
             points.extend(p if not points else p[1:])
         routes.append({'name':name,'source_ids':members,'points':points})
-        if members in (WEST,SHAM_SHUI_PO,LAI_CHI_KOK,KWAI_CHUNG):
+        if members in (WEST,SHAM_SHUI_PO,LAI_CHI_KOK,KWAI_CHUNG,TSUEN_WAN,WEST_COAST):
             for a,b,c in zip(points,points[1:],points[2:]):
                 dot=sum((b[i]-a[i])*(c[i]-b[i]) for i in range(3))/(math.dist(a,b)*math.dist(b,c))
                 assert dot>-.5, (name,'Drive turns back sharply; choose a continuous source route')
@@ -273,7 +287,7 @@ def build(source):
     ground = land.difference(unary_union(cutouts))
     for street in district_data['side_roads']:
         assert ground.covers(LineString(street['points']).buffer(9)), (street['name'],'portal cut breaks the existing street')
-    water = box(KWAI_CHUNG_BOUNDS[0]-500,KWAI_CHUNG_BOUNDS[1]-250,2550,2350).difference(land)
+    water = box(WEST_COAST_BOUNDS[0]-500,WEST_COAST_BOUNDS[1]-250,2550,2350).difference(land)
     water_triangles = [list(t.exterior.coords)[:3] for t in constrained_delaunay_triangles(water).geoms]
     for road in roads:
         for x,y,z in road['points']:
@@ -295,17 +309,21 @@ def build(source):
         'tunnel_reference':'https://www.td.gov.hk/en/transport_in_hong_kong/tunnels_and_bridges_n/location_map/index_t.html',
         'note':'Original XY preserved in approximate local metre coordinates. ELEVATION is a relative road level, not metres. Depth 32 m, widths (6 m elevated carriageways; 12 m at the low Hung Hing / Tonnochy approach), 5.6 m tunnel interior and 7 m elevated decks with cosine ramps over 150 m outside shared level junction aprons are authored. Aprons extend until adjoining centreline branches separate by 7.5 m. Shorelines derive from LandsD iB1000 with recorded gap repairs. Turn restrictions are not inferred.'}
     # Only outer edges remain: remove old internal north/west fences at the map seams.
-    border=kowloon.boundary.intersection(box(KWAI_CHUNG_BOUNDS[0],KWAI_CHUNG_BOUNDS[1],WEST_BOUNDS[2],WEST_BOUNDS[3])).difference(district.buffer(.1))
+    border=kowloon.boundary.intersection(box(WEST_COAST_BOUNDS[0],WEST_COAST_BOUNDS[1],WEST_BOUNDS[2],WEST_BOUNDS[3])).difference(district.buffer(.1))
     shore=unary_union([*[LineString(p) for p in coast_data['coastline']],
         unary_union([LineString(p) for p in northwest_coast['coastline']]).difference(box(*WEST_BOUNDS)),
-        unary_union([LineString(p) for p in kwai_chung_coast['coastline']]).difference(prior_region)]).difference(district.buffer(.1))
+        unary_union([LineString(p) for p in kwai_chung_coast['coastline']]).difference(prior_region),
+        unary_union([LineString(p) for p in tsuen_wan_coast['coastline']]).difference(kwai_region),
+        unary_union([LineString(p) for p in west_coast['coastline']]).difference(tsuen_region)]).difference(district.buffer(.1))
     def line_parts(g):
         return [list(p.coords) for p in (g.geoms if hasattr(g,'geoms') else [g]) if p.geom_type=='LineString' and p.length>.5]
-    output = {'metadata':metadata,'bounds':[KWAI_CHUNG_BOUNDS[0]-80,KWAI_CHUNG_BOUNDS[1]-80,ISLAND_BOUNDS[2]+80,ISLAND_BOUNDS[3]+50], 'island_bounds':ISLAND_BOUNDS, 'kowloon_north_bounds':KOWLOON_BOUNDS,
+    output = {'metadata':metadata,'bounds':[WEST_COAST_BOUNDS[0]-80,WEST_COAST_BOUNDS[1]-80,ISLAND_BOUNDS[2]+80,ISLAND_BOUNDS[3]+50], 'island_bounds':ISLAND_BOUNDS, 'kowloon_north_bounds':KOWLOON_BOUNDS,
               'island_land':island_coast['land'],'island_coastline':line_parts(unary_union([LineString(p) for p in island_coast['coastline']]).difference(unary_union(cutouts).buffer(1))),
               'island_boundary':line_parts(island.boundary.intersection(box(*ISLAND_BOUNDS).boundary)), 'island_coast_metadata':island_coast['metadata'],
               'kowloon_west_land':mapping(west_land),'kowloon_coastline':line_parts(shore),'kowloon_boundary':line_parts(border.difference(shore.buffer(.3))), 'coast_metadata':coast_data['metadata'],
-              'kowloon_northwest_bounds':NORTHWEST_BOUNDS,'northwest_coast_metadata':northwest_coast['metadata'],'kwai_chung_bounds':KWAI_CHUNG_BOUNDS,'kwai_chung_coast_metadata':kwai_chung_coast['metadata'],'roads':roads,
+              'kowloon_northwest_bounds':NORTHWEST_BOUNDS,'northwest_coast_metadata':northwest_coast['metadata'],'kwai_chung_bounds':KWAI_CHUNG_BOUNDS,'kwai_chung_coast_metadata':kwai_chung_coast['metadata'],
+              'tsuen_wan_bounds':TSUEN_WAN_BOUNDS,'tsuen_wan_coast_metadata':tsuen_wan_coast['metadata'],
+              'west_coast_bounds':WEST_COAST_BOUNDS,'west_coast_metadata':west_coast['metadata'],'roads':roads,
               'routes':routes,'tubes':tubes,'ground_triangles':ground_triangles,'water_triangles':water_triangles,'surface_triangles':surface_triangles}
     (ROOT/'Data/cross-harbour-source.geojson').write_text(json.dumps({'type':'FeatureCollection','metadata':metadata,'features':list(records.values())},ensure_ascii=False,separators=(',',':')))
     (ROOT/'Data/cross-harbour.json').write_text(json.dumps(output,ensure_ascii=False,separators=(',',':')))

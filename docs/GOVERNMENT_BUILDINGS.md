@@ -1,6 +1,6 @@
 # Government building layout — 13 September 2026
 
-The [12–13 October Lai Chi Kok expansion](LAI_CHI_KOK_EXPANSION.md) adds a fourth Kowloon source extract and three building GLBs; current scene totals are 20,832 parts and 1,403 render/collision chunk pairs. Earlier counts below describe their recorded snapshots.
+The [15 October coastal expansion](WEST_COAST_EXPANSION.md) adds a seventh Kowloon source extract and a Ting Kau / Sham Tseng building GLB. Current scene totals are 31,380 parts and 2,456 render/collision chunk pairs. Earlier counts below describe their recorded snapshots.
 
 The 8 October 2026 [government-map corrections](GOVERNMENT_MAP_FIXES.md) supersede the earlier island boundary, flattened elevated-road geometry and exact-metre-scale wording below. Earlier verification records apply to their original snapshots.
 
@@ -159,3 +159,11 @@ The shared downloader now rejects empty/invalid counts, incomplete or duplicate 
 ## Mei Foo / Lai King / Kwai Chung — 13 October 2026
 
 The fifth Kowloon source extract contains 4,690 CSDI building records; the new layout has 3,422 parts, excluding all preceding region rectangles. All five source hashes participate in shared BuildingCSUID base/roof-height reconciliation. Lai Chi Kok becomes 2,795 parts after new road clearance and shared datums; original, north, west and island building/paving arrays remain unchanged. The combined scene has 24,250 parts, 1,842 render/collision chunk pairs and 2,676 paving patches. Three new GLBs split at y=6656 and x=-4864 in Blender coordinates; every file remains below 100 MB. See [source queries, regeneration, model audit and limits](KWAI_CHUNG_EXPANSION.md). The geography uses flat terrain even along real hillside roads.
+
+## Kwai Chung / Tsuen Wan — 14 October 2026
+
+The sixth Kowloon extract contains 7,313 CSDI records and produces 4,996 parts outside prior region rectangles. Shared heights are reconciled across all six extracts; the Kwai Chung seam is regenerated. Other earlier building/paving arrays remain unchanged. Three new isolated Blender exports preserve matching render/collision chunks and reuse the existing facade atlases. The download safety regression now covers Tsuen Wan as its sixth regional mode. See [sources, regeneration, checks and limits](TSUEN_WAN_EXPANSION.md).
+
+## Ting Kau / Sham Tseng — 15 October 2026
+
+The seventh Kowloon extract contains 3,811 CSDI records and produces 2,134 parts outside earlier regional rectangles. Shared heights are reconciled across all seven extracts. Every earlier building array is unchanged; the Tsuen Wan paving geometry is also unchanged despite serialization differences. Blender MCP exports 195 matching render/collision chunks using the existing generated facade/shopfront atlases. The download regression covers seven modes. See [source provenance, regeneration and verification](WEST_COAST_EXPANSION.md).

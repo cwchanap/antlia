@@ -286,7 +286,11 @@ public sealed class RoadMap
                 }
         }
         Polygon(park,2);
-        foreach(var polygon in lots)Polygon(polygon,1);
+        // Conservatively cover texels touched by paving. Narrow gap patches can fall
+        // between texel centres once a large map reaches the texture-size cap.
+        float pavingPixelRadius=new Vector2(1/sx,1/sy).Length()*.5f;
+        foreach(var polygon in lots)
+            foreach(var covered in Geometry2D.OffsetPolygon(polygon,pavingPixelRadius))Polygon(covered,1);
         foreach(var (a,b) in paths)Stroke(new(a.X,a.Z),new(b.X,b.Z),-1,1.5f);
         foreach(var s in roads??_segments.Select(s=>(s.A,s.B,s.HalfWidth)))Stroke(s.A,s.B,s.HalfWidth,s.HalfWidth+3);
         var image=Image.CreateFromData(width,height,false,Image.Format.Rgb8,pixels);

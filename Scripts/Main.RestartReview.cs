@@ -44,10 +44,10 @@ public partial class Main
         }
         if(Volatile.Read(ref _restartLog.Errors)>0)throw new Exception("Restart world validation emitted engine errors");
         GD.Print($"ANTILA_RESTART_STATE_OK: cycle {_restartCycle}; {meshes} meshes / {shapes} collision shapes; H1 ready");
-        if(_restartCycle==5)
+        if(_restartCycle==7)
         {
             OS.RemoveLogger(_restartLog);_restartLog.Dispose();_restartLog=null;
-            GD.Print("ANTILA_RESTART_CHECKS_OK: 5 reloads from paused map, island drive, northwest drive, Kwai Chung drive and completed service; no engine errors");
+            GD.Print("ANTILA_RESTART_CHECKS_OK: 7 reloads from paused map, island drive, northwest drive, Kwai Chung drive, Tsuen Wan drive, west coast drive and completed service; no engine errors");
             QuitGame();return;
         }
         if(_restartCycle==0)
@@ -58,6 +58,8 @@ public partial class Main
         else if(_restartCycle==1)StartHarbourDrive(3);
         else if(_restartCycle==2)StartHarbourDrive(8);
         else if(_restartCycle==3)StartHarbourDrive(9);
+        else if(_restartCycle==4)StartHarbourDrive(10);
+        else if(_restartCycle==5)StartHarbourDrive(11);
         else
         {
             foreach(var stop in Map.Stops)

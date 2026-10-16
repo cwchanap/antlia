@@ -24,3 +24,11 @@ Complete: clean launcher build, both side-street drives, the full three-stop ser
 ## Road and density review
 
 Reviewed junction renders, corrected surface depth fighting and conflicting road paint, opened the former internal road caps, and rebuilt building placement around shared footprints and block infill. Park planting now follows paths. See `POLISH_REVIEW.md` for findings and before/after evidence. Full-network bus-clearance queries and the existing driving checks verify the changes.
+
+## Continued regional expansion — 14 October 2026
+
+Extend the connected Kwai Chung road network north into Tsuen Wan using Transport Department centrelines and LandsD coast/building sources, preserve earlier drives, and add the stopped-only U shortcut. Regenerate terrain and building chunks through Blender MCP, then verify source geometry, regional seams, physical driving, native views and reload behavior. Current scope, evidence and verification status are maintained in [TSUEN_WAN_EXPANSION.md](TSUEN_WAN_EXPANSION.md).
+
+## Ting Kau / Sham Tseng coastal expansion — 15 October 2026
+
+Continue west from Tsuen Wan using government road, coast and building sources. Add the stopped-only O shortcut and preserve earlier map geometry. The execution plan is [west-coast-expansion](superpowers/plans/2026-10-14-west-coast-expansion.md); measured scope, source limits and verification status are in [WEST_COAST_EXPANSION.md](WEST_COAST_EXPANSION.md).
