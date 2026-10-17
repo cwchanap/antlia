@@ -243,6 +243,9 @@ public partial class Hud : Control
         if(Game.MapOpen)DrawMap(projection.Distance,street,true);
     }
 
+    // Free drives have no stops or scoring, so the map leaves the last previewed service off.
+    public bool MapShowsService=>!Game.HarbourDrive;
+
     private void DrawMap(float distance,string street,bool expanded=false)
     {
         if(expanded)
@@ -269,21 +272,23 @@ public partial class Hud : Control
             map.RenderTargetUpdateMode=SubViewport.UpdateMode.Once;
         }
         DrawTextureRect(map.GetTexture(),area,false);
-        var path=Game.Route.Path;
-        var line=path.Points.Select(Point).ToArray();
-        int reached=path.Along.FindLastIndex(a=>a<distance);
-        DrawPolyline(line,new Color("5e897c"),expanded?6:3,true);
-        if(reached>0)DrawPolyline(line[..(reached+1)],_mint,expanded?3:2,true);
-        var stops=Game.Route.Stops;
-        for(int i=0;i<stops.Count;i++)
+        var path=Game.Route.Path;var stops=Game.Route.Stops;
+        if(MapShowsService)
         {
-            var stop=stops[i];var p=Point(path.At(stop.Distance));
-            DrawCircle(p,expanded?6:4,i<Game.StopIndex?_mint:_paper);
-            if(expanded)
+            var line=path.Points.Select(Point).ToArray();
+            int reached=path.Along.FindLastIndex(a=>a<distance);
+            DrawPolyline(line,new Color("5e897c"),expanded?6:3,true);
+            if(reached>0)DrawPolyline(line[..(reached+1)],_mint,expanded?3:2,true);
+            for(int i=0;i<stops.Count;i++)
             {
-                var labelAt=MapStopLabelAt(stops.Count,i);
-                DrawLine(p,labelAt+new Vector2(-8,-4),new Color(.55f,.66f,.62f,.6f),1,true);
-                Text($"{Game.Route.Number} · {stop.Name}",labelAt.X,labelAt.Y,13,i==Game.StopIndex?_paper:_muted);
+                var stop=stops[i];var p=Point(path.At(stop.Distance));
+                DrawCircle(p,expanded?6:4,i<Game.StopIndex?_mint:_paper);
+                if(expanded)
+                {
+                    var labelAt=MapStopLabelAt(stops.Count,i);
+                    DrawLine(p,labelAt+new Vector2(-8,-4),new Color(.55f,.66f,.62f,.6f),1,true);
+                    Text($"{Game.Route.Number} · {stop.Name}",labelAt.X,labelAt.Y,13,i==Game.StopIndex?_paper:_muted);
+                }
             }
         }
         if(expanded)

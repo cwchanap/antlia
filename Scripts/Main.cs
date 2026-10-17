@@ -12,6 +12,7 @@ public partial class Main : Node3D
     public bool CabView, Paused, Complete, MapOpen;
     public int StopIndex, Passengers;
     public float Boarding, Elapsed;
+    private float? _arrivedAt;
     public string Notice = "Welcome aboard. Pull into Middle Road, stop and press E.";
     public float NoticeTime = 9;
     public bool SelfTest;
@@ -646,11 +647,13 @@ public partial class Main : Node3D
         var stop=Route.Stops[StopIndex];
         if(IsAtStop() && Bus.DoorsOpen && Bus.Kmh<.5f)
         {
+            _arrivedAt??=Elapsed; // The results' ARRIVED column is when service first began at the bay, not when boarding finished.
             Boarding+=dt;
             if(Boarding>=4)
             {
                 var (distance,lateral,_)=Route.Path.Project(Bus.GlobalPosition);
-                StopLog.Add((stop.Name,Elapsed,new Vector2(distance-stop.Distance,lateral-stop.Lane).Length(),stop.Passengers,false));
+                StopLog.Add((stop.Name,_arrivedAt.Value,new Vector2(distance-stop.Distance,lateral-stop.Lane).Length(),stop.Passengers,false));
+                _arrivedAt=null;
                 Passengers+=stop.Passengers;
                 Route.Waiting[StopIndex].Visible=false;
                 StopIndex++;
@@ -668,7 +671,7 @@ public partial class Main : Node3D
             float distance=Route.Path.Project(Bus.GlobalPosition).Distance;
             if(NearRoute(distance,12) && distance>stop.Distance+30)
             {
-                StopLog.Add((stop.Name,Elapsed,0,0,true));
+                StopLog.Add((stop.Name,Elapsed,0,0,true));_arrivedAt=null;
                 StopIndex++;
                 ShowNotice($"{stop.Name} missed. Next stop: {Route.Stops[StopIndex].Name}.");
             }

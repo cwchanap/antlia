@@ -36,14 +36,14 @@ All three services are fictional. Route numbers, stop names, stop placements and
 
 | Screen | Keys |
 | --- | --- |
-| Route select | Up / Down or 1–3 choose, Enter opens the briefing, a click selects a card. T, I, J, K, L, N, B, U and O start the free drives. |
+| Route select | Up / Down or 1–3 choose, Enter opens the briefing, a click selects a card. T, I, J, K, L, N, B, U and O start the free drives. A free drive has no service, so the bus blinds read NOT IN SERVICE and the map shows no route or stops. |
 | Briefing | Enter starts, C picks chase or cab view, Escape returns. |
 | Driving | Tab ends the route early. R restarts the same route. Escape pauses. |
 | Results | R drives the route again, Enter or Tab returns to route select. |
 
 Pull into the green bay, stop with the bus aligned to the road and press E. Boarding takes four seconds, then close the doors and continue. A stop left more than 30 m behind counts as missed so the trip can go on; the terminus can never be missed. Serving the terminus ends the trip. A banner warns of each junction turn on the route from 220 m ahead.
 
-The results screen shows journey time, distance actually driven, average speed, stops served and missed, passengers boarded, bay accuracy (the mean distance from the bus centre to the stop mark when boarding finished), contacts and red-light crossings, with a per-stop table. Signals and taxis exist only on the original Nathan Road and Tsim Sha Tsui junctions, so H2 and H3 have no signals or traffic.
+The results screen shows journey time, distance actually driven, average speed, stops served and missed, passengers boarded, bay accuracy (the mean distance from the bus centre to the stop mark when boarding finished), contacts and red-light crossings, with a per-stop table. The table's ARRIVED time is when the doors first opened in that bay, not when boarding finished. Signals and taxis exist only on the original Nathan Road and Tsim Sha Tsui junctions, so H2 and H3 have no signals or traffic.
 
 ## How the new routes are laid out
 
@@ -63,11 +63,11 @@ The harbour roads are government centrelines given authored widths: 12 m on the 
 ./run.command --headless -- --route-check            # data, menu flow, missed stop, abandoned trip, then H1, H2 and H3 driven
 ./run.command --headless -- --route-check --route=H2 # the same, driving only H2
 ./run.command --headless -- --stop-survey            # candidate stop sites and fitted lanes for H2 and H3
-./run.command -- --route-capture                     # evidence/routes/*.png: menu, briefing, staged bays, tube, H2/H3 maps, H1 results
+./run.command -- --route-capture                     # evidence/routes/*.png: menu, briefing, staged bays, tube, H2/H3 maps, free-drive map, H1 results
 ./run.command --headless -- --self-test              # includes --route-check after the harbour drives
 ```
 
-`--route-check` asserts the route table (three services, H1 identical to Nathan Road, lengths 3,879 m and 3,431 m, 8 stops / 60 passengers with two poles on H2, 4 shelters / 33 passengers on H3, three junction turns each, and stop labels on the expanded map that stay inside it, clear of district names). It steps the menu with the same input actions as play, skips a stop to prove the missed-stop rule, abandons H2 with Tab, then drives every route with the player's controller. A scripted driver steers by pure pursuit, brakes for bends, bays and red signals, and opens the doors at each bay. Each drive must serve every stop with no contact, no red-light crossing and no lane departure over 3.5 m, finish at the terminus, and stop within 3 m of every mark. H3 must descend below −30 m in the tube.
+`--route-check` asserts the route table (three services, H1 identical to Nathan Road, lengths 3,879 m and 3,431 m, 8 stops / 60 passengers with two poles on H2, 4 shelters / 33 passengers on H3, three junction turns each, and stop labels on the expanded map that stay inside it, clear of district names). It steps the menu with the same input actions as play, starts a free drive from route select and from H3 to check that no service shows on the blinds or map, skips a stop to prove the missed-stop rule, abandons H2 with Tab, then drives every route with the player's controller. A scripted driver steers by pure pursuit, brakes for bends, bays and red signals, and opens the doors at each bay. Each drive must serve every stop with no contact, no red-light crossing and no lane departure over 3.5 m, finish at the terminus, and stop within 3 m of every mark. Each logged arrival must come more than 3.5 s before that stop's boarding finished. H3 must descend below −30 m in the tube.
 
 `--route-capture` stages the bus at bays for its stills; only `results-h1.png` follows a driven trip.
 
