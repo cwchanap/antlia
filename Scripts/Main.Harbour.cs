@@ -14,7 +14,7 @@ public partial class Main
     public readonly List<Vector2[]> IslandCoastline = new();
     private readonly List<(Vector3 Position,float Radius)> _islandDetails = new();
     public bool HarbourDrive;
-    public readonly List<(string Name,bool Tunnel,bool Elevated,List<Vector3> Points)> HarbourRoads = new();
+    public readonly List<(string Name,bool Tunnel,bool Elevated,float Width,List<Vector3> Points)> HarbourRoads = new();
     private readonly List<(string Name,List<Vector3> Points)> _harbourRoutes = new();
     private Node3D _harbour = null!;
     private MeshInstance3D[] _vehicleMeshes = Array.Empty<MeshInstance3D>();
@@ -37,8 +37,15 @@ public partial class Main
         HarbourBounds=new(b[0].GetSingle(),b[1].GetSingle(),b[2].GetSingle()-b[0].GetSingle(),b[3].GetSingle()-b[1].GetSingle());
         List<Vector3> Points(JsonElement row)=>row.GetProperty("points").EnumerateArray().Select(p=>new Vector3(p[0].GetSingle(),p[1].GetSingle(),p[2].GetSingle())).ToList();
         foreach(var road in root.GetProperty("roads").EnumerateArray())
-            HarbourRoads.Add((road.GetProperty("name").GetString()!,road.GetProperty("tunnel").GetBoolean(),road.GetProperty("elevated").GetBoolean(),Points(road)));
-        foreach(var route in root.GetProperty("routes").EnumerateArray())_harbourRoutes.Add((route.GetProperty("name").GetString()!,Points(route)));
+        {
+            _harbourRoadIndex[road.GetProperty("id").GetString()!]=HarbourRoads.Count;
+            HarbourRoads.Add((road.GetProperty("name").GetString()!,road.GetProperty("tunnel").GetBoolean(),road.GetProperty("elevated").GetBoolean(),road.GetProperty("width").GetSingle(),Points(road)));
+        }
+        foreach(var route in root.GetProperty("routes").EnumerateArray())
+        {
+            _harbourRoutes.Add((route.GetProperty("name").GetString()!,Points(route)));
+            _harbourRouteSources.Add(route.GetProperty("source_ids").EnumerateArray().Select(id=>id.GetString()!).ToArray());
+        }
         _harbour=Asset("cross-harbour",Vector3.Zero);_harbour.Name="CrossHarbour";
         _harbourPaint=new ShaderMaterial {Shader=GD.Load<Shader>("res://Assets/Materials/harbour-paint.gdshader")};
         _harbourPaint.SetShaderParameter("map_origin",Map.Bounds.Position);_harbourPaint.SetShaderParameter("map_size",Map.Bounds.Size);
@@ -220,7 +227,7 @@ public partial class Main
         var p=_harbourRoutes[route].Points;var f=p[1]-p[0];
         Bus.ResetAt(p[0]+f.Normalized().Cross(Vector3.Up)*(route>=3?-1.8f:1.8f),Mathf.Atan2(-f.X,-f.Z));
         Bus.SetPaused(false);SetCab(true);
-        ShowNotice(route==11?"Ting Kau / Sham Tseng • M map • R returns to H1":route==10?"Kwai Chung / Tsuen Wan • M map • R returns to H1":route==9?"Mei Foo / Lai King / Kwai Chung • M map • R returns to H1":route==8?"Sham Shui Po / Cheung Sha Wan / Lai Chi Kok • M map • R returns to H1":route==6?"West Kowloon / Tai Kok Tsui / Sham Shui Po • M map • R returns to H1":route==5?"Jordan / Yau Ma Tei / Mong Kok • M map • R returns to H1":route==4?"Admiralty / Central • M map • R returns to H1":route==0?"Follow the tunnel signs. M opens the map; R returns to H1.":"Wan Chai / Causeway Bay • M map • R returns to H1");
+        ShowNotice((route==11?"Ting Kau / Sham Tseng • M map • R returns to H1":route==10?"Kwai Chung / Tsuen Wan • M map • R returns to H1":route==9?"Mei Foo / Lai King / Kwai Chung • M map • R returns to H1":route==8?"Sham Shui Po / Cheung Sha Wan / Lai Chi Kok • M map • R returns to H1":route==6?"West Kowloon / Tai Kok Tsui / Sham Shui Po • M map • R returns to H1":route==5?"Jordan / Yau Ma Tei / Mong Kok • M map • R returns to H1":route==4?"Admiralty / Central • M map • R returns to H1":route==0?"Follow the tunnel signs. M opens the map; R returns to H1.":"Wan Chai / Causeway Bay • M map • R returns to H1").Replace("H1",Route.Number));
     }
 
     private void CheckGovernmentMap()

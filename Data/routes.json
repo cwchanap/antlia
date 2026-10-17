@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "description": "Authored bus services for the route select screen. Route numbers, stop names, stop placements and waiting passengers are fictional prototype data, not published bus routes or timetables.",
+    "geometry": "Legs reuse existing alignments: 'nathan' is the Nathan Road service corridor in nathan-road.json (its stops stay there); 'drive' indexes the government-derived drives in cross-harbour.json, optionally cut at 'to' metres.",
+    "units": "start, stop distance and lane are metres along / across the joined route; negative lane is left of the centreline in the direction of travel.",
+    "created": "2026-10-17"
+  },
+  "routes": [
+    {
+      "number": "H1", "name": "Tsim Sha Tsui → Jordan", "zh": "尖沙咀 → 佐敦", "area": "KOWLOON", "difficulty": "Easy", "color": "c75236",
+      "summary": "Three stops up Nathan Road with signals and taxis.",
+      "start": 22,
+      "legs": [{"nathan": -7.3}]
+    },
+    {
+      "number": "H2", "name": "Jordan → Mong Kok → Sham Shui Po", "zh": "佐敦 → 旺角 → 深水埗", "area": "KOWLOON NORTH", "difficulty": "Medium", "color": "d08a2c",
+      "summary": "Nathan Road north, then left onto Cheung Sha Wan Road.",
+      "start": 22,
+      "legs": [{"drive": 5}, {"drive": 7}],
+      "stops": [
+        {"name": "Saigon Street", "zh": "西貢街", "distance": 155, "passengers": 6},
+        {"name": "Waterloo Road", "zh": "窩打老道", "distance": 765, "passengers": 9},
+        {"name": "Shantung Street", "zh": "山東街", "distance": 1270, "passengers": 12},
+        {"name": "Bute Street", "zh": "弼街", "distance": 1940, "passengers": 10},
+        {"name": "Wong Chuk Street", "zh": "黃竹街", "distance": 2727, "passengers": 7},
+        {"name": "Cheung Sha Wan Road", "zh": "長沙灣道", "distance": 3110, "passengers": 8},
+        {"name": "Kweilin Street", "zh": "桂林街", "distance": 3550, "passengers": 5},
+        {"name": "Pei Ho Street", "zh": "北河街", "distance": 3850, "passengers": 3}
+      ]
+    },
+    {
+      "number": "H3", "name": "Hung Hom → Wan Chai", "zh": "紅磡 → 灣仔", "area": "CROSS-HARBOUR", "difficulty": "Medium", "color": "2f7fa8",
+      "summary": "Through the Cross-Harbour Tunnel to the island.",
+      "start": 22,
+      "legs": [{"drive": 0}, {"drive": 1, "to": 480}],
+      "stops": [
+        {"name": "Hong Chong Road", "zh": "康莊道", "distance": 435, "passengers": 9},
+        {"name": "Tunnel Interchange", "zh": "紅隧轉車站", "distance": 770, "passengers": 14},
+        {"name": "Hung Hing Road", "zh": "鴻興道", "distance": 3040, "passengers": 6},
+        {"name": "Marsh Road", "zh": "馬師道", "distance": 3388, "passengers": 4}
+      ]
+    }
+  ]
+}
