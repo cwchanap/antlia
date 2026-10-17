@@ -456,6 +456,7 @@ public partial class Main
     {
         try
         {
+            SelfTest=true; // DriveRoute owns service progression; keep _Process from boarding a second time each frame.
             string folder=ProjectSettings.GlobalizePath("res://evidence/routes");DirAccess.MakeDirRecursiveAbsolute(folder);
             async Task Save(string name)
             {
