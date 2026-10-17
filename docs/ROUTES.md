@@ -63,11 +63,11 @@ The harbour roads are government centrelines given authored widths: 12 m on the 
 ./run.command --headless -- --route-check            # data, menu flow, missed stop, abandoned trip, then H1, H2 and H3 driven
 ./run.command --headless -- --route-check --route=H2 # the same, driving only H2
 ./run.command --headless -- --stop-survey            # candidate stop sites and fitted lanes for H2 and H3
-./run.command -- --route-capture                     # evidence/routes/*.png: menu, briefing, staged bays, tube, H1 results
+./run.command -- --route-capture                     # evidence/routes/*.png: menu, briefing, staged bays, tube, H2 map, H1 results
 ./run.command --headless -- --self-test              # includes --route-check after the harbour drives
 ```
 
-`--route-check` asserts the route table (three services, H1 identical to Nathan Road, lengths 3,879 m and 3,431 m, 8 stops / 60 passengers with two poles on H2, 4 shelters / 33 passengers on H3, three junction turns each). It steps the menu with the same input actions as play, skips a stop to prove the missed-stop rule, abandons H2 with Tab, then drives every route with the player's controller. A scripted driver steers by pure pursuit, brakes for bends, bays and red signals, and opens the doors at each bay. Each drive must serve every stop with no contact, no red-light crossing and no lane departure over 3.5 m, finish at the terminus, and stop within 3 m of every mark. H3 must descend below −30 m in the tube.
+`--route-check` asserts the route table (three services, H1 identical to Nathan Road, lengths 3,879 m and 3,431 m, 8 stops / 60 passengers with two poles on H2, 4 shelters / 33 passengers on H3, three junction turns each, and stop labels on the expanded map that stay inside it, above its footer). It steps the menu with the same input actions as play, skips a stop to prove the missed-stop rule, abandons H2 with Tab, then drives every route with the player's controller. A scripted driver steers by pure pursuit, brakes for bends, bays and red signals, and opens the doors at each bay. Each drive must serve every stop with no contact, no red-light crossing and no lane departure over 3.5 m, finish at the terminus, and stop within 3 m of every mark. H3 must descend below −30 m in the tube.
 
 `--route-capture` stages the bus at bays for its stills; only `results-h1.png` follows a driven trip.
 
@@ -94,3 +94,9 @@ Runs used Godot 4.6.2 .NET on Linux in a cloud container. Captures used Xvfb wit
   - Yu Chau Street
   - the Tunnel Interchange shelter
   - the tube from the cab
+
+## Review follow-up — 17 October 2026
+
+- **Expanded-map legend.** On the M map, H2's eight stop labels started at y=600 and ran down into the footer lines at y=759 and y=784. Routes with up to five stops keep the old placement; longer routes now start their list higher so it ends inside the map. `--route-check` asserts every route's labels sit inside the map with at least 20 px between them, and `--route-capture` adds `h2-map.png`.
+- **Capture boarding.** `--route-capture` is not a self-test launch, so `_Process` advanced the service as well as the scripted driver, and each stop in `results-h1.png` boarded in about 2 s instead of 4 s. The capture now sets `SelfTest`, as `--capture` already did.
+- `--route-check` passed after the legend change. Build: **0 warnings / 0 errors**.
