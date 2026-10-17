@@ -260,9 +260,25 @@ public partial class Main
         NoticeTime=0;SetCab(false);PreviewRoute(RouteIndex);
     }
 
+    private Label3D? _frontBlind,_rearBlind;
+
+    // The modelled blinds read "H1  JORDAN"; lit overlays show the chosen service and its terminus instead.
+    private void SetBlinds()
+    {
+        if(_frontBlind==null || _rearBlind==null)
+        {
+            Box(Bus.Model,new(0,2.59f,-5.415f),new(2.15f,.35f,.01f),"0b0d0c");
+            Box(Bus.Model,new(0,3.7f,5.405f),new(.7f,.3f,.01f),"0b0d0c");
+            _frontBlind=Label(Bus.Model,"",new(0,2.59f,-5.425f),.0045f,48);_frontBlind.Rotation=new(0,Mathf.Pi,0);
+            _rearBlind=Label(Bus.Model,"",new(0,3.7f,5.415f),.0048f,48);
+            _frontBlind.Modulate=_rearBlind.Modulate=new("f2b53a");
+        }
+        _frontBlind.Text=$"{Route.Number}  {Route.Name.Split(" → ")[^1].ToUpper()}";_rearBlind.Text=Route.Number;
+    }
+
     private void PreviewRoute(int index)
     {
-        RouteIndex=index;Route=Routes[index];StopIndex=0;Passengers=0;Boarding=0;
+        RouteIndex=index;Route=Routes[index];StopIndex=0;Passengers=0;Boarding=0;SetBlinds();
         foreach(var route in Routes)foreach(var group in route.Waiting)group.Visible=route==Route;
         Bus.ResetAt(Route.Path.At(Route.Start,Route.LaneAt(Route.Start)),Route.Path.Heading(Route.Start));
         Bus.SetPaused(true);
@@ -457,7 +473,11 @@ public partial class Main
             Staged(1,Routes[1].Stops[6].Distance-32,false);StopIndex=6;await Save("h2-yu-chau-street");
             Staged(2,Routes[2].Stops[1].Distance-30,false);StopIndex=1;await Save("h3-tunnel-interchange");
             Staged(2,1600,true);StopIndex=2;await Save("h3-tube-cab");
-            Engine.TimeScale=4;await DriveRoute(Routes[0]);Engine.TimeScale=1;
+            // The drive itself needs no frames drawn; software renderers would otherwise take most of an hour.
+            RenderingServer.RenderLoopEnabled=false;Engine.TimeScale=4;
+            await DriveRoute(Routes[0]);
+            RenderingServer.RenderLoopEnabled=true;Engine.TimeScale=1;
+            if(!Complete || StopsServed!=3)throw new Exception("H1 results capture needs a completed trip");
             await Save("results-h1");
             QuitGame();
         }

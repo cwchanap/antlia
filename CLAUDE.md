@@ -20,9 +20,11 @@ Godot user args (all defined in `Main._Ready`):
 
 | Flag | Effect |
 | --- | --- |
-| `--self-test` | Everything: markings, buildings, footpaths, audio, regressions, signals, then a physically driven 1.08 km route through all three stops |
+| `--self-test` | Everything: markings, buildings, footpaths, audio, regressions, signals, harbour drives, routes, then a physically driven 1.08 km route through all three stops |
+| `--route-check` | Route table, menu/briefing/results flow, missed and abandoned trips, then H1, H2 and H3 driven terminus to terminus; add `--route=H2` to drive one route |
+| `--stop-survey` | Prints fitted lanes and candidate stop sites (S shelter, P pole) for H2/H3, then quits |
 | `--road-check` / `--footpath-check` / `--building-check` / `--signal-check` | Early-exit subsets of the same `RunChecks` cascade — cheapest first |
-| `--capture`, `--signal-capture`, `--audio-review` | Save rendered/recorded evidence, then quit |
+| `--capture`, `--signal-capture`, `--audio-review`, `--route-capture` | Save rendered/recorded evidence, then quit |
 | `--building-review`, `--footpath-review`, `--road-review` | Scenery capture sets; add `--before` to write `before-*` filenames |
 
 There is no unit-test framework. `RunChecks` in `Scripts/Main.cs` **is** the test suite: it drives the real `BusController` through the real physics world and throws on failure. Add new checks there (or in the matching `Main.*.cs` partial) rather than introducing a test project. Checks print `ANTILA_*`-prefixed markers; `ANTILA_SELF_TEST_FAILED` accompanies exit code 1.
@@ -37,21 +39,25 @@ There is no unit-test framework. `RunChecks` in `Scripts/Main.cs` **is** the tes
 RoadMap → PrepareParkEntrances → BuildEnvironment → BuildGovernmentBuildings → BuildStreet
 → BuildNeighborhoods → BuildStops → BuildTrafficLights → BuildRoads → BuildRoadDetails
 → BuildFootpaths → FinishStreetMeshes → BusController → Camera → BuildCab → Hud
+→ route select (or BeginRoute when R reloads the scene)
 ```
 
 Later stages read state accumulated by earlier ones (`_lots`, `_pavementPatches`, `_paint`, the terrain mask), so reordering these calls breaks placement. `FinishStreetMeshes` commits the batched `SurfaceTool` road paint — geometry added to `_paint` after it is lost.
 
 `Main` is one `partial class` split by feature, all in `Scripts/`:
 
-- `Main.cs` — lifecycle, terrain/street/neighborhood/stop construction, camera, service progression, captures, `RunChecks`
+- `Main.cs` — lifecycle, terrain/street/neighborhood construction, camera, service progression, captures, `RunChecks`
+- `Main.Routes.cs` — `ServiceRoute`, `Data/routes.json` loading, kerbside lane fitting, stop construction (shelter or pole), route select/briefing/results flow, `CheckRoutes` and the scripted `DriveRoute` test driver
 - `Main.Signals.cs` — `TrafficSignal`, `SignalAspect`, 48 approaches across 14 junctions
 - `Main.RoadDetails.cs`, `Main.Footpaths.cs`, `Main.BuildingReview.cs`, `Main.AudioReview.cs`
 
-Standalone types: `RoadMap` (plain C# class, not a Node), `BusController : CharacterBody3D`, `Hud : Control`.
+Standalone types: `RoadMap` (plain C# class, not a Node), `RoutePath` (a service line: points, lanes, streets, turns, projection), `BusController : CharacterBody3D`, `Hud : Control` (partial; `Hud.Routes.cs` draws route select, briefing, turn banner and results).
+
+`BuildStops` calls `LoadRoutes`, which needs the harbour roads from `BuildEnvironment` and the lots and harbour scenery built before it. H1 reuses RoadMap's 5 m stations exactly; H2/H3 run on a smoothed reference line with lanes fitted to the carriageway widths (see `docs/ROUTES.md`). `Route` is the active service; HUD guidance, stop logic and the map read it rather than `Map`.
 
 **`RoadMap`** is the geometric authority. It parses `Data/nathan-road.json` at construction, joins same-name segments into polylines, and exposes the queries the rest of the build depends on: `At(distance, lane)`, `Forward`/`Heading`, `Project(position)`, `CanPaintLane`, `ClearOfRoads`, `LotClear`, `NearSideRoad`. It also generates the three-channel terrain surface mask (asphalt / paving / park) at 3 px per metre, consumed by `Assets/Materials/terrain.gdshader`. One blended terrain surface replaces stacked road meshes — do not add coplanar road geometry.
 
-**Coordinates:** +X east, **−Z north**, 1 world unit = 1 metre, ground plane at Y = 0. Route positions are expressed as a distance along the H1 corridor plus a signed lane offset (the northbound driving lane is about −7.3).
+**Coordinates:** +X east, **−Z north**, 1 world unit = 1 metre, ground plane at Y = 0. Route positions are expressed as a distance along the H1 corridor (or a `RoutePath`) plus a signed lane offset, negative to the left (the H1 northbound driving lane is −7.3).
 
 **Physics layers:** layer 1 = world/static, layer 2 = bus. The bus is a kinematic `CharacterBody3D` with a bicycle steering model — no suspension or drivetrain sim.
 
@@ -76,8 +82,8 @@ Data files carry provenance (source URL, download timestamp, SHA-256, origin). R
 ## Working conventions
 
 - **Every change is verified in-engine and recorded.** `evidence/` holds the run logs and rendered PNGs referenced from `README.md` and `docs/`; `--*-review` flags with `--before` produce before/after pairs. `Art/before-*/` keeps prior asset states for comparison.
-- Each feature area has a companion doc — `docs/TRAFFIC_LIGHTS.md`, `docs/GOVERNMENT_BUILDINGS.md`, `docs/FOOTPATH_POLISH.md`, `docs/ROAD_POLISH.md`, `docs/AUDIO_ASSETS.md`, `docs/DECORATION_ASSETS.md`, `docs/REALISM_ASSETS.md`, `docs/PASSENGER_ASSETS.md` — covering sources, exact generation prompts, approximations and check commands. Update the matching doc alongside code.
+- Each feature area has a companion doc — `docs/ROUTES.md`, `docs/TRAFFIC_LIGHTS.md`, `docs/GOVERNMENT_BUILDINGS.md`, `docs/FOOTPATH_POLISH.md`, `docs/ROAD_POLISH.md`, `docs/AUDIO_ASSETS.md`, `docs/DECORATION_ASSETS.md`, `docs/REALISM_ASSETS.md`, `docs/PASSENGER_ASSETS.md` — covering sources, exact generation prompts, approximations and check commands. Update the matching doc alongside code.
 - C# is deliberately dense: compact one-line bodies, expression members, tuple lists as data tables, minimal spacing in the newer partials. `<Nullable>enable</Nullable>` is on; the codebase uses `= null!` for fields initialized in `_Ready`.
-- Numeric constants in checks (231 map points, 1150 m, 437 sections, 26 passengers, 53 roof probes) are asserted, not incidental. Changing the data means updating those assertions.
+- Numeric constants in checks (231 map points, 1150 m, 437 sections, 26 passengers, 53 roof probes; H2 3,879 m / 8 stops / 60 passengers, H3 3,431 m / 4 stops / 33 passengers) are asserted, not incidental. Changing the data means updating those assertions.
 - The build is expected to be **0 warnings / 0 errors**.
 - Claims about the prototype stay honest: it is stylized, road widths/stops/traffic are authored, H1 is fictional, and no surveyed reconstruction or performance benchmark is claimed. Keep new documentation to that standard.
