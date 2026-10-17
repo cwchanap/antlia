@@ -32,3 +32,7 @@ Extend the connected Kwai Chung road network north into Tsuen Wan using Transpor
 ## Ting Kau / Sham Tseng coastal expansion — 15 October 2026
 
 Continue west from Tsuen Wan using government road, coast and building sources. Add the stopped-only O shortcut and preserve earlier map geometry. The execution plan is [west-coast-expansion](superpowers/plans/2026-10-14-west-coast-expansion.md); measured scope, source limits and verification status are in [WEST_COAST_EXPANSION.md](WEST_COAST_EXPANSION.md).
+
+## Playable route loop — 17 October 2026
+
+Turn the scene into a bus-driving loop: route select, a briefing, a fictional service driven stop by stop to its terminus, and a results screen. H1 keeps Nathan Road; H2 (Jordan → Sham Shui Po) and H3 (Hung Hom → Wan Chai) reuse the government-derived drives with authored stops. Free drives move to the route select screen. Scope, lane fitting, stop sites, limits and checks are in [ROUTES.md](ROUTES.md). Not in scope yet: route unlocks or saved scores, timetables, other buses, alighting passengers and traffic on the new routes.

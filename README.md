@@ -1,6 +1,6 @@
 # Antila — Kowloon Bus
 
-A playable **Godot 4.6 .NET / C#** bus-driving scene across Tsim Sha Tsui and Jordan, Hong Kong. Drive an original cream-and-red double-decker north from Tsim Sha Tsui towards Jordan, serve three H1 stops, and finish the service. The map also reaches **West Kowloon, Tai Kok Tsui, Sham Shui Po, Cheung Sha Wan, Lai Chi Kok, Mei Foo, Lai King, Kwai Chung, Tsuen Wan, Ting Kau, Sham Tseng, Yau Ma Tei, Mong Kok, the Cross-Harbour Tunnel, Central, Admiralty, Wan Chai and Causeway Bay**, with both tunnel tubes and an expanded island street network.
+A playable **Godot 4.6 .NET / C#** bus-driving scene across Tsim Sha Tsui and Jordan, Hong Kong. Pick one of three fictional services on the route select screen, drive an original cream-and-red double-decker stop by stop to its terminus, and read the trip results: H1 runs up Nathan Road from Tsim Sha Tsui to Jordan, H2 continues through Mong Kok to Sham Shui Po, and H3 crosses the harbour from Hung Hom to Wan Chai. The map also reaches **West Kowloon, Tai Kok Tsui, Sham Shui Po, Cheung Sha Wan, Lai Chi Kok, Mei Foo, Lai King, Kwai Chung, Tsuen Wan, Ting Kau, Sham Tseng, Yau Ma Tei, Mong Kok, the Cross-Harbour Tunnel, Central, Admiralty, Wan Chai and Causeway Bay**, with both tunnel tubes and an expanded island street network.
 
 ![Expanded Kowloon and Cross-Harbour map](evidence/lai-chi-kok-expansion-2026-10-12/map.png)
 
@@ -16,8 +16,12 @@ Open `project.godot` in **Godot_mono** and press **F5** after building C#, or do
 
 On another machine set `GODOT_BIN` to a Godot 4.6 .NET executable. The SDK may require an initial NuGet restore; the game runs offline once built.
 
+The game opens on **route select**. Choose H1, H2 or H3 with Up / Down or 1–3, press Enter for the briefing (C picks the starting camera), and Enter again to drive. Serving the last stop shows the results: journey time, distance, average speed, stops served and missed, passengers, bay accuracy, contacts and red lights. R drives the route again; Enter returns to the menu. Free drives start from the same screen. See [routes, stops and checks](docs/ROUTES.md).
+
 | Key | Action |
 | --- | --- |
+| Up / Down, 1–3 | Choose a route on the route select screen |
+| Enter | Open the briefing, start the route, or leave the results |
 | W / Up | Accelerate |
 | S / Down | Brake |
 | A, D / Left, Right | Steer |
@@ -38,19 +42,21 @@ On another machine set `GODOT_BIN` to a Godot 4.6 .NET executable. The SDK may r
 | H | Horn |
 | V | Mute / unmute all game audio |
 | Escape | Pause / resume |
-| R | Restart the service |
+| Tab | End the route early; from a free drive or the results, return to route select |
+| R | Restart the current route |
 | F12 | Save the current view to `evidence/` |
 
 Traffic lights control fourteen junctions: ten on Nathan Road from Peking Road to Jordan Road, plus Canton / Haiphong, Canton / Austin, Chatham / Granville and Chatham / Mody. Brake behind the white stop line on red or red-and-amber; amber means stop if safe. The next-signal panel shows the relevant approach and distance from the bus nose. Taxis wait at signals; the bus remains under your control, with red-light crossings recorded in the completion summary.
 
-Press **T** while stopped to start at the tunnel approach in cab view. The tunnel follows government XY geometry at approximate metre scale, with approximately **1.857 km per tube**; its depth and interior dimensions are authored. **I** starts Wan Chai / Causeway Bay free drive; **J** starts the Admiralty / Central loop; **K** starts the northern Kowloon drive; **L** starts the 6.16 km western drive towards Sham Shui Po. **N** starts the 2.924 km Cheung Sha Wan / Lai Chi Kok drive. **B** starts the 5.358 km Mei Foo / Lai King / Kwai Chung drive. **U** starts the 3.530 km Kwai Chung / Tsuen Wan drive. **O** starts the 8.317 km Ting Kau / Sham Tseng coastal drive. **M** shows the expanded map; **R** returns to H1. See [Cross-Harbour data, limits and verification](docs/CROSS_HARBOUR.md).
+Press **T** while stopped to start at the tunnel approach in cab view. The tunnel follows government XY geometry at approximate metre scale, with approximately **1.857 km per tube**; its depth and interior dimensions are authored. **I** starts Wan Chai / Causeway Bay free drive; **J** starts the Admiralty / Central loop; **K** starts the northern Kowloon drive; **L** starts the 6.16 km western drive towards Sham Shui Po. **N** starts the 2.924 km Cheung Sha Wan / Lai Chi Kok drive. **B** starts the 5.358 km Mei Foo / Lai King / Kwai Chung drive. **U** starts the 3.530 km Kwai Chung / Tsuen Wan drive. **O** starts the 8.317 km Ting Kau / Sham Tseng coastal drive. **M** shows the expanded map; **R** returns to the selected route. See [Cross-Harbour data, limits and verification](docs/CROSS_HARBOUR.md).
 
-Turn onto side streets to explore the wider district; **M** shows your position and the H1 stops. The existing three-stop service stays on Nathan Road.
+Turn onto side streets to explore the wider district; **M** shows your position, the current route and its stops.
 
-Follow the **leftmost northbound lane**. Pull into the green stop marker, align with the road, stop completely and open the doors. Boarding takes four seconds. Close the doors before accelerating. Complete Middle Road, Kowloon Park and Jordan Road to finish. H1 is a fictional prototype service, not an actual published bus route.
+Follow the route in the **kerbside left lane**. Pull into the green stop marker, align with the road, stop completely and open the doors. Boarding takes four seconds. Close the doors before accelerating. A stop passed by more than 30 m counts as missed; the terminus ends the trip. H1, H2 and H3 are fictional prototype services with authored stops, not actual published bus routes.
 
 ## What is built
 
+- Route select, briefing and results screens with three fictional services: the 1.15 km three-stop H1, the 3.88 km eight-stop H2 from Jordan to Sham Shui Po, and the 3.43 km four-stop H3 through the Cross-Harbour Tunnel. Stops on the new routes use shelters, or flag poles where the pavement is narrow; a banner warns of junction turns. See [routes, stops and checks](docs/ROUTES.md).
 - A **16.01 km east–west × 13.43 km north–south** overall map with 5,164 government road sections across northern Kowloon, the Cross-Harbour approaches and island streets, two driveable tubes, island return loop, ceramic walls, lamps and portal signs. The existing detailed Kowloon district remains a **2.06 km east–west × 1.24 km north–south** extract, 3.6 times the previous data width. A connected network of 58 named side streets reaches Canton Road and Kowloon Park Drive to the west, and Chatham Road, Granville Road and Science Museum Road to the east.
 - A connected 8.317 km Tsuen Wan → Ting Kau → Sham Tseng drive, adding 114 government road sections and 2,134 building parts. Press **O while stopped**; [sources, terrain limits and checks](docs/WEST_COAST_EXPANSION.md).
 - A connected 3.530 km Kwai Chung → Tsuen Wan drive, adding 424 government road sections and 4,996 building parts. Press **U while stopped**; [sources, terrain limits and checks](docs/TSUEN_WAN_EXPANSION.md).
