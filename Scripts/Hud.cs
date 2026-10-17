@@ -53,11 +53,39 @@ public partial class Hud : Control
     private static Rect2 MapArea(bool expanded)=>expanded?new(135,190,1170,540):new(1106,607,288,218);
     public static Rect2 ExpandedMapArea=>MapArea(true);
 
-    // Expanded-map stop labels keep their 600 px top; long routes rise only as far as needed to end inside the map, above the footer.
-    public static float MapStopLabelY(int count,int i)
+    // Expanded-map stop labels list the terminus first in the clear north-east corner, away from district names and the footer.
+    public static Vector2 MapStopLabelAt(int count,int i)=>new(1105,228+(count-1-i)*(count>4?22:28));
+
+    private static readonly (string Label,Vector3 At,Vector2 Offset)[] MapDistricts={
+        ("SHAM TSENG",new Vector3(-11720,0,-7940),new Vector2(-100,65)),
+        ("TING KAU",new Vector3(-9400,0,-8260),new Vector2(-110,50)),
+        ("TSUEN WAN",new Vector3(-6250,0,-8870),new Vector2(-150,-5)),
+        ("KWAI CHUNG",new Vector3(-4630,0,-7300),new Vector2(80,-10)),
+        ("LAI KING",new Vector3(-4400,0,-6250),new Vector2(-202,-17)),
+        ("MEI FOO",new Vector3(-3500,0,-5100),new Vector2(-239,-29)),
+        ("LAI CHI KOK",new Vector3(-3370,0,-4830),new Vector2(-244,-5)),
+        ("CHEUNG SHA WAN",new Vector3(-2190,0,-4770),new Vector2(80,-50)),
+        ("SHAM SHUI PO",new Vector3(-1180,0,-4000),new Vector2(-255,-12)),
+        ("TAI KOK TSUI",new Vector3(-1000,0,-2850),new Vector2(-245,0)),
+        ("WEST KOWLOON",new Vector3(-1420,0,-870),new Vector2(-265,-8)),
+        ("MONG KOK",new Vector3(-300,0,-2930),new Vector2(120,-5)),
+        ("YAU MA TEI",new Vector3(-140,0,-1940),new Vector2(135,0)),
+        ("JORDAN",new Vector3(-70,0,-1110),new Vector2(205,-20)),
+        ("TSIM SHA TSUI",new Vector3(-180,0,-470),new Vector2(-200,10)),
+        ("TSIM SHA TSUI EAST",new Vector3(590,0,-460),new Vector2(170,62)),
+        ("CROSS-HARBOUR TUNNEL · 1.86 km",new Vector3(975,0,400),new Vector2(100,55)),
+        ("CENTRAL",new Vector3(-1700,0,1680),new Vector2(-125,32)),
+        ("ADMIRALTY",new Vector3(-850,0,1680),new Vector2(-65,32)),
+        ("WAN CHAI",new Vector3(150,0,1680),new Vector2(35,32)),
+        ("CAUSEWAY BAY",new Vector3(1570,0,1680),new Vector2(65,32))};
+
+    // Text boxes on the expanded map: district names, then a route's stop labels; the route check keeps them apart.
+    public (Rect2[] Districts,Rect2[] Stops) ExpandedMapLabels(ServiceRoute route)
     {
-        float spacing=count>4?24:28;
-        return Mathf.Min(600,MapArea(true).End.Y-18-(count-1)*spacing)+(count-1-i)*spacing;
+        var (origin,scale)=MapTransform(true);
+        Rect2 Box(Vector2 at,string text)=>new(at.X,at.Y-13,_font.GetStringSize(text,HorizontalAlignment.Left,-1,13).X,17);
+        return (MapDistricts.Select(d=>Box(origin+new Vector2(d.At.X,d.At.Z)*scale+d.Offset,d.Label)).ToArray(),
+            route.Stops.Select((stop,i)=>Box(MapStopLabelAt(route.Stops.Count,i),$"{route.Number} · {stop.Name}")).ToArray());
     }
 
     private (Vector2 Origin,float Scale) MapTransform(bool expanded)
@@ -253,35 +281,14 @@ public partial class Hud : Control
             DrawCircle(p,expanded?6:4,i<Game.StopIndex?_mint:_paper);
             if(expanded)
             {
-                var labelAt=new Vector2(1085,MapStopLabelY(stops.Count,i));
+                var labelAt=MapStopLabelAt(stops.Count,i);
                 DrawLine(p,labelAt+new Vector2(-8,-4),new Color(.55f,.66f,.62f,.6f),1,true);
                 Text($"{Game.Route.Number} · {stop.Name}",labelAt.X,labelAt.Y,13,i==Game.StopIndex?_paper:_muted);
             }
         }
         if(expanded)
         {
-            foreach(var (label,at,offset) in new[]{
-                ("SHAM TSENG",new Vector3(-11720,0,-7940),new Vector2(-100,65)),
-                ("TING KAU",new Vector3(-9400,0,-8260),new Vector2(-110,50)),
-                ("TSUEN WAN",new Vector3(-6250,0,-8870),new Vector2(-150,-5)),
-                ("KWAI CHUNG",new Vector3(-4630,0,-7300),new Vector2(80,-10)),
-                ("LAI KING",new Vector3(-4400,0,-6250),new Vector2(-202,-17)),
-                ("MEI FOO",new Vector3(-3500,0,-5100),new Vector2(-239,-29)),
-                ("LAI CHI KOK",new Vector3(-3370,0,-4830),new Vector2(-244,-5)),
-                ("CHEUNG SHA WAN",new Vector3(-2190,0,-4770),new Vector2(80,-50)),
-                ("SHAM SHUI PO",new Vector3(-1180,0,-4000),new Vector2(-255,-12)),
-                ("TAI KOK TSUI",new Vector3(-1000,0,-2850),new Vector2(-245,0)),
-                ("WEST KOWLOON",new Vector3(-1420,0,-870),new Vector2(-265,-8)),
-                ("MONG KOK",new Vector3(-300,0,-2930),new Vector2(120,-5)),
-                ("YAU MA TEI",new Vector3(-140,0,-1940),new Vector2(135,0)),
-                ("JORDAN",new Vector3(-70,0,-1110),new Vector2(205,-20)),
-                ("TSIM SHA TSUI",new Vector3(-180,0,-470),new Vector2(-200,10)),
-                ("TSIM SHA TSUI EAST",new Vector3(590,0,-460),new Vector2(170,62)),
-                ("CROSS-HARBOUR TUNNEL · 1.86 km",new Vector3(975,0,400),new Vector2(100,55)),
-                ("CENTRAL",new Vector3(-1700,0,1680),new Vector2(-125,32)),
-                ("ADMIRALTY",new Vector3(-850,0,1680),new Vector2(-65,32)),
-                ("WAN CHAI",new Vector3(150,0,1680),new Vector2(35,32)),
-                ("CAUSEWAY BAY",new Vector3(1570,0,1680),new Vector2(65,32))})
+            foreach(var (label,at,offset) in MapDistricts)
             {
                 var p=Point(at);var labelAt=p+offset;
                 float width=_font.GetStringSize(label,HorizontalAlignment.Left,-1,13).X;

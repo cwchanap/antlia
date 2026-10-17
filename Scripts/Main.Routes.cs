@@ -363,11 +363,11 @@ public partial class Main
         Check(Mathf.Abs(Routes[1].Path.Length-3879)<1 && Mathf.Abs(Routes[2].Path.Length-3431)<1,"H2 and H3 route lengths");
         Check(Routes[1].Stops.Count==8 && Routes[1].TotalPassengers==60 && Routes[1].Sites.Count(s=>s.Pole)==2 && Routes[2].Stops.Count==4 && Routes[2].TotalPassengers==33 && Routes[2].Sites.All(s=>!s.Pole),"H2 and H3 stop tables");
         Check(Routes[1].Path.Turns.Count==3 && Routes[2].Path.Turns.Count==3,"junction turn prompts");
-        // Expanded-map stop labels must stay inside the map, clear of the footer lines below it.
-        foreach(var route in Routes)for(int i=0;i<route.Stops.Count;i++)
+        // Expanded-map stop labels must stay inside the map, above its footer, clear of district names and of each other.
+        foreach(var route in Routes)
         {
-            float y=Hud.MapStopLabelY(route.Stops.Count,i);
-            Check(y-13>=Hud.ExpandedMapArea.Position.Y && y+4<=Hud.ExpandedMapArea.End.Y && (i==0 || Hud.MapStopLabelY(route.Stops.Count,i-1)-y>=20),$"{route.Number} map label {i+1} must sit inside the map above its footer: y={y}");
+            var (districts,labels)=Hud.ExpandedMapLabels(route);
+            for(int i=0;i<labels.Length;i++)Check(Hud.ExpandedMapArea.Encloses(labels[i]) && !districts.Any(d=>d.Grow(4).Intersects(labels[i])) && !labels.Take(i).Any(l=>l.Intersects(labels[i])),$"{route.Number} map label {i+1} must sit inside the map, clear of district names and other stops: {labels[i]}");
         }
         foreach(var route in Routes.Skip(1))
         {
