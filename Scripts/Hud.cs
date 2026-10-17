@@ -293,6 +293,8 @@ public partial class Hud : Control
                 var p=Point(at);var labelAt=p+offset;
                 float width=_font.GetStringSize(label,HorizontalAlignment.Left,-1,13).X;
                 DrawLine(p,labelAt+new Vector2(offset.X<0?width+6:-6,-4),new Color(.55f,.66f,.62f,.6f),1,true);
+                // A panel-coloured halo keeps stop leader lines from striking through district names.
+                DrawRect(new(labelAt.X-3,labelAt.Y-13,width+6,17),new Color(_panel,1));
                 Text(label,labelAt.X,labelAt.Y,13,_muted);
             }
             Text($"Approx. {bounds.Size.X/1000:0.00} km east–west  ×  {bounds.Size.Y/1000:0.00} km north–south",112,759,16,_paper);

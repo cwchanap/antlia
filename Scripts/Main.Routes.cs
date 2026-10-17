@@ -481,6 +481,7 @@ public partial class Main
             Staged(2,Routes[2].Stops[1].Distance-30,false);StopIndex=1;await Save("h3-tunnel-interchange");
             Staged(2,1600,true);StopIndex=2;await Save("h3-tube-cab");
             Staged(1,Routes[1].Stops[2].Distance-70,false);StopIndex=2;MapOpen=true;Hud.QueueRedraw();await Save("h2-map");MapOpen=false;
+            Staged(2,Routes[2].Stops[1].Distance-30,false);StopIndex=1;MapOpen=true;Hud.QueueRedraw();await Save("h3-map");MapOpen=false;
             // The drive itself needs no frames drawn; software renderers would otherwise take most of an hour.
             RenderingServer.RenderLoopEnabled=false;Engine.TimeScale=4;
             await DriveRoute(Routes[0]);
