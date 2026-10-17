@@ -51,6 +51,14 @@ public partial class Hud : Control
     }
 
     private static Rect2 MapArea(bool expanded)=>expanded?new(135,190,1170,540):new(1106,607,288,218);
+    public static Rect2 ExpandedMapArea=>MapArea(true);
+
+    // Expanded-map stop labels keep their 600 px top; long routes rise only as far as needed to end inside the map, above the footer.
+    public static float MapStopLabelY(int count,int i)
+    {
+        float spacing=count>4?24:28;
+        return Mathf.Min(600,MapArea(true).End.Y-18-(count-1)*spacing)+(count-1-i)*spacing;
+    }
 
     private (Vector2 Origin,float Scale) MapTransform(bool expanded)
     {
@@ -245,7 +253,7 @@ public partial class Hud : Control
             DrawCircle(p,expanded?6:4,i<Game.StopIndex?_mint:_paper);
             if(expanded)
             {
-                var labelAt=new Vector2(1085,600+(stops.Count-1-i)*(stops.Count>4?24:28));
+                var labelAt=new Vector2(1085,MapStopLabelY(stops.Count,i));
                 DrawLine(p,labelAt+new Vector2(-8,-4),new Color(.55f,.66f,.62f,.6f),1,true);
                 Text($"{Game.Route.Number} · {stop.Name}",labelAt.X,labelAt.Y,13,i==Game.StopIndex?_paper:_muted);
             }
