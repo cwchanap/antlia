@@ -74,3 +74,23 @@ The harbour roads are government centrelines given authored widths: 12 m on the 
 ## Limits
 
 Lane positions come from authored road widths, so H2 runs on the left of the combined twin-carriageway asphalt rather than a surveyed northbound lane. It moves toward the line before tight left turns. There are no other buses, timetables, fares, passengers alighting, or traffic on H2 and H3. The scripted test driver proves the routes can be driven cleanly; it is not a player benchmark.
+
+## Verification — 17 October 2026
+
+Runs used Godot 4.6.2 .NET on Linux in a cloud container. Captures used Xvfb with Mesa llvmpipe software rendering at 1440×900.
+
+- Build: **0 warnings / 0 errors**.
+- `--self-test` exits 0 with `ANTILA_SELF_TEST_OK`. That covers the existing road, building, footpath, audio, HUD, signal and harbour-drive checks, then `--route-check`, then the original H1 service. The route drives were:
+  - H1: 1,078 m in 267 s of trip time, 3 stops, 26 passengers.
+  - H2: 3,752 m in 553 s, 8 stops, 60 passengers.
+  - H3: 3,373 m in 432 s, 4 stops, 33 passengers, below −30 m in the tube.
+
+  None of the drives had a contact or a red-light crossing. The scripted driver brakes to halt about 2 m short of each mark, so every bay offset reads 2.0 m. Trip times are the game clock under the check's time scale, not a benchmark.
+- That suite ran before the destination-blind overlays were added. With the overlays in place, the driven H1 trip in `--route-capture` also completed.
+- `--restart-check --fixed-fps 60` exits 0 with `ANTILA_RESTART_CHECKS_OK`. All seven reloads keep 4,912 building meshes and 2,456 collision shapes, with no engine errors. An earlier run without `--fixed-fps`, made while a capture run was also using the machine, logged 72 `Handle is not initialized` errors. They came while government buildings were instanced on the second reload. That is the intermittent Godot/.NET handle issue described under [Restart cleanup](ISLAND_EXPANSION.md#restart-cleanup--22-september-2026), at the same call site. The building instancing code is unchanged here, and one clean rerun does not prove the issue gone.
+- `--route-capture` saved eight images in `evidence/routes/`, and all eight were inspected. `evidence/` is git-ignored, so they are not committed. Three show route select, the briefing and the results after a driven H1 trip. The other five are staged:
+  - the Waterloo Road pole stop
+  - Mong Kok from the cab
+  - Yu Chau Street
+  - the Tunnel Interchange shelter
+  - the tube from the cab
