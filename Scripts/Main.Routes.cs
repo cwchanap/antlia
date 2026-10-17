@@ -363,6 +363,12 @@ public partial class Main
         Check(Mathf.Abs(Routes[1].Path.Length-3879)<1 && Mathf.Abs(Routes[2].Path.Length-3431)<1,"H2 and H3 route lengths");
         Check(Routes[1].Stops.Count==8 && Routes[1].TotalPassengers==60 && Routes[1].Sites.Count(s=>s.Pole)==2 && Routes[2].Stops.Count==4 && Routes[2].TotalPassengers==33 && Routes[2].Sites.All(s=>!s.Pole),"H2 and H3 stop tables");
         Check(Routes[1].Path.Turns.Count==3 && Routes[2].Path.Turns.Count==3,"junction turn prompts");
+        // Expanded-map stop labels must stay inside the map, clear of the footer lines below it.
+        foreach(var route in Routes)for(int i=0;i<route.Stops.Count;i++)
+        {
+            float y=Hud.MapStopLabelY(route.Stops.Count,i);
+            Check(y-13>=Hud.ExpandedMapArea.Position.Y && y+4<=Hud.ExpandedMapArea.End.Y && (i==0 || Hud.MapStopLabelY(route.Stops.Count,i-1)-y>=20),$"{route.Number} map label {i+1} must sit inside the map above its footer: y={y}");
+        }
         foreach(var route in Routes.Skip(1))
         {
             for(float d=0;d<route.Path.Length;d+=5)Check(route.LaneAt(d)<-.3f && route.LaneAt(d)>-21,$"{route.Number} lane must stay left of the line at {d} m: {route.LaneAt(d)}");
@@ -473,6 +479,7 @@ public partial class Main
             Staged(1,Routes[1].Stops[6].Distance-32,false);StopIndex=6;await Save("h2-yu-chau-street");
             Staged(2,Routes[2].Stops[1].Distance-30,false);StopIndex=1;await Save("h3-tunnel-interchange");
             Staged(2,1600,true);StopIndex=2;await Save("h3-tube-cab");
+            Staged(1,Routes[1].Stops[2].Distance-70,false);StopIndex=2;MapOpen=true;Hud.QueueRedraw();await Save("h2-map");MapOpen=false;
             // The drive itself needs no frames drawn; software renderers would otherwise take most of an hour.
             RenderingServer.RenderLoopEnabled=false;Engine.TimeScale=4;
             await DriveRoute(Routes[0]);
