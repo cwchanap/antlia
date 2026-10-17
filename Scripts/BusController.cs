@@ -161,6 +161,8 @@ public partial class BusController : CharacterBody3D
 
     public void StopAudio() { foreach(var player in _audio.Values)player.Stop(); }
 
+    public void RestartAudio() { foreach(var name in new[]{"engine","rolling","city","music"})if(!_audio[name].Playing)_audio[name].Play(); }
+
     public override void _ExitTree() => StopAudio();
 
     public void ResetAt(Vector3 position, float heading)

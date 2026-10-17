@@ -15,6 +15,7 @@ public partial class Hud : Control
     {
         MouseFilter=MouseFilterEnum.Ignore;SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         _miniMap=BuildMapRoads(false);_fullMap=BuildMapRoads(true);
+        BuildRouteMap();
     }
 
     public bool OncomingLaneWarning
@@ -38,12 +39,14 @@ public partial class Hud : Control
         get
         {
             if(Game.Complete)return "";
-            var bus=Game.Bus;var projection=Game.Map.Project(bus.GlobalPosition);
-            var stop=Game.Map.Stops[Game.StopIndex];
+            var bus=Game.Bus;var route=Game.Route;var projection=route.Path.Project(bus.GlobalPosition);
+            var stop=route.Stops[Game.StopIndex];
             float metres=Mathf.Max(0,stop.Distance-projection.Distance);
-            return !NearServiceCorridor(projection.Distance,20) ? "Exploring • M map • R returns to H1" :
+            string street=TitleCase(route.Path.StreetAt(projection.Distance));
+            return !Game.NearRoute(projection.Distance,20) ? $"Exploring • M map • R returns to {route.Number}" :
                 Game.IsAtStop() ? bus.DoorsOpen ? "Boarding passengers…" : "Stop & press E to open doors" :
-                projection.Distance>stop.Distance+7 ? "Stop missed — reverse carefully or press R" : $"{metres:0} m   •   Keep left on Nathan Road";
+                projection.Distance>stop.Distance+7 ? "Stop missed — reverse carefully or press R" :
+                $"{metres:0} m   •   "+(street==""?"Follow the route line":$"Keep left on {street}");
         }
     }
 
@@ -115,27 +118,28 @@ public partial class Hud : Control
         if(Game.Bus==null)return;
         var viewport=GetViewportRect().Size;
         DrawSetTransform(Vector2.Zero,0,new(viewport.X/1440,viewport.Y/900));
+        if(Game.Menu){DrawRouteSelect();return;}
         var bus=Game.Bus;
-        var projection=Game.Map.Project(bus.GlobalPosition);
+        var projection=Game.Route.Path.Project(bus.GlobalPosition);
         string street=Game.HarbourDrive || !Game.MapOpen?Game.CurrentStreet():"";
         Panel(30,28,382,80);
-        DrawRect(new(30,28,76,80),new Color("c75236"));
-        Text(Game.HarbourDrive?"HK":"H1",Game.HarbourDrive?34:44,81,Game.HarbourDrive?26:37);
-        Text(Game.HarbourDrive?"FREE DRIVE":"KOWLOON",123,61,22);
-        Text(Game.HarbourDrive?"KOWLOON · WEST COAST · HK ISLAND":"TSIM SHA TSUI  →  JORDAN",124,87,13,_muted);
+        DrawRect(new(30,28,76,80),Game.HarbourDrive?new Color("c75236"):Game.Route.Color);
+        Text(Game.HarbourDrive?"HK":Game.Route.Number,Game.HarbourDrive?34:44,81,Game.HarbourDrive?26:37);
+        Text(Game.HarbourDrive?"FREE DRIVE":Game.Route.Area,123,61,22);
+        Text(Game.HarbourDrive?"KOWLOON · WEST COAST · HK ISLAND":Game.Route.Heading,124,87,13,_muted);
         Panel(1118,28,292,60);
         Text("ANTILA  /  BUS DRIVING",1135,51,16);
         Text("10:24 AM     •     HONG KONG",1135,73,12,_muted);
         if(Game.HarbourDrive)
         {
             Panel(30,121,382,95);Text("FREE DRIVE  /  REAL-SCALE ALIGNMENT",48,149,12,_mint);
-            Text(street,48,178,15);Text("Follow signs • M map • R returns to H1",48,200,14,_muted);
+            Text(street,48,178,15);Text($"Follow signs • M map • R returns to {Game.Route.Number}",48,200,14,_muted);
         }
         else if(!Game.Complete)
         {
-            var stop=Game.Map.Stops[Game.StopIndex];
+            var stop=Game.Route.Stops[Game.StopIndex];
             Panel(30,121,382,113);
-            Text($"NEXT STOP   {Game.StopIndex+1} / 3",48,149,12,_mint);
+            Text($"NEXT STOP   {Game.StopIndex+1} / {Game.Route.Stops.Count}",48,149,12,_mint);
             Text(stop.Name,48,180,25);
             Text(ServiceInstruction,48,208,14,_muted);
             if(Game.Boarding>0)
@@ -172,7 +176,8 @@ public partial class Hud : Control
         Panel(330,823,722,44);
         Chip("W","Throttle",346,851);Chip("S","Brake",464,851);Chip("A/D","Steer",568,851);
         Chip("E","Doors",684,851);Chip("C","Camera",788,851);Chip("Q","Gear",912,851);
-        Text("SPACE Handbrake  H Horn  V "+(AudioServer.IsBusMute(0)?"Unmute":"Sound")+"  M Map  T Tunnel  I Island  J Central  K Nathan  L West  N Lai Chi Kok  B Kwai Chung  U Tsuen Wan  O Coast  R Restart  ESC Pause",382,889,11,_paper);
+        Text("SPACE Handbrake    H Horn    V "+(AudioServer.IsBusMute(0)?"Unmute":"Sound")+"    M Map & free drives    "+(Game.HarbourDrive?"TAB Routes":"TAB End route")+"    R Restart    ESC Pause",382,889,11,_paper);
+        if(!Game.HarbourDrive && !Game.Complete && !Game.MapOpen)DrawTurnBanner(projection.Distance);
         if(Game.NoticeTime>0 && !Game.Complete)
         {
             float x=Game.CabView?438:350;
@@ -186,25 +191,18 @@ public partial class Hud : Control
             Text("ONCOMING LANE  —  Drive on the left",459,786,17,new Color("f2b16c"));
         }
         Text("Roads / buildings / coast © HKSAR Govt · TD / LandsD · 15 Oct 2026",31,889,9,_muted);
-        if(Game.Paused || Game.Complete)
+        if(Game.Complete)DrawResults();
+        else if(Game.Paused)
         {
             DrawRect(new(0,0,1440,900),new Color(.03f,.08f,.08f,.65f));
             Panel(460,282,520,302);
-            Text(Game.Complete?"END OF THE LINE":"TAKE A BREATHER",495,330,14,_mint);
-            Text(Game.Complete?"Welcome to Jordan.":"Service paused.",495,377,32);
-            Text(Game.Complete?$"3 stops served  •  {Game.Passengers} passengers aboard":"Your bus is safely paused.",495,417,17,_muted);
-            if(Game.Complete)
-            {
-                Text($"Journey   {(int)Game.Elapsed/60:00}:{(int)Game.Elapsed%60:00}     Contacts   {bus.Collisions}",495,453,17,_paper);
-                Text($"Red lights crossed   {Game.RedLightCrossings}",495,482,17,_paper);
-                Text("R   Drive again",495,530,20,_mint);
-            }
-            else
-            {
-                Text("ESC   Resume     R   Restart",495,462,19,_paper);
-                Text("W / S  Throttle / brake     A / D  Steer",495,505,14,_muted);
-                Text("E  Doors    C  Camera    Q  Gear    H  Horn",495,535,14,_muted);
-            }
+            Text("TAKE A BREATHER",495,330,14,_mint);
+            Text("Service paused.",495,377,32);
+            Text("Your bus is safely paused.",495,417,17,_muted);
+            Text("ESC   Resume     R   Restart",495,462,19,_paper);
+            Text(Game.HarbourDrive?"TAB   Back to route select":$"TAB   End {Game.Route.Number} and see your stats",495,496,15,_paper);
+            Text("W / S  Throttle / brake     A / D  Steer",495,530,14,_muted);
+            Text("E  Doors    C  Camera    Q  Gear    H  Horn",495,557,14,_muted);
         }
         if(Game.MapOpen)DrawMap(projection.Distance,street,true);
     }
@@ -235,21 +233,21 @@ public partial class Hud : Control
             map.RenderTargetUpdateMode=SubViewport.UpdateMode.Once;
         }
         DrawTextureRect(map.GetTexture(),area,false);
-        for(int i=0;i<Game.Map.Points.Count-1;i++)
+        var path=Game.Route.Path;
+        var line=path.Points.Select(Point).ToArray();
+        int reached=path.Along.FindLastIndex(a=>a<distance);
+        DrawPolyline(line,new Color("5e897c"),expanded?6:3,true);
+        if(reached>0)DrawPolyline(line[..(reached+1)],_mint,expanded?3:2,true);
+        var stops=Game.Route.Stops;
+        for(int i=0;i<stops.Count;i++)
         {
-            var a=Point(Game.Map.Points[i]);var b=Point(Game.Map.Points[i+1]);
-            DrawLine(a,b,new Color("5e897c"),expanded?6:3,true);
-            if(i*5<distance)DrawLine(a,b,_mint,expanded?3:2,true);
-        }
-        for(int i=0;i<Game.Map.Stops.Count;i++)
-        {
-            var stop=Game.Map.Stops[i];var p=Point(Game.Map.At(stop.Distance));
+            var stop=stops[i];var p=Point(path.At(stop.Distance));
             DrawCircle(p,expanded?6:4,i<Game.StopIndex?_mint:_paper);
             if(expanded)
             {
-                var labelAt=new Vector2(1085,600+(2-i)*28);
+                var labelAt=new Vector2(1085,600+(stops.Count-1-i)*(stops.Count>4?24:28));
                 DrawLine(p,labelAt+new Vector2(-8,-4),new Color(.55f,.66f,.62f,.6f),1,true);
-                Text($"H1 · {stop.Name}",labelAt.X,labelAt.Y,13,i==Game.StopIndex?_paper:_muted);
+                Text($"{Game.Route.Number} · {stop.Name}",labelAt.X,labelAt.Y,13,i==Game.StopIndex?_paper:_muted);
             }
         }
         if(expanded)

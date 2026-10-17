@@ -17,7 +17,6 @@ public partial class Main : Node3D
     public bool SelfTest;
     private Node3D _cab = null!, _stopMarker = null!;
     private readonly List<(StaticBody3D Body, float Distance)> _traffic = new();
-    private readonly List<Node3D> _waiting = new();
     private readonly PhysicsShapeQueryParameters3D _cameraSweep = new() {
         Shape=new SphereShape3D {Radius=1.2f},CollisionMask=1,Margin=.02f};
     private readonly Dictionary<string,SurfaceTool> _paint = new();
@@ -36,7 +35,7 @@ public partial class Main : Node3D
 
     public override void _Ready()
     {
-        SelfTest = OS.GetCmdlineUserArgs().Contains("--map-check") || OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--west-coast-check") || OS.GetCmdlineUserArgs().Contains("--tsuen-wan-check") || OS.GetCmdlineUserArgs().Contains("--hud-check") || OS.GetCmdlineUserArgs().Contains("--restart-check");
+        SelfTest = OS.GetCmdlineUserArgs().Contains("--map-check") || OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--west-coast-check") || OS.GetCmdlineUserArgs().Contains("--tsuen-wan-check") || OS.GetCmdlineUserArgs().Contains("--hud-check") || OS.GetCmdlineUserArgs().Contains("--restart-check") || OS.GetCmdlineUserArgs().Contains("--route-check") || OS.GetCmdlineUserArgs().Contains("--stop-survey");
         RegisterInput();
         Map = new RoadMap();
         PrepareParkEntrances();
@@ -70,8 +69,12 @@ public partial class Main : Node3D
         if (OS.GetCmdlineUserArgs().Contains("--capture")) CallDeferred(MethodName.CaptureViews);
         if (OS.GetCmdlineUserArgs().Contains("--audio-review")) CallDeferred(MethodName.ReviewAudio);
         if (OS.GetCmdlineUserArgs().Contains("--signal-capture")) CallDeferred(MethodName.CaptureSignals);
+        if (OS.GetCmdlineUserArgs().Contains("--route-capture")) CallDeferred(MethodName.CaptureRoutes);
         if (OS.GetCmdlineUserArgs().Contains("--building-review") || OS.GetCmdlineUserArgs().Contains("--footpath-review") || OS.GetCmdlineUserArgs().Contains("--road-review")) CallDeferred(MethodName.ReviewScenery);
-        GD.Print("ANTILA_READY: government map loaded; 3 stops; Blender GLBs; C# driving");
+        // A restart replays the chosen route; a fresh launch opens route select unless a check or capture drives it.
+        if(_pendingRoute>=0)BeginRoute(_pendingRoute);
+        else if(!SelfTest && !OS.GetCmdlineUserArgs().Any(a=>a is "--harbour" or "--harbour-review" or "--capture" or "--audio-review" or "--signal-capture" or "--building-review" or "--footpath-review" or "--road-review"))ShowRouteSelect();
+        GD.Print($"ANTILA_READY: government map loaded; {Routes.Count} routes, {Routes.Sum(r=>r.Stops.Count)} stops; Blender GLBs; C# driving");
     }
 
     private static void RegisterInput()
@@ -79,7 +82,8 @@ public partial class Main : Node3D
         foreach (var (name, key) in new (string, Key)[] {
             ("accelerate", Key.W), ("brake", Key.S), ("steer_left", Key.A), ("steer_right", Key.D),
             ("handbrake", Key.Space), ("doors", Key.E), ("camera", Key.C), ("reverse", Key.Q),
-            ("tunnel", Key.T), ("island", Key.I), ("central", Key.J), ("kowloon", Key.K), ("west", Key.L), ("northwest", Key.N), ("kwai_chung", Key.B), ("tsuen_wan", Key.U), ("west_coast", Key.O), ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V) })
+            ("tunnel", Key.T), ("island", Key.I), ("central", Key.J), ("kowloon", Key.K), ("west", Key.L), ("northwest", Key.N), ("kwai_chung", Key.B), ("tsuen_wan", Key.U), ("west_coast", Key.O), ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V),
+            ("routes", Key.Tab), ("confirm", Key.Enter), ("menu_up", Key.Up), ("menu_down", Key.Down) })
         {
             if (InputMap.HasAction(name)) continue;
             InputMap.AddAction(name);
@@ -89,6 +93,8 @@ public partial class Main : Node3D
         InputMap.ActionAddEvent("brake", new InputEventKey { PhysicalKeycode = Key.Down });
         InputMap.ActionAddEvent("steer_left", new InputEventKey { PhysicalKeycode = Key.Left });
         InputMap.ActionAddEvent("steer_right", new InputEventKey { PhysicalKeycode = Key.Right });
+        foreach (var (name, key) in new[] { ("confirm", Key.KpEnter), ("menu_up", Key.W), ("menu_down", Key.S) })
+            if (InputMap.ActionGetEvents(name).Count < 2) InputMap.ActionAddEvent(name, new InputEventKey { PhysicalKeycode = key });
     }
 
     private StandardMaterial3D Material(string hex, float roughness = .85f)
@@ -408,42 +414,6 @@ public partial class Main : Node3D
         GD.Print($"ANTILA_MAP: {Map.Bounds.Size.X:0} × {Map.Bounds.Size.Y:0} m; {Map.SideRoads.Select(r=>r.Name).Distinct().Count()} side streets; {Map.SourceSections} sections joined to {Map.SideRoads.Count} polylines");
     }
 
-    private void BuildStops()
-    {
-        for(int i=0;i<Map.Stops.Count;i++)
-        {
-            var stop=Map.Stops[i];
-            var shelter=Asset("shelter",Map.At(stop.Distance,-12.2f),Map.Heading(stop.Distance)+Mathf.Pi/2);
-            Asset("bench",Map.At(stop.Distance+12,-12.5f),Map.Heading(stop.Distance)+Mathf.Pi/2);
-            Asset("bin",Map.At(stop.Distance-7,-12.7f));
-            Asset("planter",Map.At(stop.Distance+15,-12.5f),Map.Heading(stop.Distance));
-            var poster=new MeshInstance3D {Mesh=new QuadMesh {Size=new(1.19f,1.83f)},Position=new(2,1.4f,-.622f),
-                MaterialOverride=new StandardMaterial3D {AlbedoTexture=GD.Load<Texture2D>("res://Assets/Textures/kowloon-poster.png"),Roughness=.9f}};
-            shelter.AddChild(poster);
-            var label=Label(shelter,stop.Name.ToUpper()+"  /  "+stop.Chinese,new(0,2.48f,1.32f),.009f,30);
-            for(float d=stop.Distance-7;d<stop.Distance+8;d+=3)
-                Mark(d,-5.1f,.15f,1.5f,"e1b954");
-            Mark(stop.Distance-8,-7.3f,4.4f,.15f,"e1b954");
-            Mark(stop.Distance+8,-7.3f,4.4f,.15f,"e1b954");
-            var people=new Node3D();AddChild(people);_waiting.Add(people);
-            for(int p=0;p<4;p++)
-            {
-                var at=Map.At(stop.Distance-3+p*1.45f,-11.1f);
-                string model=new[]{"mei","dennis","family","headphones"}[(p+i)%4];
-                var passenger=GD.Load<PackedScene>($"res://Assets/Models/passenger_{model}.glb").Instantiate<Node3D>();
-                people.AddChild(passenger);
-                passenger.Position=at+Vector3.Up*.05f;
-                passenger.Rotation=new(0,Map.Heading(stop.Distance)+Mathf.Pi/2+(p%2==0?-.12f:.10f),0);
-                foreach(MeshInstance3D mesh in passenger.FindChildren("*","MeshInstance3D",true,false))
-                    mesh.VisibilityRangeEnd=160;
-            }
-        }
-        _stopMarker=new Node3D();AddChild(_stopMarker);
-        var targetMat=new StandardMaterial3D {AlbedoColor=new Color(.39f,.85f,.7f,.32f),Transparency=BaseMaterial3D.TransparencyEnum.Alpha,
-            ShadingMode=BaseMaterial3D.ShadingModeEnum.Unshaded,CullMode=BaseMaterial3D.CullModeEnum.Disabled};
-        _stopMarker.AddChild(new MeshInstance3D {Mesh=new CylinderMesh {TopRadius=2,BottomRadius=2,Height=.03f,RadialSegments=48},MaterialOverride=targetMat});
-    }
-
     private void BuildCab()
     {
         _cab=new Node3D();Camera.AddChild(_cab);_cab.Visible=false;
@@ -478,6 +448,7 @@ public partial class Main : Node3D
 
     public override void _UnhandledInput(InputEvent e)
     {
+        if(Menu){MenuInput(e);return;}
         if(e.IsActionPressed("pause"))
         {
             if(MapOpen)MapOpen=false; else Paused=!Paused;
@@ -494,8 +465,15 @@ public partial class Main : Node3D
         if(e.IsActionPressed("kwai_chung")){StartHarbourDrive(9);return;}
         if(e.IsActionPressed("tsuen_wan")){StartHarbourDrive(10);return;}
         if(e.IsActionPressed("west_coast")){StartHarbourDrive(11);return;}
+        if(e.IsActionPressed("routes") && !MapOpen)
+        {
+            if(HarbourDrive || Complete)ShowRouteSelect(); else FinishRoute(true);
+            return;
+        }
+        if(Complete && e.IsActionPressed("confirm")){ShowRouteSelect();return;}
         if(e.IsActionPressed("restart"))
         {
+            _pendingRoute=RouteIndex;
             // As on quit, finish temporary C# wrappers before replacing their native scene/resources.
             GC.Collect();GC.WaitForPendingFinalizers();
             GetTree().ReloadCurrentScene();return;
@@ -616,15 +594,15 @@ public partial class Main : Node3D
     {
         if(Bus==null)return;
         float dt=(float)delta;
-        if(!Paused && !Complete && !MapOpen)
+        if(!Paused && !Complete && !MapOpen && !Menu)
         {
             Elapsed+=dt;
             NoticeTime=Mathf.Max(0,NoticeTime-dt);
             if(!SelfTest && !HarbourDrive)AdvanceService(dt);
         }
         _stopMarker.Visible=!Complete && !HarbourDrive;
-        if(!Complete)_stopMarker.Position=Map.At(Map.Stops[StopIndex].Distance,-7.3f)+Vector3.Up*.08f;
-        UpdateCamera(dt,false);
+        if(!Complete)_stopMarker.Position=Route.Path.At(Route.Stops[StopIndex].Distance,Route.Stops[StopIndex].Lane)+Vector3.Up*.08f;
+        if(Menu)UpdateMenuCamera(dt); else UpdateCamera(dt,false);
         UpdateVehicleLighting();
         UpdateCabInstruments();
         Hud.QueueRedraw();
@@ -656,36 +634,45 @@ public partial class Main : Node3D
     public bool IsAtStop()
     {
         if(Complete)return false;
-        var target=Map.Stops[StopIndex];
-        var (distance,lateral)=Map.Project(Bus.GlobalPosition);
-        return Mathf.Abs(distance-target.Distance)<7 && Mathf.Abs(lateral+7.3f)<1.6f &&
-            (-Bus.GlobalBasis.Z).Dot(Map.Forward(target.Distance))>.94f;
+        var target=Route.Stops[StopIndex];
+        var (distance,lateral,_)=Route.Path.Project(Bus.GlobalPosition);
+        return Mathf.Abs(distance-target.Distance)<7 && Mathf.Abs(lateral-target.Lane)<1.6f &&
+            (-Bus.GlobalBasis.Z).Dot(Route.Path.Forward(target.Distance))>.94f;
     }
 
     public void AdvanceService(float dt)
     {
         if(Complete)return;
+        var stop=Route.Stops[StopIndex];
         if(IsAtStop() && Bus.DoorsOpen && Bus.Kmh<.5f)
         {
             Boarding+=dt;
             if(Boarding>=4)
             {
-                Passengers+=Map.Stops[StopIndex].Passengers;
-                _waiting[StopIndex].Visible=false;
+                var (distance,lateral,_)=Route.Path.Project(Bus.GlobalPosition);
+                StopLog.Add((stop.Name,Elapsed,new Vector2(distance-stop.Distance,lateral-stop.Lane).Length(),stop.Passengers,false));
+                Passengers+=stop.Passengers;
+                Route.Waiting[StopIndex].Visible=false;
                 StopIndex++;
                 Boarding=0;
-                if(StopIndex==Map.Stops.Count)
-                {
-                    Complete=true;
-                    Bus.SetPhysicsProcess(false);
-                    Bus.StopAudio();
-                    ShowNotice("Service complete. Thank you for driving H1.");
-                }
-                else ShowNotice("Passengers aboard. Close doors with E, then continue north.");
+                if(StopIndex==Route.Stops.Count)FinishRoute(false);
+                else ShowNotice($"Passengers aboard. Close doors with E, then continue to {Route.Stops[StopIndex].Name}.");
                 Bus.Sound("stop-bell");
             }
+            return;
         }
-        else Boarding=0;
+        Boarding=0;
+        // A stop left well behind counts as missed so the trip can go on; the terminus always has to be served.
+        if(StopIndex<Route.Stops.Count-1)
+        {
+            float distance=Route.Path.Project(Bus.GlobalPosition).Distance;
+            if(NearRoute(distance,12) && distance>stop.Distance+30)
+            {
+                StopLog.Add((stop.Name,Elapsed,0,0,true));
+                StopIndex++;
+                ShowNotice($"{stop.Name} missed. Next stop: {Route.Stops[StopIndex].Name}.");
+            }
+        }
     }
 
     private void UpdateCamera(float dt,bool snap)
@@ -799,6 +786,8 @@ public partial class Main : Node3D
                     new Rect2(Vector2.Zero,size),Array.Empty<(Vector2,Vector2,float)>(),2))
                     Check(mask.GetWidth()<=16384 && mask.GetHeight()<=16384,"Expanded surface mask exceeds the 16K texture budget");
             if(OS.GetCmdlineUserArgs().Contains("--restart-check")){await CheckRestart();return;}
+            if(OS.GetCmdlineUserArgs().Contains("--stop-survey")){await SurveyStops();return;}
+            if(OS.GetCmdlineUserArgs().Contains("--route-check")){await CheckRoutes();QuitGame();return;}
             if(OS.GetCmdlineUserArgs().Contains("--hud-check")){CheckHud();await CheckReviewRegressions();QuitGame();return;}
             if(OS.GetCmdlineUserArgs().Contains("--map-check")){CheckGovernmentMap();QuitGame();return;}
             CheckStreetClearance();
@@ -816,6 +805,7 @@ public partial class Main : Node3D
             await CheckTrafficSignals();
             if(OS.GetCmdlineUserArgs().Contains("--signal-check")) { QuitGame(); return; }
             await CheckHarbour();
+            await CheckRoutes();
             Check(Map.Points.Count==231 && Map.Length==1150,"map geometry");
             Check(Map.Bounds.Size.X>2000 && Map.SourceSections==437,"expanded road extract");
             Check(Map.SideRoads.Any(r=>r.Name=="SCIENCE MUSEUM ROAD") && Map.SideRoads.Any(r=>r.Name=="CANTON ROAD"),"east/west streets");
@@ -840,7 +830,7 @@ public partial class Main : Node3D
             Check(_lots.Count>1500 && _lots.Count(l=>l.Height>75)>70,"government building density and tower variation");
             Check(Map.RoadPoints[0].Z>0 && Map.RoadPoints[^1].Z<-Map.Length,"Nathan Road must reach the surrounding junctions");
             await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
-            Check(_waiting.Count==3 && _waiting.All(group=>group.GetChildCount()==4),"passenger models at every stop");
+            Check(Routes[0].Waiting.Count==3 && Routes[0].Waiting.All(group=>group.GetChildCount()==4),"passenger models at every stop");
             float v=0;
             for(int i=0;i<600;i++)v=BusController.IntegrateSpeed(v,1,0,false,false,1f/60);
             Check(v>14 && v<14.5f,"acceleration/speed cap");
@@ -898,7 +888,7 @@ public partial class Main : Node3D
             }
             Check(Complete && Passengers==26,"full service completion");
             Check(!AudioClip("music").Playing,"service completion must stop background music");
-            Check(_waiting.All(group=>!group.Visible),"boarded passenger queues must disappear");
+            Check(Routes[0].Waiting.All(group=>!group.Visible),"boarded passenger queues must disappear");
             Check(Bus.Collisions==contacts,"corridor must be drivable without collision");
             Check(RedLightCrossings==redLights,"route driver must obey red traffic lights");
             Check(Bus.DistanceDriven-serviceStartDistance>1070,"full route must be physically driven");
