@@ -273,12 +273,13 @@ public partial class Main
             _rearBlind=Label(Bus.Model,"",new(0,3.7f,5.415f),.0048f,48);
             _frontBlind.Modulate=_rearBlind.Modulate=new("f2b53a");
         }
-        _frontBlind.Text=$"{Route.Number}  {Route.Name.Split(" → ")[^1].ToUpper()}";_rearBlind.Text=Route.Number;
+        // A free drive carries no service, so the front blind reads NOT IN SERVICE and the rear one is wound blank.
+        _frontBlind.Text=HarbourDrive?"NOT IN SERVICE":$"{Route.Number}  {Route.Name.Split(" → ")[^1].ToUpper()}";_rearBlind.Text=HarbourDrive?"":Route.Number;
     }
 
     private void PreviewRoute(int index)
     {
-        RouteIndex=index;Route=Routes[index];StopIndex=0;Passengers=0;Boarding=0;SetBlinds();
+        RouteIndex=index;Route=Routes[index];StopIndex=0;Passengers=0;Boarding=0;_arrivedAt=null;SetBlinds();
         foreach(var route in Routes)foreach(var group in route.Waiting)group.Visible=route==Route;
         Bus.ResetAt(Route.Path.At(Route.Start,Route.LaneAt(Route.Start)),Route.Path.Heading(Route.Start));
         Bus.SetPaused(true);
@@ -287,8 +288,8 @@ public partial class Main
 
     public void BeginRoute(int index)
     {
-        PreviewRoute(index);_pendingRoute=index;
         Menu=Briefing=false;Paused=MapOpen=HarbourDrive=Complete=Abandoned=false;
+        PreviewRoute(index);_pendingRoute=index;
         Elapsed=0;StopLog.Clear();
         Bus.SetPhysicsProcess(true);Bus.SetPaused(false);Bus.RestartAudio();
         _tripContacts=Bus.Collisions;_tripRedLights=RedLightCrossings;_tripDistance=Bus.DistanceDriven;
@@ -400,7 +401,13 @@ public partial class Main
         Press("routes");
         Check(Complete && Abandoned && !Bus.IsPhysicsProcessing() && !AudioClip("music").Playing,"tab must end the route and show its results");
         Press("confirm");Check(Menu && !Complete && Route==Routes[1],"enter on the results must return to route select");
-        BeginRoute(2);Check(!Menu && Route==Routes[2] && !Complete && StopLog.Count==0,"each route starts fresh");
+        // A free drive shows no service on the blinds or the map, whether started from route select or mid-route.
+        bool NoService()=>HarbourDrive && _frontBlind!.Text=="NOT IN SERVICE" && _rearBlind!.Text=="" && !Hud.MapShowsService;
+        PreviewRoute(2);_UnhandledInput(new InputEventKey {Keycode=Key.T,Pressed=true});
+        Check(!Menu && NoService(),"T on route select must start a free drive without H3 on the blinds or map");
+        Press("routes");Check(Menu && Route==Routes[2] && _frontBlind!.Text=="H3  WAN CHAI" && _rearBlind!.Text=="H3" && Hud.MapShowsService,$"tab from a free drive must restore H3: {_frontBlind!.Text}");
+        BeginRoute(2);Press("kowloon");Check(NoService(),"the in-game K shortcut must clear the service from the blinds and map");
+        BeginRoute(2);Check(!Menu && Route==Routes[2] && !Complete && StopLog.Count==0 && _frontBlind!.Text=="H3  WAN CHAI","each route starts fresh");
         // Drive every route through its stops with the player's steering, brakes and door interlock.
         Engine.TimeScale=4;
         var only=OS.GetCmdlineUserArgs().FirstOrDefault(a=>a.StartsWith("--route="))?[8..];
@@ -442,7 +449,9 @@ public partial class Main
             Bus.TestThrottle=Bus.TestBrake==0 && Bus.Speed<limit?1:0;
             if(IsAtStop() && Bus.Kmh<.5f){if(!Bus.DoorsOpen)Bus.ToggleDoors();}
             else if(Bus.DoorsOpen)Bus.ToggleDoors();
-            AdvanceService((float)GetPhysicsProcessDeltaTime());
+            int logged=StopLog.Count;AdvanceService((float)GetPhysicsProcessDeltaTime());
+            // ARRIVED is when the doors first opened in the bay, so it must lead the end of the 4 s boarding.
+            if(StopLog.Count>logged)Check(Elapsed-StopLog[^1].Time>3.5f,$"{route.Number} {StopLog[^1].Name} arrival logged at {StopLog[^1].Time:0.0} s, boarding done at {Elapsed:0.0} s");
             minY=Mathf.Min(minY,Bus.Position.Y);
             if(tick%2000==0)GD.Print($"ANTILA_ROUTE_PROGRESS: {route.Number} {along:0}/{path.Length:0} m, stop {StopIndex+1}/{route.Stops.Count}, {Bus.Kmh:0} km/h");
             await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
@@ -482,6 +491,7 @@ public partial class Main
             Staged(2,1600,true);StopIndex=2;await Save("h3-tube-cab");
             Staged(1,Routes[1].Stops[2].Distance-70,false);StopIndex=2;MapOpen=true;Hud.QueueRedraw();await Save("h2-map");MapOpen=false;
             Staged(2,Routes[2].Stops[1].Distance-30,false);StopIndex=1;MapOpen=true;Hud.QueueRedraw();await Save("h3-map");MapOpen=false;
+            ShowRouteSelect();StartFreeDrive(0);MapOpen=true;Hud.QueueRedraw();await Save("free-drive-map");MapOpen=false;
             // The drive itself needs no frames drawn; software renderers would otherwise take most of an hour.
             RenderingServer.RenderLoopEnabled=false;Engine.TimeScale=4;
             await DriveRoute(Routes[0]);
