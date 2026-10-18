@@ -149,6 +149,18 @@ public partial class Hud : Control
         Text(caption,x+38,y,14,_muted);
     }
 
+    // Mio's English caption; her Japanese text stays in Data/mio.json for a future Japanese UI.
+    public int CaptionLines(string text)=>Mathf.RoundToInt(_font.GetMultilineStringSize(text,HorizontalAlignment.Left,610,16).Y/_font.GetHeight(16));
+
+    private void DrawMioCaption(float x,float y,float w,bool above)
+    {
+        float h=46+(CaptionLines(Game.MioCaption)-1)*_font.GetHeight(16);
+        if(above)y-=h;
+        Panel(x,y,w,h);
+        Text("MIO",x+20,y+28,12,_mint);
+        DrawMultilineString(_font,new(x+70,y+29),Game.MioCaption,HorizontalAlignment.Left,610,16,-1,_paper);
+    }
+
     public override void _Draw()
     {
         if(Game.Bus==null)return;
@@ -227,7 +239,9 @@ public partial class Hud : Control
             Text("ONCOMING LANE  —  Drive on the left",459,786,17,new Color("f2b16c"));
         }
         Text("Roads / buildings / coast © HKSAR Govt · TD / LandsD · 15 Oct 2026",31,889,9,_muted);
-        if(Game.Complete)DrawResults();
+        bool mio=Game.MioCaption!="" && bus.Voice.Playing; // Pause and the map pause her voice, which hides the caption too.
+        if(mio && !Game.Complete)DrawMioCaption(Game.CabView?438:350,Game.CabView?188:743,Game.CabView?654:702,!Game.CabView);
+        if(Game.Complete){DrawResults();if(mio)DrawMioCaption(370,822,700,false);}
         else if(Game.Paused)
         {
             DrawRect(new(0,0,1440,900),new Color(.03f,.08f,.08f,.65f));

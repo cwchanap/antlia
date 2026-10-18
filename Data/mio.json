@@ -1,0 +1,95 @@
+{
+  "metadata": {
+    "description": "Mio, the onboard guide on the fictional Antila services: her Japanese voice lines, their English meaning and the ElevenLabs voice cast. Kept as data so a future Japanese UI can reuse the text.",
+    "language": "ja",
+    "fields": "ja is the display text for a future Japanese UI. say is exactly what was sent to ElevenLabs: bracketed audio tags plus katakana readings (route numbers spelled out). en is the English caption shown in game.",
+    "ids": "<route>.welcome plays when a route starts; <route>.next.<stop slug> announces the next stop at the start and each time the doors close after boarding; the other ids are shared by every route.",
+    "created": "2026-10-18"
+  },
+  "character": {
+    "name": "Mio",
+    "ja": "ミオ",
+    "role": "Onboard guide and announcer. Polite to passengers; warm, a little playful, with the driver."
+  },
+  "cast": [
+    {
+      "id": "warm", "active": true, "voice_id": "nBV906YvEOdwWKK9J8Hx", "name": "Mio - Warm Japanese Narrator", "model": "eleven_v4",
+      "note": "Warm, clear announcer delivery. Records every line."
+    },
+    {
+      "id": "casual", "voice_id": "EVmK7c3z026INySFvQLP", "name": "Mio - Casual and Friendly", "model": "eleven_v4",
+      "note": "Slightly husky best-friend tone. Audition lines only."
+    },
+    {
+      "id": "bright", "voice_id": "6awt6FKyZGV0HyQEwisX", "name": "Suzu - Cute, Clear and Calm", "model": "eleven_v4",
+      "note": "Anime game-character voice, cute but calm. Audition lines only."
+    }
+  ],
+  "places": [
+    {"en": "Tsim Sha Tsui", "zh": "尖沙咀", "ja": "チムサーチョイ"},
+    {"en": "Jordan", "zh": "佐敦", "ja": "ジョーダン"},
+    {"en": "Mong Kok", "zh": "旺角", "ja": "モンコック"},
+    {"en": "Sham Shui Po", "zh": "深水埗", "ja": "シャムスイポー"},
+    {"en": "Hung Hom", "zh": "紅磡", "ja": "ホンハム"},
+    {"en": "Wan Chai", "zh": "灣仔", "ja": "ワンチャイ"},
+    {"en": "Cross-Harbour Tunnel", "zh": "紅磡海底隧道", "ja": "海底トンネル"},
+    {"en": "Middle Road", "zh": "中間道", "ja": "ミドル・ロード"},
+    {"en": "Kowloon Park", "zh": "九龍公園", "ja": "カオルーン・パーク"},
+    {"en": "Jordan Road", "zh": "佐敦道", "ja": "ジョーダン・ロード"},
+    {"en": "Saigon Street", "zh": "西貢街", "ja": "サイゴン・ストリート"},
+    {"en": "Waterloo Road", "zh": "窩打老道", "ja": "ウォータールー・ロード"},
+    {"en": "Shantung Street", "zh": "山東街", "ja": "シャンタン・ストリート"},
+    {"en": "Bute Street", "zh": "弼街", "ja": "ビュート・ストリート"},
+    {"en": "Wong Chuk Street", "zh": "黃竹街", "ja": "ウォンチョク・ストリート"},
+    {"en": "Cheung Sha Wan Road", "zh": "長沙灣道", "ja": "チョンサーワン・ロード"},
+    {"en": "Kweilin Street", "zh": "桂林街", "ja": "クワイリン・ストリート"},
+    {"en": "Pei Ho Street", "zh": "北河街", "ja": "ペイホー・ストリート"},
+    {"en": "Hong Chong Road", "zh": "康莊道", "ja": "ホンチョン・ロード"},
+    {"en": "Tunnel Interchange", "zh": "紅隧轉車站", "ja": "トンネル・インターチェンジ"},
+    {"en": "Hung Hing Road", "zh": "鴻興道", "ja": "ホンヒン・ロード"},
+    {"en": "Marsh Road", "zh": "馬師道", "ja": "マーシュ・ロード"}
+  ],
+  "lines": [
+    {"id": "H1.welcome", "ja": "本日もご乗車ありがとうございます。このバスは、H1系統、ジョーダン行きです。",
+      "say": "[warmly] 本日もご乗車、ありがとうございます。このバスは、エイチ・ワン系統、ジョーダン行きです。",
+      "en": "Thank you for riding with us today. This is route H1 to Jordan."},
+    {"id": "H2.welcome", "ja": "本日もご乗車ありがとうございます。このバスは、H2系統、モンコック経由、シャムスイポー行きです。",
+      "say": "[warmly] 本日もご乗車、ありがとうございます。このバスは、エイチ・ツー系統、モンコック経由、シャムスイポー行きです。",
+      "en": "Thank you for riding with us today. This is route H2 to Sham Shui Po, via Mong Kok."},
+    {"id": "H3.welcome", "ja": "本日もご乗車ありがとうございます。このバスは、H3系統、海底トンネル経由、ワンチャイ行きです。",
+      "say": "[warmly] 本日もご乗車、ありがとうございます。このバスは、エイチ・スリー系統、海底トンネル経由、ワンチャイ行きです。",
+      "en": "Thank you for riding with us today. This is route H3 to Wan Chai, via the Cross-Harbour Tunnel."},
+    {"id": "H1.next.middle-road", "ja": "次は、ミドル・ロードです。", "say": "次は、ミドル・ロードです。", "en": "Next stop: Middle Road."},
+    {"id": "H1.next.kowloon-park", "ja": "次は、カオルーン・パークです。", "say": "次は、カオルーン・パークです。", "en": "Next stop: Kowloon Park."},
+    {"id": "H1.next.jordan-road", "ja": "次は、終点、ジョーダン・ロードです。", "say": "次は、終点、ジョーダン・ロードです。", "en": "Next stop: Jordan Road, the last stop."},
+    {"id": "H2.next.saigon-street", "ja": "次は、サイゴン・ストリートです。", "say": "次は、サイゴン・ストリートです。", "en": "Next stop: Saigon Street."},
+    {"id": "H2.next.waterloo-road", "ja": "次は、ウォータールー・ロードです。", "say": "次は、ウォータールー・ロードです。", "en": "Next stop: Waterloo Road."},
+    {"id": "H2.next.shantung-street", "ja": "次は、シャンタン・ストリートです。", "say": "次は、シャンタン・ストリートです。", "en": "Next stop: Shantung Street."},
+    {"id": "H2.next.bute-street", "ja": "次は、ビュート・ストリートです。", "say": "次は、ビュート・ストリートです。", "en": "Next stop: Bute Street."},
+    {"id": "H2.next.wong-chuk-street", "ja": "次は、ウォンチョク・ストリートです。", "say": "次は、ウォンチョク・ストリートです。", "en": "Next stop: Wong Chuk Street."},
+    {"id": "H2.next.cheung-sha-wan-road", "ja": "次は、チョンサーワン・ロードです。", "say": "次は、チョンサーワン・ロードです。", "en": "Next stop: Cheung Sha Wan Road."},
+    {"id": "H2.next.kweilin-street", "ja": "次は、クワイリン・ストリートです。", "say": "次は、クワイリン・ストリートです。", "en": "Next stop: Kweilin Street."},
+    {"id": "H2.next.pei-ho-street", "ja": "次は、終点、ペイホー・ストリートです。", "say": "次は、終点、ペイホー・ストリートです。", "en": "Next stop: Pei Ho Street, the last stop."},
+    {"id": "H3.next.hong-chong-road", "ja": "次は、ホンチョン・ロードです。", "say": "次は、ホンチョン・ロードです。", "en": "Next stop: Hong Chong Road."},
+    {"id": "H3.next.tunnel-interchange", "ja": "次は、トンネル・インターチェンジです。", "say": "次は、トンネル・インターチェンジです。", "en": "Next stop: Tunnel Interchange."},
+    {"id": "H3.next.hung-hing-road", "ja": "次は、ホンヒン・ロードです。", "say": "次は、ホンヒン・ロードです。", "en": "Next stop: Hung Hing Road."},
+    {"id": "H3.next.marsh-road", "ja": "次は、終点、マーシュ・ロードです。", "say": "次は、終点、マーシュ・ロードです。", "en": "Next stop: Marsh Road, the last stop."},
+    {"id": "doors.open", "ja": "お待たせいたしました。ご乗車の際は、足元にご注意ください。",
+      "say": "[politely] お待たせいたしました。ご乗車の際は、足元にご注意ください。",
+      "en": "Thank you for waiting. Please mind your step as you board."},
+    {"id": "doors.close", "ja": "ドアが閉まります。発車しますので、手すりにおつかまりください。",
+      "say": "ドアが閉まります。発車しますので、手すりにおつかまりください。",
+      "en": "Doors closing. We're about to move off, so please hold on to a handrail."},
+    {"id": "missed", "ja": "あっ、停留所を通り過ぎてしまいましたね…。次は気をつけましょう！",
+      "say": "[surprised] あっ、停留所を通り過ぎてしまいましたね…。[warmly] 次は気をつけましょう！",
+      "en": "Oh, we went past the stop… Let's watch for the next one!"},
+    {"id": "red-light", "ja": "い、今の…赤信号でしたよ！", "say": "[nervous] い、今の…赤信号でしたよ！", "en": "Th-that was a red light!"},
+    {"id": "contact", "ja": "きゃっ！…安全運転で、お願いしますね。", "say": "[gasps] きゃっ！ [nervous] …安全運転で、お願いしますね。",
+      "en": "Eek! …Drive safely, please."},
+    {"id": "complete", "ja": "終点です。ご乗車ありがとうございました。お忘れ物のないよう、ご注意ください。運転手さん、おつかれさまでした！",
+      "say": "[warmly] 終点です。ご乗車、ありがとうございました。お忘れ物のないよう、ご注意ください。[happy] 運転手さん、おつかれさまでした！",
+      "en": "This is the last stop. Thank you for riding, and please take all your belongings. Thanks for driving today!"},
+    {"id": "abandoned", "ja": "今日はここまで、ですね。また一緒に走りましょう。", "say": "[softly] 今日はここまで、ですね。[warmly] また一緒に走りましょう。",
+      "en": "So that's it for today. Let's drive together again."}
+  ]
+}

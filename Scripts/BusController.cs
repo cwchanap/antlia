@@ -12,6 +12,7 @@ public partial class BusController : CharacterBody3D
     public float DistanceDriven { get; private set; }
     public float Kmh => Mathf.Abs(Speed) * 3.6f;
     public Node3D Model = null!;
+    public AudioStreamPlayer Voice = null!;
     public Action<string>? Notify;
     public Action<Transform3D, Transform3D>? Moved;
     public bool AutomaticTest;
@@ -53,6 +54,9 @@ public partial class BusController : CharacterBody3D
         music.Loop=true;
         var musicPlayer=new AudioStreamPlayer {Name="Audio_music",Stream=music,VolumeDb=-16};
         AddChild(musicPlayer);_audio["music"]=musicPlayer;musicPlayer.Play();
+        // Mio's announcements share pause, reset and cleanup with the other one-shots; Main chooses each line.
+        Voice=new AudioStreamPlayer {Name="Audio_voice",VolumeDb=-3};
+        AddChild(Voice);_audio["voice"]=Voice;
     }
 
     public static float IntegrateSpeed(float speed, float throttle, float brake, bool reverse, bool doorsOpen, float dt)
@@ -124,7 +128,7 @@ public partial class BusController : CharacterBody3D
             Mathf.Lerp(-60,-12,Mathf.Clamp(Kmh/40,0,1)),blend);
         _audio["city"].VolumeDb=CabAudio?(DoorsOpen?-18:-24):-18;
         _audio["music"].VolumeDb=Mathf.Lerp(_audio["music"].VolumeDb,
-            DoorsOpen || _audio["stop-bell"].Playing?-22:-16,blend);
+            DoorsOpen || _audio["stop-bell"].Playing || Voice.Playing?-22:-16,blend);
     }
 
     public bool ToggleDoors()

@@ -223,7 +223,7 @@ public partial class Main
     private void StartHarbourDrive(int route=0)
     {
         if(Paused || Complete || MapOpen || Bus.Kmh>.5f)return;
-        HarbourDrive=true;Complete=false;SetBlinds();
+        HarbourDrive=true;Complete=false;MioReset();SetBlinds();
         var p=_harbourRoutes[route].Points;var f=p[1]-p[0];
         Bus.ResetAt(p[0]+f.Normalized().Cross(Vector3.Up)*(route>=3?-1.8f:1.8f),Mathf.Atan2(-f.X,-f.Z));
         Bus.SetPaused(false);SetCab(true);

@@ -1,0 +1,1123 @@
+{
+  "provider": "ElevenLabs MCP",
+  "tool": "creative_generate_speech",
+  "flow": "https://elevenlabs.io/app/flows/CpPx3QF206cI4blyPali",
+  "takes_per_line": 4,
+  "selection": "Median-duration take of each line, ignoring takes more than 35% from the median.",
+  "recordings": [
+    {
+      "cast": "warm",
+      "line": "H1.welcome",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "[warmly] 本日もご乗車、ありがとうございます。このバスは、エイチ・ワン系統、ジョーダン行きです。",
+      "node_id": "w1eXITRGpETPWaeZCqvM",
+      "chosen": "tVmdNAyqn27vw7Ygn1U6",
+      "takes": [
+        {
+          "generation_id": "tVmdNAyqn27vw7Ygn1U6",
+          "session_id": "qFv4tOJ9lVG6YAR8XRRN",
+          "duration": 7.36
+        },
+        {
+          "generation_id": "Isdb2g5npeHFCv0JRCVh",
+          "session_id": "f2FXCwV6E2qoE6ninoCh",
+          "duration": 7.36
+        },
+        {
+          "generation_id": "zwQc87GOMPgdO7HttOdK",
+          "session_id": "OwrXZY2HSRKecCLOXA5T",
+          "duration": 6.72
+        },
+        {
+          "generation_id": "NXb7iW6st29zEbyk2VRR",
+          "session_id": "XZfPWPsi7HmnP1GYiW3B",
+          "duration": 6.8
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H1.welcome.mp3",
+      "source_sha256": "ba40681656a72e731bc4f8fef8824bc81f0bf17d4e2eaa41fce2665ef5017fb4",
+      "output": "Assets/Audio/Mio/warm/H1.welcome.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H2.welcome",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "[warmly] 本日もご乗車、ありがとうございます。このバスは、エイチ・ツー系統、モンコック経由、シャムスイポー行きです。",
+      "node_id": "XomCkrBA4naEF5gD11et",
+      "chosen": "lcRbPSTURJaxUDS3X17Z",
+      "takes": [
+        {
+          "generation_id": "CjK8Go8wOSafpjiJnwv2",
+          "session_id": "S3TIDiVskqOiBtyH009h",
+          "duration": 8.48
+        },
+        {
+          "generation_id": "lcRbPSTURJaxUDS3X17Z",
+          "session_id": "3nCreES2QT2jkpLmZLdn",
+          "duration": 8.64
+        },
+        {
+          "generation_id": "2MksKgt9MK4c9rdGCzEE",
+          "session_id": "l3UDzdQm2NHjWG4ipnlR",
+          "duration": 8.96
+        },
+        {
+          "generation_id": "8KfUKb69Ay5jnnLQr6BU",
+          "session_id": "hV8LlKjIwOwerhXzoRSV",
+          "duration": 9.04
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H2.welcome.mp3",
+      "source_sha256": "1a027d18caa6a34270bbf3a0eb3daae4f69c89994988e2bf126e2af46fef19e8",
+      "output": "Assets/Audio/Mio/warm/H2.welcome.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H3.welcome",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "[warmly] 本日もご乗車、ありがとうございます。このバスは、エイチ・スリー系統、海底トンネル経由、ワンチャイ行きです。",
+      "node_id": "47lGLAkLtIwXsn6PvDiB",
+      "chosen": "Hd9Lm7RiaUuri2Nlj05b",
+      "takes": [
+        {
+          "generation_id": "Hd9Lm7RiaUuri2Nlj05b",
+          "session_id": "hBpn0tWm4Gau3wRKybUd",
+          "duration": 8.72
+        },
+        {
+          "generation_id": "GwvEGlhqYw86JMw9GQNA",
+          "session_id": "iu4CQfHaikPwSfxMxvRp",
+          "duration": 9.04
+        },
+        {
+          "generation_id": "tZ6TorTSXbqfg5tpSRiZ",
+          "session_id": "oqttScrSkFfDVPxNCG0g",
+          "duration": 8.88
+        },
+        {
+          "generation_id": "FjEUMV9SL7MlbRtV4HLS",
+          "session_id": "ZeUuzyjQtFQvsGWWq3Z3",
+          "duration": 7.76
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H3.welcome.mp3",
+      "source_sha256": "e3923784a75712f81c8c7839a2e49897186857bdd87f4fd8391a17ebc59bfd9c",
+      "output": "Assets/Audio/Mio/warm/H3.welcome.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H1.next.middle-road",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、ミドル・ロードです。",
+      "node_id": "Vd74VWCyJQ3hRLnWRoW7",
+      "chosen": "X2SmlHYz1pgZoAqUQFMp",
+      "takes": [
+        {
+          "generation_id": "5S88UU2DLpqdQOcVQCnP",
+          "session_id": "jKF9sG4v0krbVY9KcDu7",
+          "duration": 1.76
+        },
+        {
+          "generation_id": "yMmAKXLl4uj2u1OC55Mx",
+          "session_id": "qeFuVVL4ZZQWjlEBVP8c",
+          "duration": 1.6
+        },
+        {
+          "generation_id": "X2SmlHYz1pgZoAqUQFMp",
+          "session_id": "iZxHP0GfJ0jwdIxC4Nl7",
+          "duration": 1.68
+        },
+        {
+          "generation_id": "VgdPDq0679KyHER3GGbV",
+          "session_id": "7xNRHe2WfqM21BJy7xhp",
+          "duration": 1.68
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H1.next.middle-road.mp3",
+      "source_sha256": "a4b99b2e57c245c3b3466c8e85da28d064f1c79e5df039b2233f93cec5e7dba7",
+      "output": "Assets/Audio/Mio/warm/H1.next.middle-road.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H1.next.kowloon-park",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、カオルーン・パークです。",
+      "node_id": "pgcGiiyUAeGXicOIu8Af",
+      "chosen": "yMJrz2HIRcyKF7OEBcvS",
+      "takes": [
+        {
+          "generation_id": "yMJrz2HIRcyKF7OEBcvS",
+          "session_id": "kY3MkVXpbw3v6yPYeh0G",
+          "duration": 1.92
+        },
+        {
+          "generation_id": "B2BZD6m4yu3W88M4IJ8P",
+          "session_id": "otQlZvvQ87gmqTCfsvaA",
+          "duration": 2.0
+        },
+        {
+          "generation_id": "cj3txUEovLKEzNC84mVz",
+          "session_id": "ZeJQYbI7MXCMStchuTO5",
+          "duration": 1.92
+        },
+        {
+          "generation_id": "tx3ehDktopvB6VlAxl9u",
+          "session_id": "7CprxfbhDB7rri9zTbEI",
+          "duration": 1.92
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H1.next.kowloon-park.mp3",
+      "source_sha256": "25b04e07f6aa330bda1e9e9ad5bc1f1f8ff77c71d2258916990bddb11f818f8b",
+      "output": "Assets/Audio/Mio/warm/H1.next.kowloon-park.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H1.next.jordan-road",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、終点、ジョーダン・ロードです。",
+      "node_id": "693TKZ4c14txwnT6nqeJ",
+      "chosen": "f4JNZf6TBZAHpeOmfhY8",
+      "takes": [
+        {
+          "generation_id": "jzRlWW7ovFhXjjrCEstd",
+          "session_id": "uGp1oVEW0k7fACoCjnLW",
+          "duration": 2.88
+        },
+        {
+          "generation_id": "AIo3pLjpw4fXhLdSjct8",
+          "session_id": "KHfa0CZUkbjDigZnRmrO",
+          "duration": 2.48
+        },
+        {
+          "generation_id": "f4JNZf6TBZAHpeOmfhY8",
+          "session_id": "zpl37A0dNA04296u9yJg",
+          "duration": 2.8
+        },
+        {
+          "generation_id": "TXp63u0VOKOhiMV1eEkE",
+          "session_id": "poPVrxOPDDREPKbKHVm0",
+          "duration": 2.56
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H1.next.jordan-road.mp3",
+      "source_sha256": "371c71ad9b2dd186bb07aede68e1a5bb8e793d2336b0c1b6d6e4ecdac93560c5",
+      "output": "Assets/Audio/Mio/warm/H1.next.jordan-road.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H2.next.saigon-street",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、サイゴン・ストリートです。",
+      "node_id": "xwWtzUjOnVEybEZVwB8U",
+      "chosen": "OQCEVuFqxXw4hPISvO3l",
+      "takes": [
+        {
+          "generation_id": "OQCEVuFqxXw4hPISvO3l",
+          "session_id": "2RxzrNkrcj35eGT0ac4C",
+          "duration": 2.08
+        },
+        {
+          "generation_id": "2mvtOtesn67gK4zEEj8e",
+          "session_id": "C7wetjV847DzrCQgTgCg",
+          "duration": 2.0
+        },
+        {
+          "generation_id": "odlh2kaX22r51BwJEeRE",
+          "session_id": "2aTQ1xTSdaImfRif8QCF",
+          "duration": 2.16
+        },
+        {
+          "generation_id": "mTd54d0wXPlNHkYvFY6u",
+          "session_id": "Tm4H2mgWpqrodW1JPvlW",
+          "duration": 1.92
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H2.next.saigon-street.mp3",
+      "source_sha256": "6e96d58510b637e486a226bcfd4ee00cc39a681c2e1e35ebd76dd0af0ef6d739",
+      "output": "Assets/Audio/Mio/warm/H2.next.saigon-street.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H2.next.waterloo-road",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、ウォータールー・ロードです。",
+      "node_id": "ycmlMsSvZYmk2DRI1y7i",
+      "chosen": "NsJSgvKliHKBEZHnfpxE",
+      "takes": [
+        {
+          "generation_id": "VOUqrqTnD4MYNBN9Yrrd",
+          "session_id": "jKmQGNifvdpWYsZpvWWs",
+          "duration": 2.08
+        },
+        {
+          "generation_id": "NsJSgvKliHKBEZHnfpxE",
+          "session_id": "9LlGQx3V7ZbE1Wdoc4sB",
+          "duration": 2.0
+        },
+        {
+          "generation_id": "xv017r45VOvv6LNdF2a1",
+          "session_id": "VbTLFR9Na7303oO8L5ow",
+          "duration": 1.92
+        },
+        {
+          "generation_id": "9DJX4N5WW5qUv2lSbUvp",
+          "session_id": "w28Bd2ljvAFq4fEfkPyX",
+          "duration": 1.92
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H2.next.waterloo-road.mp3",
+      "source_sha256": "82ae02ec2ea0220ec0fcf1e87c7876b55cc4f6daaa112a0b6901f40c5adfd49c",
+      "output": "Assets/Audio/Mio/warm/H2.next.waterloo-road.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H2.next.shantung-street",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、シャンタン・ストリートです。",
+      "node_id": "CFu9VimDQKp5AjC6A782",
+      "chosen": "OHAOvSXElmlXlbkLwbvh",
+      "takes": [
+        {
+          "generation_id": "aHIStPkVLm1GUh8wRKkG",
+          "session_id": "1Su6hAwdRuGzBmXiSUpc",
+          "duration": 2.08
+        },
+        {
+          "generation_id": "OHAOvSXElmlXlbkLwbvh",
+          "session_id": "3O20X19cLCWvPqFymvVv",
+          "duration": 2.0
+        },
+        {
+          "generation_id": "9LYqKI96W1fYGseCpmuz",
+          "session_id": "FzinDGRxjDVrqBMbaoFZ",
+          "duration": 2.0
+        },
+        {
+          "generation_id": "x5HlredLmTCCHE9NA0Yu",
+          "session_id": "17hEd58qGljQrfR5ZQJr",
+          "duration": 2.0
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H2.next.shantung-street.mp3",
+      "source_sha256": "87a232c1ef013ea3a42ce69e638fd2c5de9ae237f57fde70edf12718b723d4fd",
+      "output": "Assets/Audio/Mio/warm/H2.next.shantung-street.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H2.next.bute-street",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、ビュート・ストリートです。",
+      "node_id": "VBebol7xLrEVVvtEURAr",
+      "chosen": "r4XwUI4FzR5MxX11Ov69",
+      "takes": [
+        {
+          "generation_id": "SsV9x2ei2atWVGTjL9TJ",
+          "session_id": "RyMe6cWtBFkpymxnbF1L",
+          "duration": 2.0
+        },
+        {
+          "generation_id": "ajQK3S5qdVv61KsS6NZm",
+          "session_id": "f32UIQ5C7D4BRYsJbhng",
+          "duration": 1.76
+        },
+        {
+          "generation_id": "r4XwUI4FzR5MxX11Ov69",
+          "session_id": "s5vgZArehfdDkVZGTFwd",
+          "duration": 1.92
+        },
+        {
+          "generation_id": "6J1kUnMvDhNOS3RVIukW",
+          "session_id": "dy2Laz5rlsjiceEP3dgW",
+          "duration": 1.92
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H2.next.bute-street.mp3",
+      "source_sha256": "e9d165d9283e730a5b2533b5f380be899412b159449105b5c8a43421be04a6bb",
+      "output": "Assets/Audio/Mio/warm/H2.next.bute-street.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H2.next.wong-chuk-street",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、ウォンチョク・ストリートです。",
+      "node_id": "WV8hOYYQtx6S2KC8eIyZ",
+      "chosen": "zqYqtGyfoDDFvvdNXGCu",
+      "takes": [
+        {
+          "generation_id": "zqYqtGyfoDDFvvdNXGCu",
+          "session_id": "UmrCXjVMzk6SP8AoZZLK",
+          "duration": 1.92
+        },
+        {
+          "generation_id": "oZM6e6cSMouulG8wJe9T",
+          "session_id": "75zW8xqWzplI47RGLYXt",
+          "duration": 1.92
+        },
+        {
+          "generation_id": "wQLrNCz4fX6rHQ9GNwBu",
+          "session_id": "E0OFzf8JRasmusCP8BJ0",
+          "duration": 1.92
+        },
+        {
+          "generation_id": "PfN4xwhXM57XrisbsIGz",
+          "session_id": "7KlZ83kC8bUiYuzmdxH6",
+          "duration": 2.08
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H2.next.wong-chuk-street.mp3",
+      "source_sha256": "bb4b9a4adaf2d8b7740018b9c194bf69ba1811aee486b4595051df65cf20e651",
+      "output": "Assets/Audio/Mio/warm/H2.next.wong-chuk-street.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H2.next.cheung-sha-wan-road",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、チョンサーワン・ロードです。",
+      "node_id": "fIzxfbVg8Tg8JI6Vo1zU",
+      "chosen": "UDFKi9iXwRWS1sEADOIE",
+      "takes": [
+        {
+          "generation_id": "UDFKi9iXwRWS1sEADOIE",
+          "session_id": "cNnq1utQ3VjJj9vyXpgI",
+          "duration": 2.16
+        },
+        {
+          "generation_id": "HlRgtZ1oaofjt0lB2nhD",
+          "session_id": "apUMkbFESQ7PiZCskemm",
+          "duration": 2.0
+        },
+        {
+          "generation_id": "3mxmHocN3Hhoz5wIB7gL",
+          "session_id": "2qghI1ed1XCzY9hLCG81",
+          "duration": 2.24
+        },
+        {
+          "generation_id": "f6mDrbDDAUecTtB99NFy",
+          "session_id": "4K2DKkW823X9fEYfonMR",
+          "duration": 1.84
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H2.next.cheung-sha-wan-road.mp3",
+      "source_sha256": "6fec9c1c5c1bd5015f28637921296c9da9947f2bef95788691abbbbccaab91dd",
+      "output": "Assets/Audio/Mio/warm/H2.next.cheung-sha-wan-road.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H2.next.kweilin-street",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、クワイリン・ストリートです。",
+      "node_id": "4hZgnPbUGl6WeCNKX4dd",
+      "chosen": "kH7NjXa3t0JYxW2EkJoQ",
+      "takes": [
+        {
+          "generation_id": "kw9hIEo4SZMrHpdCIKj3",
+          "session_id": "WyFNiADi4bjDYnCGmcWf",
+          "duration": 1.92
+        },
+        {
+          "generation_id": "kH7NjXa3t0JYxW2EkJoQ",
+          "session_id": "LY1lSQnIQ4xMlmv7QT3X",
+          "duration": 2.0
+        },
+        {
+          "generation_id": "5LzKl5Mp8EuaGjMsPNOS",
+          "session_id": "5zs68bxM2GwWbGM2JeTq",
+          "duration": 2.08
+        },
+        {
+          "generation_id": "xBxnb04rCcd5ezeqt4n0",
+          "session_id": "IKnQtaSK69xPKDTSDECR",
+          "duration": 2.16
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H2.next.kweilin-street.mp3",
+      "source_sha256": "7eeb34faf3c316dc4e5142d2671bab8a5d3c02fdfb713d45cd3b33a4a9e18963",
+      "output": "Assets/Audio/Mio/warm/H2.next.kweilin-street.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H2.next.pei-ho-street",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、終点、ペイホー・ストリートです。",
+      "node_id": "4VarDaqOufCE5pYhMkaC",
+      "chosen": "Fw390gnt0KqsIeX9gSWb",
+      "takes": [
+        {
+          "generation_id": "Fw390gnt0KqsIeX9gSWb",
+          "session_id": "gQmJvWPiTuwRklyDqcVP",
+          "duration": 2.72
+        },
+        {
+          "generation_id": "xYqEL0f6aHs3Aubw9TOB",
+          "session_id": "bqvFk5LMYc7JF2I1XbQh",
+          "duration": 2.8
+        },
+        {
+          "generation_id": "mPiBkXrKBqJLrRIgD31B",
+          "session_id": "5wFOboGEEKxBDk0WuVvg",
+          "duration": 2.8
+        },
+        {
+          "generation_id": "2qHcY7iQ5kSNRADuM8W4",
+          "session_id": "qncCO19Nzooc3RgHfn0X",
+          "duration": 2.72
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H2.next.pei-ho-street.mp3",
+      "source_sha256": "1d6b7d5ae300759f32345dac07b179989e52731496960678772b4502737c09ac",
+      "output": "Assets/Audio/Mio/warm/H2.next.pei-ho-street.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H3.next.hong-chong-road",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、ホンチョン・ロードです。",
+      "node_id": "oG3xjF5rtRQFHt2vfQfh",
+      "chosen": "0DGef90YWSGG0BPVtKJZ",
+      "takes": [
+        {
+          "generation_id": "0XqheWRbgVPjQ4Mm3YNY",
+          "session_id": "TOkc3SFBrhl1sbx2EJHq",
+          "duration": 1.92
+        },
+        {
+          "generation_id": "0DGef90YWSGG0BPVtKJZ",
+          "session_id": "8z524Ifr7bq2ReduKHFq",
+          "duration": 1.76
+        },
+        {
+          "generation_id": "q7pI7XCnLmUAqSo35bt0",
+          "session_id": "xYeRog2LzWi7rPNcs8bO",
+          "duration": 1.84
+        },
+        {
+          "generation_id": "8RsNtRnom7ZU9sAu0XLU",
+          "session_id": "P9OwDAzaX2qiThhvb136",
+          "duration": 1.76
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H3.next.hong-chong-road.mp3",
+      "source_sha256": "f5efacc717e41dff85cc296c81f6edd0d0024c35a5f64eeac547ba13d74ded7f",
+      "output": "Assets/Audio/Mio/warm/H3.next.hong-chong-road.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H3.next.tunnel-interchange",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、トンネル・インターチェンジです。",
+      "node_id": "iZBAG3vsKIeRTn4JCHhE",
+      "chosen": "EO6GsAITgECCJeCA2DEk",
+      "takes": [
+        {
+          "generation_id": "EO6GsAITgECCJeCA2DEk",
+          "session_id": "KCXnEdI3PsibxLgYXmLX",
+          "duration": 2.24
+        },
+        {
+          "generation_id": "k7MQLHA2LixpG0RPs7Qk",
+          "session_id": "82folbHQztJHgWhKym9H",
+          "duration": 2.24
+        },
+        {
+          "generation_id": "xXOLDNgxBfVrjXKOcvJB",
+          "session_id": "hAEdV8jWTB7nCi268HZD",
+          "duration": 2.08
+        },
+        {
+          "generation_id": "MUyikcbD0lt86cSfLFO6",
+          "session_id": "mS8jDMt9LPFLZjbz85Hf",
+          "duration": 2.08
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H3.next.tunnel-interchange.mp3",
+      "source_sha256": "6ef7559850c5deae1d99f155f17ecc7121c87b82353657f91cd5ff5e23f79490",
+      "output": "Assets/Audio/Mio/warm/H3.next.tunnel-interchange.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H3.next.hung-hing-road",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、ホンヒン・ロードです。",
+      "node_id": "B2XLip91dB8IYrmIPj4W",
+      "chosen": "CmzpVBVsqbPK4qyZQ1Bx",
+      "takes": [
+        {
+          "generation_id": "CmzpVBVsqbPK4qyZQ1Bx",
+          "session_id": "4gpf2jN9w7mS81BtARiT",
+          "duration": 1.92
+        },
+        {
+          "generation_id": "JWEWrMtkxuPrN6rvbuFe",
+          "session_id": "fRQFKtg1eN6Dv5dkPZJ9",
+          "duration": 1.92
+        },
+        {
+          "generation_id": "YWQ17dflhRF7quxDTKjq",
+          "session_id": "Us2Om69tvwFH7SB2J4wD",
+          "duration": 1.84
+        },
+        {
+          "generation_id": "MAdVr46GyriY9Nh8qWU1",
+          "session_id": "dD9e236nIPpZUUzB65wV",
+          "duration": 1.84
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H3.next.hung-hing-road.mp3",
+      "source_sha256": "b05fb60a8cdb9c6a668fed83b53863329708c37f30e3a0cb47c0f4a911426f4d",
+      "output": "Assets/Audio/Mio/warm/H3.next.hung-hing-road.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "H3.next.marsh-road",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "次は、終点、マーシュ・ロードです。",
+      "node_id": "PtC5Lzp56Hr0pPpuI0e2",
+      "chosen": "ekXDlYgOXfsEKqNzKjek",
+      "takes": [
+        {
+          "generation_id": "ekXDlYgOXfsEKqNzKjek",
+          "session_id": "qnk8SOGQfITl20QBTYUr",
+          "duration": 2.8
+        },
+        {
+          "generation_id": "s7gZ0lH0tFMm3YZtpXoe",
+          "session_id": "uKjffqTu7gULa5dEgNDA",
+          "duration": 2.64
+        },
+        {
+          "generation_id": "NYpmplesarHwlNxFgzlN",
+          "session_id": "8Iq6Z3tw87yw3BAxFZv3",
+          "duration": 2.8
+        },
+        {
+          "generation_id": "c1SZyNN05zYDtHWf5oxP",
+          "session_id": "8SF8VuE309eMgHueyjqi",
+          "duration": 2.72
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/H3.next.marsh-road.mp3",
+      "source_sha256": "b8ee2096f96187f38b592e6176cf4e6740311e2f69090d95759d0eae44b15ec4",
+      "output": "Assets/Audio/Mio/warm/H3.next.marsh-road.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "doors.open",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "[politely] お待たせいたしました。ご乗車の際は、足元にご注意ください。",
+      "node_id": "Whzcng25xOYDwgFqraRv",
+      "chosen": "fG7hIWpl7voIFpaK0jIG",
+      "takes": [
+        {
+          "generation_id": "2PGy8yPUzjQKTFoF7RyT",
+          "session_id": "1HnJeNPGrR46fUOdtTqP",
+          "duration": 4.32
+        },
+        {
+          "generation_id": "i9eRurAmlbUMb5npwDoJ",
+          "session_id": "gFmlI96alVIc7Al5FcZs",
+          "duration": 4.48
+        },
+        {
+          "generation_id": "fG7hIWpl7voIFpaK0jIG",
+          "session_id": "pii1Ykeqa71D2HmbOSzh",
+          "duration": 4.4
+        },
+        {
+          "generation_id": "29DwwuQivZ6didjBo16R",
+          "session_id": "eESpqwPSSD2SzIqBXRHB",
+          "duration": 4.4
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/doors.open.mp3",
+      "source_sha256": "d46fd6f01b66c66d1ff709223dd3404e722a772b46f0dff2ca967100080df58c",
+      "output": "Assets/Audio/Mio/warm/doors.open.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "doors.close",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "ドアが閉まります。発車しますので、手すりにおつかまりください。",
+      "node_id": "9czvI8DwuNLJSLkXKkkG",
+      "chosen": "S1fWadPMsbBOd5QtzM4s",
+      "takes": [
+        {
+          "generation_id": "AXtT55puyklIJl09gEw4",
+          "session_id": "OEYFvazlUHJnOqe1yXqz",
+          "duration": 4.64
+        },
+        {
+          "generation_id": "NUPd3jzoMaLBwajWY6A2",
+          "session_id": "HbZQA4ODQGRLNwWhouwC",
+          "duration": 4.32
+        },
+        {
+          "generation_id": "S1fWadPMsbBOd5QtzM4s",
+          "session_id": "f7zAXS5waa2eHm4AiUWD",
+          "duration": 4.48
+        },
+        {
+          "generation_id": "WPyELxNDPtKwOFQDyqHP",
+          "session_id": "8rVDhclnkSS0xKk4y2EI",
+          "duration": 4.56
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/doors.close.mp3",
+      "source_sha256": "b9ba20a7b9c3adb300d720251db101c68e3965f3e1972a97628b0d10a0f9fb53",
+      "output": "Assets/Audio/Mio/warm/doors.close.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "missed",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "[surprised] あっ、停留所を通り過ぎてしまいましたね…。[warmly] 次は気をつけましょう！",
+      "node_id": "UKu4aKsMCRjw6PAo4uoZ",
+      "chosen": "A9xuVp4Dvi5tdZUKl538",
+      "takes": [
+        {
+          "generation_id": "v9V5cZfjK3Ws3rYyMJPH",
+          "session_id": "tAFMkgYFCuujz3fnx9dI",
+          "duration": 4.32
+        },
+        {
+          "generation_id": "A9xuVp4Dvi5tdZUKl538",
+          "session_id": "Y3hDzJb4gcPjk3lUIpSa",
+          "duration": 4.8
+        },
+        {
+          "generation_id": "kmg02po9XjDFpOxhAvSa",
+          "session_id": "bZabD4GN2pndg5ZVSNU9",
+          "duration": 4.96
+        },
+        {
+          "generation_id": "bQ37WAMJFvgzyRqcmKux",
+          "session_id": "21CwZdzqWjfzEp1S3VDu",
+          "duration": 4.8
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/missed.mp3",
+      "source_sha256": "0c6011e81c958a03994a193d5bcb616f3e4b5d17ca78e4ac0716be613f271a14",
+      "output": "Assets/Audio/Mio/warm/missed.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "red-light",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "[nervous] い、今の…赤信号でしたよ！",
+      "node_id": "mBTIAQ4eEloHkM3ZBWsX",
+      "chosen": "tj1elQoPuAcmwpZj89SE",
+      "takes": [
+        {
+          "generation_id": "V7YQicnvLoC6YwN6pj8S",
+          "session_id": "60KXn88n1ZRti0vYeig1",
+          "duration": 3.04
+        },
+        {
+          "generation_id": "tj1elQoPuAcmwpZj89SE",
+          "session_id": "gAgrYptU9dQuHCr1afGJ",
+          "duration": 2.72
+        },
+        {
+          "generation_id": "QDOatrmZEdXXVTMM7Eg5",
+          "session_id": "tmKu9vu9GNuCA3b3Z3oh",
+          "duration": 2.72
+        },
+        {
+          "generation_id": "OQY43JkHpDOBZDohWRnG",
+          "session_id": "cwzleFRQq4aXl4ttwrrj",
+          "duration": 2.88
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/red-light.mp3",
+      "source_sha256": "ae0084032e8be853c9561271f9ca942f332af7c49e39c330159287c31c50b911",
+      "output": "Assets/Audio/Mio/warm/red-light.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "contact",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "[gasps] きゃっ！ [nervous] …安全運転で、お願いしますね。",
+      "node_id": "sHJmUvqw31RIEYJphglM",
+      "chosen": "ahohAi0BPl1f77hYNDZy",
+      "takes": [
+        {
+          "generation_id": "ahohAi0BPl1f77hYNDZy",
+          "session_id": "bRzB8X0YJymKg2CSu2Sa",
+          "duration": 4.16
+        },
+        {
+          "generation_id": "8cXndsT4lwbB1PRFKpqZ",
+          "session_id": "sTlHda0T5AZoilqButOX",
+          "duration": 4.08
+        },
+        {
+          "generation_id": "D3JHk14qAONscz67oOgE",
+          "session_id": "VOBBQRQNXaVM0KQeigS6",
+          "duration": 4.24
+        },
+        {
+          "generation_id": "0ZWpf3pqAg7Dqmvr8pbD",
+          "session_id": "11dHsOHdV5xpRqREQXgw",
+          "duration": 4.08
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/contact.mp3",
+      "source_sha256": "af507af3dc59bff9c15d0ea8e5b31b5a5473c28cb4427cb0193be258fa2bf08b",
+      "output": "Assets/Audio/Mio/warm/contact.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "complete",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "[warmly] 終点です。ご乗車、ありがとうございました。お忘れ物のないよう、ご注意ください。[happy] 運転手さん、おつかれさまでした！",
+      "node_id": "tPZw4sqEkj5QWoZXzN1C",
+      "chosen": "3sP5XBiFV9KbgkFshcxr",
+      "takes": [
+        {
+          "generation_id": "3sP5XBiFV9KbgkFshcxr",
+          "session_id": "1US2StsULoE6HLA0ImOM",
+          "duration": 9.28
+        },
+        {
+          "generation_id": "AfoZcUXsKSLfvslRGtGe",
+          "session_id": "u7L4FVg9JFbnOQapXvff",
+          "duration": 9.76
+        },
+        {
+          "generation_id": "5wQPEZcYAEQuPEMGGWR9",
+          "session_id": "nMSgdBNq8r8oTf59FZKu",
+          "duration": 10.24
+        },
+        {
+          "generation_id": "VYtubq13FWCsCWYCGRog",
+          "session_id": "d0LrKwnqwFTxppDjNRSU",
+          "duration": 9.04
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/complete.mp3",
+      "source_sha256": "c73e57f70dee90c7975794691344d9700fc1898198ba378295307f87e9fd9874",
+      "output": "Assets/Audio/Mio/warm/complete.ogg"
+    },
+    {
+      "cast": "warm",
+      "line": "abandoned",
+      "voice_id": "nBV906YvEOdwWKK9J8Hx",
+      "model": "eleven_v4",
+      "say": "[softly] 今日はここまで、ですね。[warmly] また一緒に走りましょう。",
+      "node_id": "DQCsTiFVj6qDAxGyYE4d",
+      "chosen": "76yVSCbsQPtONmTMzMdO",
+      "takes": [
+        {
+          "generation_id": "76yVSCbsQPtONmTMzMdO",
+          "session_id": "FZGx9pXxORnr0zFK8CNU",
+          "duration": 4.48
+        },
+        {
+          "generation_id": "4P8NdtJTFALARDl4DKYN",
+          "session_id": "NR4tcCXxfYu4RS9WVyJ3",
+          "duration": 4.88
+        },
+        {
+          "generation_id": "fw6qzhYMyYFWE0MrNILr",
+          "session_id": "QlbnqPWGNrCTNSuQIBhb",
+          "duration": 4.08
+        },
+        {
+          "generation_id": "Du1Sz8FGxxepjYPyXkEG",
+          "session_id": "qFpH13PjdGICkhFezBJo",
+          "duration": 4.4
+        }
+      ],
+      "source": "Art/Audio/Mio/warm/abandoned.mp3",
+      "source_sha256": "2d014a30860bc9dee6558ba38a635294aa109be78e4bac12fe3c835164bf5166",
+      "output": "Assets/Audio/Mio/warm/abandoned.ogg"
+    },
+    {
+      "cast": "casual",
+      "line": "H1.welcome",
+      "voice_id": "EVmK7c3z026INySFvQLP",
+      "model": "eleven_v4",
+      "say": "[warmly] 本日もご乗車、ありがとうございます。このバスは、エイチ・ワン系統、ジョーダン行きです。",
+      "node_id": "KduCAYa2sXLpboWGW9ck",
+      "chosen": "x8xiVIX6EnvYiShSuEMH",
+      "takes": [
+        {
+          "generation_id": "Q4ISIXk1Lx6npWCWsK4V",
+          "session_id": "TK2MEBU3mROx1W3rwSqr",
+          "duration": 6.32
+        },
+        {
+          "generation_id": "x8xiVIX6EnvYiShSuEMH",
+          "session_id": "TkALRtTxoE1O53akqOj6",
+          "duration": 6.08
+        },
+        {
+          "generation_id": "ruM1izB7ahU5RoArhh35",
+          "session_id": "LjC8qn8ezRX6OilyhyhT",
+          "duration": 6.16
+        },
+        {
+          "generation_id": "tAwAuzGVj4h49uphVO67",
+          "session_id": "cKD8pihhf0urtdUiL8Ds",
+          "duration": 6.0
+        }
+      ],
+      "source": "Art/Audio/Mio/casual/H1.welcome.mp3",
+      "source_sha256": "056bcb2ff07a6026d0c93ab1bd629ef1efc944366379f95cdc4ebb3d65884075"
+    },
+    {
+      "cast": "casual",
+      "line": "H1.next.kowloon-park",
+      "voice_id": "EVmK7c3z026INySFvQLP",
+      "model": "eleven_v4",
+      "say": "次は、カオルーン・パークです。",
+      "node_id": "naSA1mS9TFt43Eac001H",
+      "chosen": "H1XNuNWPokj8Veol1kUz",
+      "takes": [
+        {
+          "generation_id": "H1XNuNWPokj8Veol1kUz",
+          "session_id": "fI3WkxVVnluP4wBVtkS1",
+          "duration": 2.08
+        },
+        {
+          "generation_id": "TnrXxz1rbkPePuMW9byU",
+          "session_id": "qTdptnvyEPG2ezEh6q9w",
+          "duration": 2.24
+        },
+        {
+          "generation_id": "i6lKdKO2PdYwtyD7hd7v",
+          "session_id": "0yeDpB8iPFpNisdsq9pH",
+          "duration": 2.0
+        },
+        {
+          "generation_id": "b0Y0sPaynvaWYriaD3YR",
+          "session_id": "Us1QtHEbNsbAzFnOK8kU",
+          "duration": 2.24
+        }
+      ],
+      "source": "Art/Audio/Mio/casual/H1.next.kowloon-park.mp3",
+      "source_sha256": "30601b7c73b292f6f833236c133c3347cf8d2d43a492af3b79d63f9cb1001543"
+    },
+    {
+      "cast": "casual",
+      "line": "contact",
+      "voice_id": "EVmK7c3z026INySFvQLP",
+      "model": "eleven_v4",
+      "say": "[gasps] きゃっ！ [nervous] …安全運転で、お願いしますね。",
+      "node_id": "cA7eKFoJ2IqPWlddSuqZ",
+      "chosen": "rj0ebsovIfkWPYCyf3XS",
+      "takes": [
+        {
+          "generation_id": "dOnuyjjhFhMf0rRmQwvL",
+          "session_id": "WuFyCBiHBiGtJzYfbX4w",
+          "duration": 4.64
+        },
+        {
+          "generation_id": "rj0ebsovIfkWPYCyf3XS",
+          "session_id": "JO9lf7W6OLmFcHysHtYl",
+          "duration": 4.72
+        },
+        {
+          "generation_id": "Fzc89dUvD4nHijEmxb8G",
+          "session_id": "2e7zUyJY0XEBv9jl1zHi",
+          "duration": 5.04
+        },
+        {
+          "generation_id": "hF0PuqyR4vyegCk1Eztb",
+          "session_id": "kfx1WmfHwgaEkCsA8Szz",
+          "duration": 4.72
+        }
+      ],
+      "source": "Art/Audio/Mio/casual/contact.mp3",
+      "source_sha256": "2fecc468511357f509ca1eac76eb14e27c0790a7e88e5420d3958551b2ab1be6"
+    },
+    {
+      "cast": "casual",
+      "line": "complete",
+      "voice_id": "EVmK7c3z026INySFvQLP",
+      "model": "eleven_v4",
+      "say": "[warmly] 終点です。ご乗車、ありがとうございました。お忘れ物のないよう、ご注意ください。[happy] 運転手さん、おつかれさまでした！",
+      "node_id": "8KVT2q4xqW0eQXVzooOC",
+      "chosen": "xloPPJUFU3ETkm3BjBCe",
+      "takes": [
+        {
+          "generation_id": "xloPPJUFU3ETkm3BjBCe",
+          "session_id": "VhTbqveiC0fltM6HvDhz",
+          "duration": 8.72
+        },
+        {
+          "generation_id": "KHs3hziS4AcQNcxtAF3N",
+          "session_id": "ZWd4xfjLuWLIUXde0swh",
+          "duration": 8.72
+        },
+        {
+          "generation_id": "TTyyLnXnLjdkRNhYijlp",
+          "session_id": "KxXOPlnSRmmRLKSp7aKv",
+          "duration": 8.4
+        },
+        {
+          "generation_id": "dwRIPpUMglPK0xrFr6jB",
+          "session_id": "kouQmeRtRBy9agFAwygv",
+          "duration": 8.48
+        }
+      ],
+      "source": "Art/Audio/Mio/casual/complete.mp3",
+      "source_sha256": "023d1791e2f577e40a45f32758fb97b356d0867cfe5ba5d7b75867574c54a3bc"
+    },
+    {
+      "cast": "bright",
+      "line": "H1.welcome",
+      "voice_id": "6awt6FKyZGV0HyQEwisX",
+      "model": "eleven_v4",
+      "say": "[warmly] 本日もご乗車、ありがとうございます。このバスは、エイチ・ワン系統、ジョーダン行きです。",
+      "node_id": "X9HMXSs1ArJ7HKIiuCII",
+      "chosen": "kV4kqdNuab7GpG6KVDua",
+      "takes": [
+        {
+          "generation_id": "kV4kqdNuab7GpG6KVDua",
+          "session_id": "DGIxuH8JmsdoYtRnTT7p",
+          "duration": 7.2
+        },
+        {
+          "generation_id": "xlRmjbsc1eBfdh36FlMh",
+          "session_id": "NpGjmNEsgnFRffPymp2b",
+          "duration": 7.28
+        },
+        {
+          "generation_id": "TdA4gdfDSaR68t6ThzQR",
+          "session_id": "Z8R4i8XcgJSgDx4Ljj77",
+          "duration": 7.04
+        },
+        {
+          "generation_id": "M0BG3GzauKdNIZzdkeFp",
+          "session_id": "59iiUk18gqYCdIvvghtJ",
+          "duration": 7.68
+        }
+      ],
+      "source": "Art/Audio/Mio/bright/H1.welcome.mp3",
+      "source_sha256": "66b6bddc47f41fe516c1540dae2409d658ef5d9b0fc8802fe20e8e7703421bb3"
+    },
+    {
+      "cast": "bright",
+      "line": "H1.next.kowloon-park",
+      "voice_id": "6awt6FKyZGV0HyQEwisX",
+      "model": "eleven_v4",
+      "say": "次は、カオルーン・パークです。",
+      "node_id": "2z4mzOwsKLXOosv73lNf",
+      "chosen": "tJCZAOxNitajMtddVir1",
+      "takes": [
+        {
+          "generation_id": "tJCZAOxNitajMtddVir1",
+          "session_id": "cZNeao6i0QOEDR5vpZb3",
+          "duration": 2.48
+        },
+        {
+          "generation_id": "Ktp8CnsvmduJ39jDAy2Q",
+          "session_id": "0mEyrFASUYxKYSEclNaT",
+          "duration": 2.32
+        },
+        {
+          "generation_id": "lHTM5ebxx5Xl3jkCelVm",
+          "session_id": "suMqTdCQTynUXu1Iuj8h",
+          "duration": 2.48
+        },
+        {
+          "generation_id": "v85OdaVfGY0sEjgbPxeV",
+          "session_id": "7COB8uS7fJZnOmPkfcUr",
+          "duration": 2.32
+        }
+      ],
+      "source": "Art/Audio/Mio/bright/H1.next.kowloon-park.mp3",
+      "source_sha256": "e962f39e2641686d65514e0756547ce9cddb94619ae273b15ccb1f82f4161aa0"
+    },
+    {
+      "cast": "bright",
+      "line": "contact",
+      "voice_id": "6awt6FKyZGV0HyQEwisX",
+      "model": "eleven_v4",
+      "say": "[gasps] きゃっ！ [nervous] …安全運転で、お願いしますね。",
+      "node_id": "aOg7lM522wyNvRThm5VE",
+      "chosen": "H8PfZ1LW1IpkMGjU0XeM",
+      "takes": [
+        {
+          "generation_id": "QBAWNdE6mPstkZ3wx4us",
+          "session_id": "eE17sQhyPof8oYj7QFeh",
+          "duration": 4.08
+        },
+        {
+          "generation_id": "H8PfZ1LW1IpkMGjU0XeM",
+          "session_id": "TQh42lAVKiaQv14y5GWG",
+          "duration": 3.92
+        },
+        {
+          "generation_id": "buXJ96zxuEmeXmSNCJu0",
+          "session_id": "MrG83RhHP9jxmORPUuZY",
+          "duration": 3.92
+        },
+        {
+          "generation_id": "P02Ptt7bxHT346kQ9fjK",
+          "session_id": "n8YXdO3jtFkGpe9LFrY2",
+          "duration": 3.68
+        }
+      ],
+      "source": "Art/Audio/Mio/bright/contact.mp3",
+      "source_sha256": "c09abc60c826edae98bedb8943f21d8d5a98a3b2c00360b2c2cf20c5b20a2599"
+    },
+    {
+      "cast": "bright",
+      "line": "complete",
+      "voice_id": "6awt6FKyZGV0HyQEwisX",
+      "model": "eleven_v4",
+      "say": "[warmly] 終点です。ご乗車、ありがとうございました。お忘れ物のないよう、ご注意ください。[happy] 運転手さん、おつかれさまでした！",
+      "node_id": "MixL5qfEgF7w3RU97kpH",
+      "chosen": "wTxGjssFTOGyXHtdx8aE",
+      "takes": [
+        {
+          "generation_id": "Asr6ULZlUQLYdDG8h3kt",
+          "session_id": "2eC7WfsWiVDxH18V67I0",
+          "duration": 10.64
+        },
+        {
+          "generation_id": "wTxGjssFTOGyXHtdx8aE",
+          "session_id": "zR6agrmYDwqyr5km5oZf",
+          "duration": 11.04
+        },
+        {
+          "generation_id": "AqF8whjMVIIgCPS4Wxpz",
+          "session_id": "qfDUAyKzVA7yf9RVF7c2",
+          "duration": 11.2
+        },
+        {
+          "generation_id": "bZyybzgaRnX03hy8j3Cl",
+          "session_id": "J091obCqRI38AOf3SKTS",
+          "duration": 10.8
+        }
+      ],
+      "source": "Art/Audio/Mio/bright/complete.mp3",
+      "source_sha256": "71f3f65811839888bab660d7badf806022f2f27af194d2fc64b1ca30b923b389"
+    }
+  ]
+}
