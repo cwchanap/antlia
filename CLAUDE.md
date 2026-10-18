@@ -29,7 +29,7 @@ Godot user args (all defined in `Main._Ready`):
 
 There is no unit-test framework. `RunChecks` in `Scripts/Main.cs` **is** the test suite: it drives the real `BusController` through the real physics world and throws on failure. Add new checks there (or in the matching `Main.*.cs` partial) rather than introducing a test project. Checks print `ANTILA_*`-prefixed markers; `ANTILA_SELF_TEST_FAILED` accompanies exit code 1.
 
-`python3 Tools/generate_audio.py --check-review` validates the recorded audio mix outside the engine.
+`python3 Tools/generate_audio.py --check-review` validates the recorded audio mix outside the engine. `python3 Tools/generate_voice.py --check` validates Mio's script, voice manifest and game clips.
 
 ## Architecture
 
@@ -38,7 +38,7 @@ There is no unit-test framework. `RunChecks` in `Scripts/Main.cs` **is** the tes
 ```
 RoadMap → PrepareParkEntrances → BuildEnvironment → BuildGovernmentBuildings → BuildStreet
 → BuildNeighborhoods → BuildStops → BuildTrafficLights → BuildRoads → BuildRoadDetails
-→ BuildFootpaths → FinishStreetMeshes → BusController → Camera → BuildCab → Hud
+→ BuildFootpaths → FinishStreetMeshes → BusController → LoadMio → Camera → BuildCab → Hud
 → route select (or BeginRoute when R reloads the scene)
 ```
 
@@ -49,6 +49,7 @@ Later stages read state accumulated by earlier ones (`_lots`, `_pavementPatches`
 - `Main.cs` — lifecycle, terrain/street/neighborhood construction, camera, service progression, captures, `RunChecks`
 - `Main.Routes.cs` — `ServiceRoute`, `Data/routes.json` loading, kerbside lane fitting, stop construction (shelter or pole), route select/briefing/results flow, `CheckRoutes` and the scripted `DriveRoute` test driver
 - `Main.Signals.cs` — `TrafficSignal`, `SignalAspect`, 48 approaches across 14 junctions
+- `Main.Mio.cs` — Mio, the Japanese onboard guide: `Data/mio.json` loading, the announcement queue on `Bus.Voice`, door/contact triggers and `CheckMio`. Route start, stop service, missed stops, red lights and route end call `MioSay`
 - `Main.RoadDetails.cs`, `Main.Footpaths.cs`, `Main.BuildingReview.cs`, `Main.AudioReview.cs`
 
 Standalone types: `RoadMap` (plain C# class, not a Node), `RoutePath` (a service line: points, lanes, streets, turns, projection), `BusController : CharacterBody3D`, `Hud : Control` (partial; `Hud.Routes.cs` draws route select, briefing, turn banner and results).
@@ -73,6 +74,7 @@ The game ships fully offline with **no Python, Shapely or network dependency at 
 
 - `Tools/import_map.py` (stdlib only) — TD `CENTERLINE.kmz` → `Data/roads.geojson` + `Data/nathan-road.json`
 - `Tools/import_buildings.py` — needs `.venv-geodata` (`python3 -m venv .venv-geodata && .venv-geodata/bin/pip install -r Tools/requirements-geodata.txt`); CSDI footprints → `Data/building-layout.json`
+- `Tools/generate_voice.py` (stdlib + `ffmpeg`) — downloaded ElevenLabs takes in `Art/Audio/Mio/` → `Assets/Audio/Mio/<cast>/<line>.ogg`. Generation itself goes through the ElevenLabs MCP; `record TAKES.jsonl` merges new takes into `Art/Audio/Mio/generation.json`
 - `Tools/model_*.py` / `import_passengers.py` — run **through Blender MCP**, not `python3`. Each creates its own isolated Blender scene, exports only its own objects to `Assets/Models/*.glb`, and restores the user's previous scene. Preserve that isolation in any new modeling script.
 
 `Art/` holds editable `.blend` sources and is `.gdignore`d so Godot does not import them. `Art/Passengers/`, `Art/passengers.blend` and `Assets/Models/passenger_*` are git-excluded: the Renderpeople license permits game use but not asset redistribution.
@@ -82,7 +84,7 @@ Data files carry provenance (source URL, download timestamp, SHA-256, origin). R
 ## Working conventions
 
 - **Every change is verified in-engine and recorded.** `evidence/` holds the run logs and rendered PNGs referenced from `README.md` and `docs/`; `--*-review` flags with `--before` produce before/after pairs. `Art/before-*/` keeps prior asset states for comparison.
-- Each feature area has a companion doc — `docs/ROUTES.md`, `docs/TRAFFIC_LIGHTS.md`, `docs/GOVERNMENT_BUILDINGS.md`, `docs/FOOTPATH_POLISH.md`, `docs/ROAD_POLISH.md`, `docs/AUDIO_ASSETS.md`, `docs/DECORATION_ASSETS.md`, `docs/REALISM_ASSETS.md`, `docs/PASSENGER_ASSETS.md` — covering sources, exact generation prompts, approximations and check commands. Update the matching doc alongside code.
+- Each feature area has a companion doc — `docs/ROUTES.md`, `docs/TRAFFIC_LIGHTS.md`, `docs/GOVERNMENT_BUILDINGS.md`, `docs/FOOTPATH_POLISH.md`, `docs/ROAD_POLISH.md`, `docs/AUDIO_ASSETS.md`, `docs/MIO_VOICE.md`, `docs/DECORATION_ASSETS.md`, `docs/REALISM_ASSETS.md`, `docs/PASSENGER_ASSETS.md` — covering sources, exact generation prompts, approximations and check commands. Update the matching doc alongside code.
 - C# is deliberately dense: compact one-line bodies, expression members, tuple lists as data tables, minimal spacing in the newer partials. `<Nullable>enable</Nullable>` is on; the codebase uses `= null!` for fields initialized in `_Ready`.
 - Numeric constants in checks (231 map points, 1150 m, 437 sections, 26 passengers, 53 roof probes; H2 3,879 m / 8 stops / 60 passengers, H3 3,431 m / 4 stops / 33 passengers) are asserted, not incidental. Changing the data means updating those assertions.
 - The build is expected to be **0 warnings / 0 errors**.

@@ -74,6 +74,7 @@ Follow the route in the **kerbside left lane**. Pull into the green stop marker,
 - Forty-eight traffic-light approaches at fourteen junctions, with Blender-modeled poles, lit lenses, stop lines, coordinated phases and taxi stopping.
 - A chase camera that pulls forward at physical walls, plus map controls that keep driving, doors, gear and traffic paused.
 - Sequential boarding, 26 passengers, a fitted district minimap and full M-key overview, pause/restart and completion summary.
+- Mio, a Japanese onboard guide voiced with ElevenLabs. She welcomes passengers, announces every next stop and the doors, reacts to missed stops, red lights and contacts, and signs off at the end, with English captions. Her 25 lines are kept as Japanese data for a future Japanese UI; see [Mio's voice](docs/MIO_VOICE.md).
 - An original imagegen poster on the shelters; nine ElevenLabs-generated engine, road, city, door, brake, horn, boarding and contact clips, plus an original instrumental background track, with driving-dependent mixing and a V-key mute control.
 - Textured banyan trees with branching trunks, roots and leaf cutouts, park lawns, planters, benches and orange litter bins.
 - Four detailed scanned passenger groups at each stop, including a parent carrying a child; queues disappear when boarding completes.
@@ -116,6 +117,8 @@ Google Maps imagery, tiles and 3D meshes are not included. The government extrac
 **Passengers:** Four additional GLBs use free licensed scans from [Renderpeople](https://renderpeople.com/free-3d-people/), prepared through Blender MCP with `Tools/import_passengers.py`. The editable lineup is `Art/passengers.blend`. See `docs/PASSENGER_ASSETS.md` for source downloads, scale conversion, verification and licensing. These passenger assets are excluded from Git because their license permits game use but restricts distribution of the individual models; obtain them from the documented supplier downloads when preparing a fresh source checkout.
 
 **Game audio:** An original instrumental track and nine SFX/ambience clips generated through ElevenLabs MCP replace the synthesized engine/horn and add event-driven SFX and city ambience. Original downloads and exact prompts are retained in `Art/Audio/`; `Tools/generate_audio.py` processes them locally without API calls. See `docs/AUDIO_ASSETS.md` and `evidence/game-audio-review.mp3` for mappings and a captured game mix. The 88-second stereo music loop plays quietly beneath the driving sounds, lowers while boarding, and follows pause, mute, reset and service-completion behavior.
+
+**Mio's voice:** 25 Japanese lines generated with ElevenLabs text to speech (`eleven_v4`, voice library voice "Mio - Warm Japanese Narrator"), plus four-line auditions in two other voices. The script, with Japanese text, spoken prompts and English captions, is `Data/mio.json`; downloads, take IDs and hashes are in `Art/Audio/Mio/`. `Tools/generate_voice.py` levels and encodes them locally without API calls. See `docs/MIO_VOICE.md`.
 
 **Generated poster:** `Assets/Textures/kowloon-poster.png`, made with the built-in imagegen tool. The exact prompt is in `docs/IMAGE_PROMPT.md`. It is decorative artwork, not a geographic reference.
 

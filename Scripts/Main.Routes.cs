@@ -279,7 +279,7 @@ public partial class Main
 
     private void PreviewRoute(int index)
     {
-        RouteIndex=index;Route=Routes[index];StopIndex=0;Passengers=0;Boarding=0;_arrivedAt=null;SetBlinds();
+        RouteIndex=index;Route=Routes[index];StopIndex=0;Passengers=0;Boarding=0;_arrivedAt=null;MioReset();SetBlinds();
         foreach(var route in Routes)foreach(var group in route.Waiting)group.Visible=route==Route;
         Bus.ResetAt(Route.Path.At(Route.Start,Route.LaneAt(Route.Start)),Route.Path.Heading(Route.Start));
         Bus.SetPaused(true);
@@ -295,6 +295,7 @@ public partial class Main
         _tripContacts=Bus.Collisions;_tripRedLights=RedLightCrossings;_tripDistance=Bus.DistanceDriven;
         SetCab(BriefingCab);
         Notice=$"Welcome aboard {Route.Number}. Pull into {Route.Stops[0].Name}, stop and press E.";NoticeTime=9;
+        MioSay($"{Route.Number}.welcome");MioSay(MioNextStop(Route,0));
     }
 
     private void FinishRoute(bool abandoned)
@@ -302,6 +303,8 @@ public partial class Main
         Complete=true;Abandoned=abandoned;Paused=false;MapOpen=false;
         Bus.SetPhysicsProcess(false);
         Bus.StopAudio();
+        // Mio signs off over the results, even when Tab ended the trip from the pause screen.
+        _mioQueue.Clear();Bus.Voice.StreamPaused=false;MioSay(abandoned?"abandoned":"complete");
         ShowNotice(abandoned?$"{Route.Number} ended before the terminus.":$"Service complete. Thank you for driving {Route.Number}.");
     }
 
@@ -364,6 +367,7 @@ public partial class Main
         Check(Mathf.Abs(Routes[1].Path.Length-3879)<1 && Mathf.Abs(Routes[2].Path.Length-3431)<1,"H2 and H3 route lengths");
         Check(Routes[1].Stops.Count==8 && Routes[1].TotalPassengers==60 && Routes[1].Sites.Count(s=>s.Pole)==2 && Routes[2].Stops.Count==4 && Routes[2].TotalPassengers==33 && Routes[2].Sites.All(s=>!s.Pole),"H2 and H3 stop tables");
         Check(Routes[1].Path.Turns.Count==3 && Routes[2].Path.Turns.Count==3,"junction turn prompts");
+        CheckMio();
         // Expanded-map stop labels must stay inside the map, above its footer, clear of district names and of each other.
         foreach(var route in Routes)
         {
@@ -391,20 +395,27 @@ public partial class Main
         Press("menu_down");Press("confirm");Press("confirm");
         Check(!Menu && !Briefing && Route==Routes[1] && Bus.IsPhysicsProcessing() && StopIndex==0 && StopLog.Count==0,"enter on the briefing must start H2");
         Check(Bus.Position.DistanceTo(Routes[1].Path.At(Routes[1].Start,Routes[1].LaneAt(Routes[1].Start)))<.5f,"H2 must start at its first lane position");
+        string Said()=>string.Join(", ",MioLog);
+        Check(MioLog.SequenceEqual(new[]{"H2.welcome","H2.next.saigon-street"}) && Bus.Voice.Playing && MioCaption==MioLines["H2.welcome"].En,"Mio must welcome H2 aboard, then name the first stop: "+Said());
+        Press("pause");Check(Paused && !Bus.Voice.Playing,"pause must pause Mio");
+        Press("pause");Check(!Paused && Bus.Voice.Playing && MioLog.Count==2,"Mio must pick up where she left off after a pause");
         var first=Route.Stops[0];
         Bus.ResetAt(Route.Path.At(first.Distance+35,Route.LaneAt(first.Distance+35)),Route.Path.Heading(first.Distance+35));
         AdvanceService(.1f);
         Check(StopIndex==1 && StopsMissed==1 && StopLog[0].Name==first.Name,"a stop left 30 m behind must count as missed");
+        Check(MioLog.Skip(2).SequenceEqual(new[]{"missed","H2.next.waterloo-road"}),"Mio must notice the missed stop and name the next one: "+Said());
         StopIndex=Route.Stops.Count-1;var terminus=Route.Stops[^1];
         Bus.ResetAt(Route.Path.At(terminus.Distance+20,Route.LaneAt(terminus.Distance+20)),Route.Path.Heading(terminus.Distance+20));
         AdvanceService(.1f);Check(StopIndex==Route.Stops.Count-1 && !Complete,"the terminus is never skipped");
         Press("routes");
         Check(Complete && Abandoned && !Bus.IsPhysicsProcessing() && !AudioClip("music").Playing,"tab must end the route and show its results");
+        Check(MioLog[^1]=="abandoned" && Bus.Voice.Playing && MioCaption==MioLines["abandoned"].En,"Mio must sign off an abandoned trip on the results: "+Said());
         Press("confirm");Check(Menu && !Complete && Route==Routes[1],"enter on the results must return to route select");
+        Check(MioLog.Count==0 && !Bus.Voice.Playing && MioCaption=="","Mio stays quiet on route select");
         // A free drive shows no service on the blinds or the map, whether started from route select or mid-route.
         bool NoService()=>HarbourDrive && _frontBlind!.Text=="NOT IN SERVICE" && _rearBlind!.Text=="" && !Hud.MapShowsService;
         PreviewRoute(2);_UnhandledInput(new InputEventKey {Keycode=Key.T,Pressed=true});
-        Check(!Menu && NoService(),"T on route select must start a free drive without H3 on the blinds or map");
+        Check(!Menu && NoService() && MioLog.Count==0,"T on route select must start a free drive without H3 on the blinds, map or Mio");
         Press("routes");Check(Menu && Route==Routes[2] && _frontBlind!.Text=="H3  WAN CHAI" && _rearBlind!.Text=="H3" && Hud.MapShowsService,$"tab from a free drive must restore H3: {_frontBlind!.Text}");
         BeginRoute(2);Press("kowloon");Check(NoService(),"the in-game K shortcut must clear the service from the blinds and map");
         BeginRoute(2);Check(!Menu && Route==Routes[2] && !Complete && StopLog.Count==0 && _frontBlind!.Text=="H3  WAN CHAI","each route starts fresh");
@@ -420,11 +431,12 @@ public partial class Main
             Check(TripDistance>(route.Stops[^1].Distance-route.Start)*.95f,$"{route.Number} must be physically driven: {TripDistance:0} m");
             Check(StopLog.All(s=>s.Offset<3),$"{route.Number} bay accuracy: "+string.Join(", ",StopLog.Select(s=>$"{s.Offset:0.0}")));
             if(route==Routes[2])Check(minY<-30,"H3 must descend through the harbour tunnel");
-            GD.Print($"ANTILA_ROUTE_DRIVE_OK: {route.Number} {TripDistance:0} m in {Elapsed:0} s; {StopsServed} stops, {Passengers} passengers, bay offsets {string.Join("/",StopLog.Select(s=>$"{s.Offset:0.0}"))}; no contacts or red lights");
+            Check(MioLog.SequenceEqual(MioService(route)),$"{route.Number} announcements out of order: "+Said());
+            GD.Print($"ANTILA_ROUTE_DRIVE_OK: {route.Number} {TripDistance:0} m in {Elapsed:0} s; {StopsServed} stops, {Passengers} passengers, bay offsets {string.Join("/",StopLog.Select(s=>$"{s.Offset:0.0}"))}; {MioLog.Count} announcements by Mio; no contacts or red lights");
         }
         Bus.TestThrottle=Bus.TestBrake=Bus.TestSteer=0;Bus.AutomaticTest=false;Engine.TimeScale=1;
         BeginRoute(0);
-        GD.Print("ANTILA_ROUTE_CHECKS_OK: route select, briefing, missed stop, abandoned trip, results; drove H1, H2 and H3 terminus to terminus");
+        GD.Print("ANTILA_ROUTE_CHECKS_OK: route select, briefing, missed stop, abandoned trip, results, Mio's announcements; drove H1, H2 and H3 terminus to terminus");
     }
 
     // Test driver: pure-pursuit steering on the route lane, bend and stop braking, signals obeyed, doors at every bay.
@@ -460,12 +472,13 @@ public partial class Main
         return minY;
     }
 
-    // Rendered evidence of the playable loop: menu, briefing, staged bays and the tunnel, then results after a driven H1.
+    // Rendered evidence of the playable loop: menu, briefing, staged bays, the tunnel and Mio's captions, then results after a driven H1.
     private async void CaptureRoutes()
     {
         try
         {
             SelfTest=true; // DriveRoute owns service progression; keep _Process from boarding a second time each frame.
+            Bus.Voice.PitchScale=.01f; // Software rendering takes seconds a frame; slowed down, Mio's line is still playing (and captioned) when the frame is saved.
             string folder=ProjectSettings.GlobalizePath("res://evidence/routes");DirAccess.MakeDirRecursiveAbsolute(folder);
             async Task Save(string name)
             {
@@ -476,7 +489,7 @@ public partial class Main
             }
             void Staged(int route,float distance,bool cab)
             {
-                BeginRoute(route);var r=Routes[route];
+                BeginRoute(route);MioReset();var r=Routes[route]; // Staged views show Mio only where a capture asks for a line.
                 Bus.ResetAt(r.Path.At(distance,r.LaneAt(distance)),r.Path.Heading(distance));
                 SetCab(cab);NoticeTime=0;Bus.SetPaused(true);UpdateCamera(1,true);
             }
@@ -489,6 +502,8 @@ public partial class Main
             Staged(1,Routes[1].Stops[6].Distance-32,false);StopIndex=6;await Save("h2-yu-chau-street");
             Staged(2,Routes[2].Stops[1].Distance-30,false);StopIndex=1;await Save("h3-tunnel-interchange");
             Staged(2,1600,true);StopIndex=2;await Save("h3-tube-cab");
+            Staged(1,Routes[1].Stops[0].Distance+15,false);StopIndex=1;MioSay("doors.close");Bus.Voice.StreamPaused=false;await Save("mio-caption");
+            Staged(2,Routes[2].Stops[0].Distance+45,true);StopIndex=1;MioSay("missed");Bus.Voice.StreamPaused=false;await Save("mio-caption-cab");
             Staged(1,Routes[1].Stops[2].Distance-70,false);StopIndex=2;MapOpen=true;Hud.QueueRedraw();await Save("h2-map");MapOpen=false;
             Staged(2,Routes[2].Stops[1].Distance-30,false);StopIndex=1;MapOpen=true;Hud.QueueRedraw();await Save("h3-map");MapOpen=false;
             ShowRouteSelect();StartFreeDrive(0);MapOpen=true;Hud.QueueRedraw();await Save("free-drive-map");MapOpen=false;

@@ -53,6 +53,7 @@ public partial class Main : Node3D
         FinishStreetMeshes();
         Bus = new BusController { Notify = ShowNotice, Moved = CheckSignalCrossing };
         AddChild(Bus);
+        LoadMio();
         Bus.ResetAt(Map.At(22, -7.3f), Map.Heading(22));
         Camera = new Camera3D { Fov = 62, Far = 3200, Near = .7f, Current = true };
         AddChild(Camera);
@@ -644,9 +645,11 @@ public partial class Main : Node3D
     public void AdvanceService(float dt)
     {
         if(Complete)return;
+        UpdateMio();
         var stop=Route.Stops[StopIndex];
         if(IsAtStop() && Bus.DoorsOpen && Bus.Kmh<.5f)
         {
+            if(_arrivedAt==null && StopIndex<Route.Stops.Count-1)MioSay("doors.open"); // At the terminus Mio waits for the end of service.
             _arrivedAt??=Elapsed; // The results' ARRIVED column is when service first began at the bay, not when boarding finished.
             Boarding+=dt;
             if(Boarding>=4)
@@ -659,7 +662,7 @@ public partial class Main : Node3D
                 StopIndex++;
                 Boarding=0;
                 if(StopIndex==Route.Stops.Count)FinishRoute(false);
-                else ShowNotice($"Passengers aboard. Close doors with E, then continue to {Route.Stops[StopIndex].Name}.");
+                else{ShowNotice($"Passengers aboard. Close doors with E, then continue to {Route.Stops[StopIndex].Name}.");_mioDeparting=true;}
                 Bus.Sound("stop-bell");
             }
             return;
@@ -674,6 +677,7 @@ public partial class Main : Node3D
                 StopLog.Add((stop.Name,Elapsed,0,0,true));_arrivedAt=null;
                 StopIndex++;
                 ShowNotice($"{stop.Name} missed. Next stop: {Route.Stops[StopIndex].Name}.");
+                MioSay("missed");MioSay(MioNextStop(Route,StopIndex));
             }
         }
     }

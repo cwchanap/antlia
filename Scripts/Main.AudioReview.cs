@@ -11,7 +11,7 @@ public partial class Main
     {
         void Check(bool ok,string message) { if(!ok)throw new Exception("audio: "+message); }
         var players=Bus.GetChildren().OfType<AudioStreamPlayer>().ToArray();
-        Check(players.Length==10 && players.All(p=>p.Stream.GetLength()>.4),"all generated clips must import");
+        Check(players.Length==11 && players.Where(p=>p!=Bus.Voice).All(p=>p.Stream.GetLength()>.4),"all generated clips must import");
         var music=AudioClip("music");
         Check(music.Playing && music.Stream is AudioStreamOggVorbis {Loop:true} && music.Stream.GetLength()>85,
             "full music track must start and loop independently");
@@ -41,7 +41,7 @@ public partial class Main
         Bus.ResetAt(Map.At(22,-7.3f),Map.Heading(22));
         Check(!AudioClip("horn").Playing && !AudioClip("door-close").Playing,"reset must stop stale one-shots");
         Check(music.Playing,"reset must preserve background music");
-        GD.Print("ANTILA_AUDIO_CHECKS_OK: 9 SFX and 1 music track, full loops, overlapping effects, map pause/resume, mute and reset cleanup");
+        GD.Print("ANTILA_AUDIO_CHECKS_OK: 9 SFX, 1 music track and Mio's voice channel, full loops, overlapping effects, map pause/resume, mute and reset cleanup");
     }
 
     private async void ReviewAudio()

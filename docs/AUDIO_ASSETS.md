@@ -13,6 +13,7 @@ Nine SFX/ambience clips were generated using the connected ElevenLabs MCP `text_
 | horn | H key, separate from engine/doors. |
 | stop-bell | Boarding confirmation at each served stop, including completion. |
 | contact | The existing collision feedback event and cooldown. |
+| Mio (voice) | Japanese announcements on routes; music lowers by 6 dB while she speaks. Generated with ElevenLabs text to speech; see [MIO_VOICE.md](MIO_VOICE.md). |
 
 The map and Pause suspend all active audio. Closing them resumes playback. V toggles the Master bus and the HUD shows Unmute when muted. Restart removes the old scene/audio; resets preserve music while discarding stale one-shots and closing the door visuals. Completing the service stops the continuous layers and plays the boarding chime.
 

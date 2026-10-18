@@ -195,6 +195,7 @@ public partial class Main
             {
                 RedLightCrossings++;
                 ShowNotice("Red light crossed — stop behind the white line next time");
+                if(!HarbourDrive && !Menu && !Complete)MioSay("red-light",true);
             }
     }
 
