@@ -94,6 +94,7 @@ public partial class Main
         bool Island(Vector3 p,float margin)=>Geometry2D.IsPointInPolygon(new(p.X,p.Z),IslandLand) &&
             !IslandCoastline.Any(line=>Enumerable.Range(1,line.Length-1).Any(i=>Geometry2D.GetClosestPointToSegment(new(p.X,p.Z),line[i-1],line[i]).DistanceTo(new(p.X,p.Z))<margin+2));
         bool Clear(Vector3 p,float margin)=>((p.Z<0?KowloonNorthBounds.Grow(-margin-1).HasPoint(new(p.X,p.Z)):Island(p,margin)) || West(p,margin)) &&
+            ClearOfServiceStops(p,margin) &&
             !_lots.Any(l=>l.Bounds.Grow(margin).HasPoint(new(p.X,p.Z))) &&
             !_islandDetails.Any(d=>p.DistanceTo(d.Position)<d.Radius+margin+1) &&
             !HarbourRoads.Any(r=>Enumerable.Range(1,r.Points.Count-1).Any(j=>

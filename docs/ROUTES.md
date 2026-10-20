@@ -14,6 +14,8 @@ All three services are fictional. Route numbers, stop names, stop placements and
 
 `Data/routes.json` holds the table. A leg is either `{"nathan": lane}` (the H1 corridor and its stops) or `{"drive": n, "to": metres}` (a government-derived drive from `Data/cross-harbour.json`, optionally cut short). Stop distances are metres along the joined route.
 
+The table and lane fitting load before decorative scenery. A reserved corridor around each stop keeps shelters, waiting passengers and stop furniture clear of generated park/street objects; actual stops are still constructed after the buildings and scenery. This prevents scenery regeneration from changing the shelter/pole layout. `CheckRoutes` verifies every decorative object's clearance as well as the original stop table. The 19 October Mong Kok check caught a generated detail occupying Wong Chuk Street's shelter area; [the scenery follow-up](MONG_KOK_OPEN_SPACES.md) records the fix and driving evidence. Routes, stop distances and passenger totals remain unchanged.
+
 | H2 stop | Chinese | Distance | Furniture | Passengers |
 | --- | --- | --- | --- | --- |
 | Saigon Street | 西貢街 | 155 m | shelter | 6 |

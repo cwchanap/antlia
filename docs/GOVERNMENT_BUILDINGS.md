@@ -1,6 +1,6 @@
 # Government building layout — 13 September 2026
 
-The [15 October coastal expansion](WEST_COAST_EXPANSION.md) adds a seventh Kowloon source extract and a Ting Kau / Sham Tseng building GLB. Current scene totals are 31,380 parts and 2,456 render/collision chunk pairs. Earlier counts below describe their recorded snapshots.
+The [15 October coastal expansion](WEST_COAST_EXPANSION.md) adds a seventh Kowloon source extract and a Ting Kau / Sham Tseng building GLB. The 18 October Mong Kok correction brings current scene totals to 31,404 parts and 2,456 render/collision chunk pairs. Earlier counts below describe their recorded snapshots.
 
 The 8 October 2026 [government-map corrections](GOVERNMENT_MAP_FIXES.md) supersede the earlier island boundary, flattened elevated-road geometry and exact-metre-scale wording below. Earlier verification records apply to their original snapshots.
 
@@ -167,3 +167,11 @@ The sixth Kowloon extract contains 7,313 CSDI records and produces 4,996 parts o
 ## Ting Kau / Sham Tseng — 15 October 2026
 
 The seventh Kowloon extract contains 3,811 CSDI records and produces 2,134 parts outside earlier regional rectangles. Shared heights are reconciled across all seven extracts. Every earlier building array is unchanged; the Tsuen Wan paving geometry is also unchanged despite serialization differences. Blender MCP exports 195 matching render/collision chunks using the existing generated facade/shopfront atlases. The download regression covers seven modes. See [source provenance, regeneration and verification](WEST_COAST_EXPANSION.md).
+
+## Mong Kok clipped components — 18 October 2026
+
+The final simplify/intersect step could return a GeometryCollection containing a valid polygon plus a point, or a MultiPolygon containing a valid polygon and a tiny fragment. Previously the importer discarded the entire result. It now visits every polygon component through the existing helper, retaining the existing 4 m² minimum and original clipping boundary.
+
+Regenerated northern and western layouts preserve every previously shipped building part byte-for-byte and recover **24 parts / 13,129.28 m²** of footprint coverage. Northern Kowloon now has 5,112 parts (+10); western Kowloon has 6,096 (+14). The four reported IDs include Man Kee Mansion's podium (228041), King's Court (263953), Kimberd Court (226983) and MTR Mong Kok Station (82955). All six regional GLBs and both editable Blender sources were rebuilt through Blender MCP. The 231 northern and 413 western spatial chunks remain unchanged. Raw government building caches, road geometry, heights of existing parts and map boundaries are unchanged. Other regions were not regenerated in this scoped repair; the shared fix applies to future regeneration.
+
+`Tools/check_buildings.py` reproduces the missing component before the fix and passes after it. The in-engine check also probes five roof locations across the four reported IDs. Before/after assets and evidence are retained locally in `Art/before-mong-kok-fix-2026-10-18/` and `evidence/mong-kok-fix-2026-10-18/`. [Mong Kok open-space work and final verification](MONG_KOK_OPEN_SPACES.md) describes the companion scenery changes.

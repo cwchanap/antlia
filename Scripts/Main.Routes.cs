@@ -178,12 +178,12 @@ public partial class Main
 
     private void BuildStops()
     {
-        LoadRoutes();
         foreach(var route in Routes)
             for(int i=0;i<route.Stops.Count;i++)
             {
                 var stop=route.Stops[i];var path=route.Path;float d=stop.Distance,lane=stop.Lane;
                 bool shelterFits=route.Nathan || ShelterFits(path,d,lane),pole=!shelterFits;
+                if(OS.GetCmdlineUserArgs().Contains("--stop-survey"))GD.Print($"ANTILA_STOP_SITE {route.Number} {stop.Name}: {path.At(d,lane)}; shelter={shelterFits}; pole={PoleFits(path,d,lane)}; shelter obstruction={SiteFailure(path.At(d,lane-4.9f),1.2f)}");
                 route.Sites.Add((pole,shelterFits || PoleFits(path,d,lane)));
                 if(pole)
                 {
@@ -237,6 +237,19 @@ public partial class Main
 
     private bool ShelterFits(RoutePath path,float d,float lane)=>StopSiteClear(path.At(d,lane-4.9f),1.2f) && Enumerable.Range(-1,3).All(k=>StopSiteClear(path.At(d+k*3-1,lane-3.8f),.4f));
     private bool PoleFits(RoutePath path,float d,float lane)=>StopSiteClear(path.At(d+4,lane-2.6f),.3f) && Enumerable.Range(-1,3).All(k=>StopSiteClear(path.At(d+k*3-1,lane-3.3f),.4f));
+
+    // Keep shelters, queues and their bench/bin space available before decorative scenery is built.
+    private bool ClearOfServiceStops(Vector3 position,float radius)
+    {
+        var p=new Vector2(position.X,position.Z);
+        foreach(var route in Routes)
+            foreach(var stop in route.Stops)
+            {
+                var a=route.Path.At(stop.Distance-9,stop.Lane-4.7f);var b=route.Path.At(stop.Distance+17,stop.Lane-4.7f);
+                if(p.DistanceTo(Geometry2D.GetClosestPointToSegment(p,new(a.X,a.Z),new(b.X,b.Z)))<radius+2.2f)return false;
+            }
+        return true;
+    }
 
     // Footprints, not their bounding boxes: Mong Kok blocks sit at an angle to the axes.
     private bool LotClear(Vector2 p,float margin)=>!_lots.Any(l=>l.Bounds.Grow(margin).HasPoint(p) &&
@@ -362,8 +375,9 @@ public partial class Main
         Check(h1.Nathan && h1.Path.Points.Count==231 && Mathf.Abs(h1.Path.Length-Map.Length)<.5f && h1.Stops.Count==3 && h1.TotalPassengers==26,$"H1 keeps the Nathan Road corridor and its three stops: {h1.Path.Points.Count} points, {h1.Path.Length} m");
         for(float d=0;d<=Map.Length;d+=37)Check(h1.Path.At(d,-7.3f).DistanceTo(Map.At(d,-7.3f))<.05f && Mathf.Abs(h1.LaneAt(d)+7.3f)<.01f,$"H1 path leaves Nathan Road at {d} m");
         Check(Mathf.Abs(Routes[1].Path.Length-3879)<1 && Mathf.Abs(Routes[2].Path.Length-3431)<1,"H2 and H3 route lengths");
-        Check(Routes[1].Stops.Count==8 && Routes[1].TotalPassengers==60 && Routes[1].Sites.Count(s=>s.Pole)==2 && Routes[2].Stops.Count==4 && Routes[2].TotalPassengers==33 && Routes[2].Sites.All(s=>!s.Pole),"H2 and H3 stop tables");
+        Check(Routes[1].Stops.Count==8 && Routes[1].TotalPassengers==60 && Routes[1].Sites.Count(s=>s.Pole)==2 && Routes[2].Stops.Count==4 && Routes[2].TotalPassengers==33 && Routes[2].Sites.All(s=>!s.Pole),"H2 and H3 stop tables: "+string.Join("; ",Routes.Skip(1).Select(r=>$"{r.Number} {string.Join(", ",r.Stops.Select((s,i)=>$"{s.Name}={(r.Sites[i].Pole?"pole":"shelter")}/{r.Sites[i].Clear}"))}")));
         Check(Routes[1].Path.Turns.Count==3 && Routes[2].Path.Turns.Count==3,"junction turn prompts");
+        Check(_islandDetails.All(d=>ClearOfServiceStops(d.Position,d.Radius)),"decorative scenery must leave service stop furniture and queues clear");
         // Expanded-map stop labels must stay inside the map, above its footer, clear of district names and of each other.
         foreach(var route in Routes)
         {

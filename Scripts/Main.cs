@@ -42,6 +42,8 @@ public partial class Main : Node3D
         PrepareParkEntrances();
         BuildEnvironment();
         BuildGovernmentBuildings();
+        LoadRoutes(); // Reserve service stop space before placing decorative street furniture.
+        BuildMongKokOpenSpaces();
         BuildHarbourScenery();
         BuildStreet();
         BuildNeighborhoods();
@@ -798,6 +800,7 @@ public partial class Main : Node3D
             CheckRoadMarkings();
             if(OS.GetCmdlineUserArgs().Contains("--road-check")) { QuitGame(); return; }
             await CheckBuildings();
+            CheckMongKokOpenSpaces();
             CheckAssetDetails();
             await CheckFootpaths();
             if(OS.GetCmdlineUserArgs().Contains("--footpath-check")) { QuitGame(); return; }

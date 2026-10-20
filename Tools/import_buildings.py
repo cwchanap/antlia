@@ -211,10 +211,10 @@ def build(island=False, north=False, west=False, northwest=False, kwai_chung=Fal
         style = 1 if height > 75 else 2 if props["BuildingBlockType"] == "Podium" else source_id % 3
         if style == 1 and height <= 75:
             style = 3
-        for poly in polygons(visible):
-            poly = orient(poly.simplify(.08, preserve_topology=True).intersection(visible), sign=1)
-            if poly.geom_type != "Polygon":
-                continue
+        # Clipping can leave a valid polygon plus a zero-area point or tiny fragment.
+        simplified = (poly.simplify(.08, preserve_topology=True).intersection(visible) for poly in polygons(visible))
+        for poly in (part for geometry in simplified for part in polygons(geometry)):
+            poly = orient(poly, sign=1)
             triangles = list(constrained_delaunay_triangles(poly).geoms)
             assert abs(sum(t.area for t in triangles)-poly.area) < .01
             point = poly.representative_point()

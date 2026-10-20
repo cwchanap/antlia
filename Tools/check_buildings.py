@@ -116,9 +116,16 @@ def check():
                         seen[uid].add(layout)
                         assert building['height'] == cases[uid][2], (uid,layout,building['height'],cases[uid][2])
             assert all(len(regions) >= 2 for regions in seen.values()), 'Refresh checks must cross region boundaries'
+            # Real clipped podiums used to disappear when intersection returned a point or tiny second polygon.
+            north=json.loads((trial/'Data/kowloon-north-layout.json').read_text())['buildings']
+            for source_id,minimum_area in ((228041,1377),(263953,159),(226983,71),(82955,54)):
+                parts=[importer.Polygon(b['rings'][0],b['rings'][1:]) for b in north if b['id']==source_id]
+                assert sum(p.area for p in parts)>=minimum_area, f'Clipped building {source_id} lost its valid polygon'
+                assert all(p.is_valid and p.area>=4 for p in parts), f'Invalid clipped building {source_id}'
         finally:
             importer.ROOT = root
     print('ANTILA_BUILDING_REFRESH_OK: newest TopHeight and missing-height Storeys fallback agree across rebuilt regions')
+    print('ANTILA_BUILDING_COMPONENTS_OK: four real Mong Kok clipped parts retain their valid area')
 
 
 if __name__ == '__main__':

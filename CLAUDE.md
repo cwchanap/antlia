@@ -36,7 +36,8 @@ There is no unit-test framework. `RunChecks` in `Scripts/Main.cs` **is** the tes
 **The scene is built entirely in code.** `Main.tscn` is a bare `Node3D` with one script attached; there are no other `.tscn` files, no editor-authored nodes, and no `[Export]` inspector wiring. `Main._Ready()` constructs the whole world in a fixed, order-dependent sequence:
 
 ```
-RoadMap → PrepareParkEntrances → BuildEnvironment → BuildGovernmentBuildings → BuildStreet
+RoadMap → PrepareParkEntrances → BuildEnvironment → BuildGovernmentBuildings → LoadRoutes
+→ BuildMongKokOpenSpaces → BuildHarbourScenery → BuildStreet
 → BuildNeighborhoods → BuildStops → BuildTrafficLights → BuildRoads → BuildRoadDetails
 → BuildFootpaths → FinishStreetMeshes → BusController → Camera → BuildCab → Hud
 → route select (or BeginRoute when R reloads the scene)
@@ -50,10 +51,11 @@ Later stages read state accumulated by earlier ones (`_lots`, `_pavementPatches`
 - `Main.Routes.cs` — `ServiceRoute`, `Data/routes.json` loading, kerbside lane fitting, stop construction (shelter or pole), route select/briefing/results flow, `CheckRoutes` and the scripted `DriveRoute` test driver
 - `Main.Signals.cs` — `TrafficSignal`, `SignalAspect`, 48 approaches across 14 junctions
 - `Main.RoadDetails.cs`, `Main.Footpaths.cs`, `Main.BuildingReview.cs`, `Main.AudioReview.cs`
+- `Main.OpenSpaces.cs` — government-bounded Mong Kok recreation surfaces, furniture and checks
 
 Standalone types: `RoadMap` (plain C# class, not a Node), `RoutePath` (a service line: points, lanes, streets, turns, projection), `BusController : CharacterBody3D`, `Hud : Control` (partial; `Hud.Routes.cs` draws route select, briefing, turn banner and results).
 
-`BuildStops` calls `LoadRoutes`, which needs the harbour roads from `BuildEnvironment` and the lots and harbour scenery built before it. H1 reuses RoadMap's 5 m stations exactly; H2/H3 run on a smoothed reference line with lanes fitted to the carriageway widths (see `docs/ROUTES.md`). `Route` is the active service; HUD guidance, stop logic and the map read it rather than `Map`.
+`LoadRoutes` runs after the harbour roads and buildings are ready, before decorative scenery. `ClearOfServiceStops` reserves shelter, queue and furniture space during decoration placement. `BuildStops` later fits and constructs the actual stops against the finished lots and scenery; do not load the route table a second time there. H1 reuses RoadMap's 5 m stations exactly; H2/H3 run on a smoothed reference line with lanes fitted to the carriageway widths (see `docs/ROUTES.md`). `Route` is the active service; HUD guidance, stop logic and the map read it rather than `Map`.
 
 **`RoadMap`** is the geometric authority. It parses `Data/nathan-road.json` at construction, joins same-name segments into polylines, and exposes the queries the rest of the build depends on: `At(distance, lane)`, `Forward`/`Heading`, `Project(position)`, `CanPaintLane`, `ClearOfRoads`, `LotClear`, `NearSideRoad`. It also generates the three-channel terrain surface mask (asphalt / paving / park) at 3 px per metre, consumed by `Assets/Materials/terrain.gdshader`. One blended terrain surface replaces stacked road meshes — do not add coplanar road geometry.
 
@@ -73,6 +75,7 @@ The game ships fully offline with **no Python, Shapely or network dependency at 
 
 - `Tools/import_map.py` (stdlib only) — TD `CENTERLINE.kmz` → `Data/roads.geojson` + `Data/nathan-road.json`
 - `Tools/import_buildings.py` — needs `.venv-geodata` (`python3 -m venv .venv-geodata && .venv-geodata/bin/pip install -r Tools/requirements-geodata.txt`); CSDI footprints → `Data/building-layout.json`
+- `Tools/import_open_spaces.py` — same geodata environment; selected iB1000 sites/sports → `Data/mong-kok-open-spaces.json`; source boundaries, authored planting/fittings
 - `Tools/model_*.py` / `import_passengers.py` — run **through Blender MCP**, not `python3`. Each creates its own isolated Blender scene, exports only its own objects to `Assets/Models/*.glb`, and restores the user's previous scene. Preserve that isolation in any new modeling script.
 
 `Art/` holds editable `.blend` sources and is `.gdignore`d so Godot does not import them. `Art/Passengers/`, `Art/passengers.blend` and `Assets/Models/passenger_*` are git-excluded: the Renderpeople license permits game use but not asset redistribution.

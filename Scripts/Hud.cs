@@ -226,7 +226,7 @@ public partial class Hud : Control
             Panel(420,757,565,46);
             Text("ONCOMING LANE  —  Drive on the left",459,786,17,new Color("f2b16c"));
         }
-        Text("Roads / buildings / coast © HKSAR Govt · TD / LandsD · 15 Oct 2026",31,889,9,_muted);
+        Text("Maps / buildings / parks © HKSAR Govt · TD / LandsD · 19 Oct 2026",31,889,9,_muted);
         if(Game.Complete)DrawResults();
         else if(Game.Paused)
         {

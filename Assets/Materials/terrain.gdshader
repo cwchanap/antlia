@@ -4,6 +4,9 @@ uniform sampler2D surface_mask : filter_linear_mipmap, repeat_disable;
 uniform sampler2D harbour_mask : filter_linear_mipmap, repeat_disable;
 uniform vec2 harbour_origin;
 uniform vec2 harbour_size;
+uniform sampler2D recreation_mask : filter_linear_mipmap, repeat_disable;
+uniform vec2 recreation_origin;
+uniform vec2 recreation_size;
 uniform sampler2D asphalt : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D paving : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D grass : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
@@ -32,6 +35,13 @@ void fragment() {
     vec2 surface_uv = world_xz / 2.0;
     vec3 turf = texture(grass, surface_uv).rgb;
     vec3 color = mix(mix(ground_color,turf,0.38), turf, masks.b);
+    vec2 ruv = (world_xz-recreation_origin)/recreation_size;
+    vec3 recreation = texture(recreation_mask,clamp(ruv,vec2(0.0),vec2(1.0))).rgb;
+    if (any(lessThan(ruv,vec2(0.0))) || any(greaterThan(ruv,vec2(1.0)))) recreation=vec3(0.0);
+    vec3 grain = texture(asphalt,surface_uv).rgb;
+    color = mix(color,turf*vec3(0.75,1.05,0.7),recreation.r);
+    color = mix(color,mix(vec3(0.12,0.32,0.27),grain,0.22),recreation.g);
+    color = mix(color,mix(vec3(0.42,0.16,0.10),grain,0.22),recreation.b);
     color = mix(color, texture(paving, surface_uv).rgb, masks.g);
     // Follow the union of all roads: edging cannot run across an adjoining carriageway.
     vec3 a = coverage(world_xz + vec2(0.45, 0.0));

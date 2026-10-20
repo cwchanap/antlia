@@ -237,7 +237,8 @@ public sealed class RoadMap
     }
 
     public Image CreateSurfaceMask(Vector2[] park,IEnumerable<(Vector3 A,Vector3 B)> paths,IEnumerable<Vector2[]> lots,
-        Rect2? region=null,IEnumerable<(Vector2 A,Vector2 B,float HalfWidth)>? roads=null,float resolution=3)
+        Rect2? region=null,IEnumerable<(Vector2 A,Vector2 B,float HalfWidth)>? roads=null,float resolution=3,
+        IEnumerable<(Vector2[] Polygon,int Channel)>? surfaces=null)
     {
         // RGB is map data: road, pavement, park. One surface avoids coplanar depth fighting.
         var bounds=region??Bounds;
@@ -286,6 +287,7 @@ public sealed class RoadMap
                 }
         }
         Polygon(park,2);
+        if(surfaces!=null)foreach(var surface in surfaces)Polygon(surface.Polygon,surface.Channel);
         // Conservatively cover texels touched by paving. Narrow gap patches can fall
         // between texel centres once a large map reaches the texture-size cap.
         float pavingPixelRadius=new Vector2(1/sx,1/sy).Length()*.5f;
