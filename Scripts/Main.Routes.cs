@@ -49,7 +49,7 @@ public partial class Main
     public float TripDistance=>Bus.DistanceDriven-_tripDistance;
     public int StopsServed=>StopLog.Count(s=>!s.Missed);
     public int StopsMissed=>StopLog.Count(s=>s.Missed);
-    private static readonly (Key Key,int Drive)[] FreeDriveKeys={(Key.T,0),(Key.I,3),(Key.J,4),(Key.K,5),(Key.L,6),(Key.N,8),(Key.B,9),(Key.U,10),(Key.O,11)};
+    private static readonly (Key Key,int Drive)[] FreeDriveKeys={(Key.T,0),(Key.I,3),(Key.J,4),(Key.K,5),(Key.L,6),(Key.N,8),(Key.B,9),(Key.U,10),(Key.O,11),(Key.P,12),(Key.Y,13)};
 
     private static string StreetName(string name)=>string.IsNullOrWhiteSpace(name) || name is "-99" or "<Null>" or "&lt;Null&gt;"?"":name;
 
@@ -101,10 +101,10 @@ public partial class Main
         Route=Routes[0];
     }
 
-    private Dictionary<(int,int),List<(Vector2 A,Vector2 B,float Ya,float Yb,float Half,bool Tube,bool Raised)>>? _kerbGrid;
+    private Dictionary<(int,int),List<(Vector2 A,Vector2 B,float Ya,float Yb,float Half,float Width,bool Tube,bool Raised)>>? _kerbGrid;
 
     // Same-level carriageway covering a point: its kind, or null where the ground is paving or a drop.
-    private (bool Tube,bool Raised)? Carriageway(Vector3 p)
+    private (bool Tube,bool Raised,float Width)? Carriageway(Vector3 p)
     {
         if(_kerbGrid==null)
         {
@@ -114,7 +114,7 @@ public partial class Main
                 {
                     var a=r.Points[j-1];var b=r.Points[j];
                     // Tube ledges stand 3.95 m out; the carriageway between them is the drivable width.
-                    var segment=(new Vector2(a.X,a.Z),new Vector2(b.X,b.Z),a.Y,b.Y,r.Tunnel?3.95f:r.Width/2,r.Tunnel,r.Elevated);
+                    var segment=(new Vector2(a.X,a.Z),new Vector2(b.X,b.Z),a.Y,b.Y,r.Tunnel?3.95f:r.Width/2,r.Tunnel?7.9f:r.Width,r.Tunnel,r.Elevated);
                     for(int x=Mathf.FloorToInt(Mathf.Min(a.X,b.X)/32)-1;x<=Mathf.FloorToInt(Mathf.Max(a.X,b.X)/32)+1;x++)
                         for(int z=Mathf.FloorToInt(Mathf.Min(a.Z,b.Z)/32)-1;z<=Mathf.FloorToInt(Mathf.Max(a.Z,b.Z)/32)+1;z++)
                         {
@@ -123,15 +123,15 @@ public partial class Main
                         }
                 }
         }
-        var flat=new Vector2(p.X,p.Z);(bool,bool)? hit=null;float nearest=float.MaxValue;
+        var flat=new Vector2(p.X,p.Z);(bool Tube,bool Raised,float Width)? hit=null;float nearest=float.MaxValue;
         if(_kerbGrid.TryGetValue((Mathf.FloorToInt(p.X/32),Mathf.FloorToInt(p.Z/32)),out var near))
             foreach(var s in near)
             {
                 var closest=Geometry2D.GetClosestPointToSegment(flat,s.A,s.B);float gap=flat.DistanceTo(closest);
                 float t=s.A.DistanceTo(s.B)<.01f?0:s.A.DistanceTo(closest)/s.A.DistanceTo(s.B);
-                if(gap<s.Half && gap<nearest && Mathf.Abs(Mathf.Lerp(s.Ya,s.Yb,t)-p.Y)<1.5f){nearest=gap;hit=(s.Tube,s.Raised);}
+                if(gap<s.Half && gap<nearest && Mathf.Abs(Mathf.Lerp(s.Ya,s.Yb,t)-p.Y)<1.5f){nearest=gap;hit=(s.Tube,s.Raised,s.Width);}
             }
-        if(hit==null && Mathf.Abs(p.Y)<1.5f && Map.Bounds.Grow(30).HasPoint(flat) && !Map.ClearOfRoads(p,0))hit=(false,false);
+        if(hit==null && Mathf.Abs(p.Y)<1.5f && Map.Bounds.Grow(30).HasPoint(flat) && !Map.ClearOfRoads(p,0))hit=(false,false,12);
         return hit;
     }
 
@@ -377,6 +377,22 @@ public partial class Main
         Check(Mathf.Abs(Routes[1].Path.Length-3879)<1 && Mathf.Abs(Routes[2].Path.Length-3431)<1,"H2 and H3 route lengths");
         Check(Routes[1].Stops.Count==8 && Routes[1].TotalPassengers==60 && Routes[1].Sites.Count(s=>s.Pole)==2 && Routes[2].Stops.Count==4 && Routes[2].TotalPassengers==33 && Routes[2].Sites.All(s=>!s.Pole),"H2 and H3 stop tables: "+string.Join("; ",Routes.Skip(1).Select(r=>$"{r.Number} {string.Join(", ",r.Stops.Select((s,i)=>$"{s.Name}={(r.Sites[i].Pole?"pole":"shelter")}/{r.Sites[i].Clear}"))}")));
         Check(Routes[1].Path.Turns.Count==3 && Routes[2].Path.Turns.Count==3,"junction turn prompts");
+        // Pin the combined-carriageway lane fit and stop centres to the saved pre-WTS baseline.
+        foreach(var (route,distance,lane) in new[]{(1,150f,-14.1f),(1,500f,-16.2f),(1,1500f,-15.1f),(2,150f,-3.6f),(2,900f,-1.9f),(2,2800f,-2.4f)})
+            Check(Mathf.Abs(Routes[route].Path.BaseLane(distance)-lane)<.08f,$"{Routes[route].Number} legacy fitted lane changed at {distance} m: {Routes[route].Path.BaseLane(distance):0.00}");
+        // At d=525, the saved H3 route math gives BaseLane=-4.1 and stop lane=-4.5; this is RoutePath.At(525,-4.5).
+        foreach(var (route,name,position) in new[]{
+            (1,"Saigon Street",new Vector3(-94.8377f,0,-1316.5558f)),(1,"Waterloo Road",new Vector3(-166.15047f,0,-1916.7354f)),
+            (1,"Shantung Street",new Vector3(-255.92569f,0,-2399.9724f)),(1,"Bute Street",new Vector3(-380.9137f,0,-3052.713f)),
+            (1,"Wong Chuk Street",new Vector3(-713.03754f,0,-3695.7139f)),(1,"Cheung Sha Wan Road",new Vector3(-997.1142f,0,-3935.753f)),
+            (1,"Kweilin Street",new Vector3(-1181.1406f,0,-3948.4402f)),(1,"Pei Ho Street",new Vector3(-1155.5431f,0,-3731.7185f)),
+            (2,"Hong Chong Road",new Vector3(888.91336f,0,-1020.34763f)),(2,"Tunnel Interchange",new Vector3(808.4727f,0,-791.6379f)),
+            (2,"Hung Hing Road",new Vector3(944.43304f,0,1378.5659f)),(2,"Marsh Road",new Vector3(647.15717f,0,1382.3267f))})
+        {
+            var service=Routes[route];var stop=service.Stops.Single(s=>s.Name==name);
+            var actual=service.Path.At(stop.Distance,stop.Lane);
+            Check(actual.DistanceTo(position)<.08f,$"{service.Number} {name} stop centre moved from its prior fitted lane: {actual}");
+        }
         Check(_islandDetails.All(d=>ClearOfServiceStops(d.Position,d.Radius)),"decorative scenery must leave service stop furniture and queues clear");
         // Expanded-map stop labels must stay inside the map, above its footer, clear of district names and of each other.
         foreach(var route in Routes)
@@ -417,9 +433,13 @@ public partial class Main
         Press("confirm");Check(Menu && !Complete && Route==Routes[1],"enter on the results must return to route select");
         // A free drive shows no service on the blinds or the map, whether started from route select or mid-route.
         bool NoService()=>HarbourDrive && _frontBlind!.Text=="NOT IN SERVICE" && _rearBlind!.Text=="" && !Hud.MapShowsService;
-        PreviewRoute(2);_UnhandledInput(new InputEventKey {Keycode=Key.T,Pressed=true});
-        Check(!Menu && NoService(),"T on route select must start a free drive without H3 on the blinds or map");
-        Press("routes");Check(Menu && Route==Routes[2] && _frontBlind!.Text=="H3  WAN CHAI" && _rearBlind!.Text=="H3" && Hud.MapShowsService,$"tab from a free drive must restore H3: {_frontBlind!.Text}");
+        foreach(var (key,drive) in new[]{(Key.T,0),(Key.P,12),(Key.Y,13)})
+        {
+            PreviewRoute(2);_UnhandledInput(new InputEventKey {Keycode=key,Pressed=true});
+            Check(!Menu && NoService(),$"{key} on route select must start a free drive without H3 on the blinds or map");
+            Check(Bus.Position.DistanceTo(_harbourRoutes[drive].Points[0])<3,$"{key} menu free drive must use itinerary {drive}");
+            Press("routes");Check(Menu && Route==Routes[2] && _frontBlind!.Text=="H3  WAN CHAI" && _rearBlind!.Text=="H3" && Hud.MapShowsService,$"tab from a free drive must restore H3: {_frontBlind!.Text}");
+        }
         BeginRoute(2);Press("kowloon");Check(NoService(),"the in-game K shortcut must clear the service from the blinds and map");
         BeginRoute(2);Check(!Menu && Route==Routes[2] && !Complete && StopLog.Count==0 && _frontBlind!.Text=="H3  WAN CHAI","each route starts fresh");
         // Drive every route through its stops with the player's steering, brakes and door interlock.

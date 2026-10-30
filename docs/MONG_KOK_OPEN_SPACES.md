@@ -1,6 +1,8 @@
-# Mong Kok open spaces — 18 October 2026
+# Mong Kok open spaces — updated 21 October 2026
 
-The empty-area review found both missing building components and genuine open sites. The importer repair restores 24 previously dropped building sections across northern and western Kowloon. The scenery work details four confirmed sites within the existing map. It does not move the eastern coverage boundary or invent buildings at the Sai Yee Street development site.
+The 24 October [Wong Tai Sin extension](WONG_TAI_SIN_EXPANSION.md) refreshes input provenance and deterministically regenerates 324 fixtures (193 trees, 125 benches, six planters). The one fewer school bench is authored reflow; park/path geometry and source sports remain unchanged. Older counts below describe their recorded snapshots.
+
+The empty-area review found both missing building components and genuine open sites. The importer repair restores 24 previously dropped building sections across northern and western Kowloon. The scenery work now details nine confirmed sites within the existing map, including five pocket gardens/playgrounds added after the 20 October gap review. It does not move the eastern coverage boundary or reconstruct the Sai Yee Street development site.
 
 ## Sources and boundaries
 
@@ -11,12 +13,17 @@ Site and sports outlines © HKSAR Government / Lands Department, from **iB1000**
 - [LCSD hard-surface pitches](https://www.lcsd.gov.hk/clpss/en/webApp/Facility/Details.do?ftid=43) identifies Anchor Street's two five-a-side pitches and MacPherson's seven-a-side pitch.
 - [LCSD Cherry Street facilities](https://www.lcsd.gov.hk/clpss/en/webApp/Facility/Details.do?ftid=26) confirms the artificial-turf pitch, four tennis courts and two basketball/volleyball courts.
 
-| Site | Source Site ID | Source area | Authored trees / benches |
+| Site | Source Site ID | Source area | Authored fixtures |
 | --- | --- | ---: | ---: |
 | Anchor Street Playground | 1503005174 | 9,320.14 m² | 19 |
 | MacPherson Playground | 1503005482 | 6,437.34 m² | 0 |
 | Cherry Street Park | 1503005201 | 40,285.06 m² | 114 |
 | Diocesan Boys' School grounds | 1503005534 | 77,700.73 m² | 141 |
+| Ivy Street Rest Garden | 1503005143 | 3,646.11 m² | 17 |
+| Mong Kok Road Playground | 1503005266 | 3,918.03 m² | 13 |
+| Cherry Street Sitting-out Area | 1503005193 | 716.70 m² | 5 |
+| Sai Yee Street Garden | 1503005468 | 2,267.98 m² | 7 |
+| Waterloo Road/Ferry Street Sitting-out Area | 1810041992 | 1,757.65 m² | 9 |
 
 The MacPherson courts receive surfaces, markings, hoops and goals; its remaining narrow margins do not admit extra furniture under the road/building clearance rules. The gap near Olympian City 3 is not wholly within the sourced Cherry Street Park boundary and is not filled as parkland.
 
@@ -24,7 +31,13 @@ The MacPherson courts receive surfaces, markings, hoops and goals; its remaining
 
 Seventeen sports surface polygons retain the sourced shapes and holes, clipped clear of building footprints and authored road widths. Fifteen intact rectangular courts receive Blender-authored markings and fittings; Anchor Street's grouped source outline is divided into two pitches. Goals, hoops, nets and line layouts are approximate. The school field and track are flattened to the current game terrain; the real hillside, entrances and level changes are not reconstructed.
 
-Planting and furniture comprise **114 street trees, 59 banyans and 101 benches**, using the existing textured assets. Their positions and the perimeter/court paths are authored, not surveyed. The source sites constrain placement; buildings, roads and sports areas are excluded. Paving and sports colours are blended into the existing single terrain surface, preserving road priority and avoiding overlapping ground meshes. The GLB contains only court markings and fittings, with separate hidden collision meshes for solid fixtures.
+Planting and furniture comprise **126 street trees, 67 banyans, 126 benches and six planters**, using the existing textured Blender assets. Their positions and the perimeter/court paths are authored, not surveyed. The source sites constrain placement; buildings, roads and sports areas are excluded. Paving and sports colours are blended into the existing single terrain surface, preserving road priority and avoiding overlapping ground meshes. The GLB contains court/play markings and fittings, with separate hidden collision meshes for solid fixtures.
+
+The five pocket sites add 5,364.84 m² of authored paving, with nominal four-metre circulation spines kept clear of furniture and clipped around buildings and roads. Their names were cross-checked against the [LCSD Yau Tsim Mong venue directory](https://www.lcsd.gov.hk/clpss/en/webApp/ContactAccessDetails.do?lsb=YTM&type=lsb&value=YTM). The narrow Cherry Street and Waterloo/Ferry Street sites use planters where tree crowns would crowd the paths. Mong Kok Road Playground has no sports polygon in the retained source: its 10 × 14 m play pad, hopscotch and ring markings are explicitly authored and stored separately in `play_areas`. They do not claim to reproduce the real equipment layout.
+
+The single authored play pad uses its saved centre, direction and dimensions directly in the terrain shader, after paving/edging and before asphalt. Its edge is antialiased in screen space rather than sampled from the large map mask. The seventeen sourced sports surfaces continue using the recreation mask. This preserves the small rectangle as the wider map grows, without changing geometry, road priority or the existing paving expansion used to cover narrow gaps.
+
+All four earlier sites retain their source geometry, sports surfaces, paving and 274 fixtures. Pui Ching Road and Wah Yan College remain larger follow-ups. The broad Olympian City and Sai Yee/Argyle gaps require more land-use evidence.
 
 ## Regeneration
 
@@ -85,3 +98,28 @@ The next review reproduced a remaining gap: a syntactically valid but empty `Sit
 `evidence/mong-kok-empty-layer-fix-2026-10-19/regression-before.log` fails on `empty_Site: invalid refresh accepted`. After the fix, `regression-after.log` exits 0 with **17** rejected refresh/write-failure cases preserving both old files and leaving no staging directory. New cases cover empty collections and unrecognized feature namespaces in both `Site` and `BuiltStructurePolygon`. The real complete refresh and identical offline rebuild also pass.
 
 `building-check.log` exits 0 with **0 warnings / 0 errors** and no engine errors, covering road and pavement checks, 31,404 building parts, the four corrected goal frames, 17 recreation surfaces, 274 fixtures and 15 court collision meshes. Source/runtime data and model assets remain byte-identical (`preservation.json`). The importer/test changes and verification files are recorded in `final-sha256.json`. Native captures and the full driving suite were not repeated for this importer-only repair.
+
+### Five pocket gardens — 20 October 2026
+
+Evidence is in `evidence/mong-kok-pocket-gardens-2026-10-20/`. The [comparison gallery](../evidence/mong-kok-pocket-gardens-2026-10-20/compare.html) contains six matched before/after views and two new detail views, all visually inspected. The bounded infill adds 20 trees, 25 benches, six planters and one authored play pad across the five recommended sites. The wider unresolved gaps remain for separate land-use research.
+
+- `build.log`: **0 warnings / 0 errors**.
+- `refresh-check-final.log`: `ANTILA_POCKET_GARDEN_DATA_OK` and `ANTILA_OPEN_SPACE_REFRESH_OK`. Checks cover all five complete source areas, paving and furniture containment, road/building/access clearance, a separate authored play pad, a complete refresh, an identical offline rebuild and 17 rejected refresh/write-failure cases.
+- `self-test.log`: `ANTILA_SELF_TEST_OK`, including eight new paving probes, all 325 recreation fixtures, 18 sports/play surface probes and 15 court collision meshes. All exploration/ramp drives, H1/H2/H3 service drives, stop reservations, side-street turns and existing gameplay checks pass. Service drives report no contacts or red-light violations; the intentionally commanded barrier contact remains part of the original test.
+- `capture.log`: `ANTILA_POCKET_GARDEN_CAPTURE_OK`, with eight native OpenGL captures and no runtime errors. Paving, furniture and playground paint are visible; the small Cherry and Waterloo sites remain confined to their mapped outlines.
+- `preservation.json`: the four earlier sites, 17 sourced sports surfaces, 274 fixtures, 7,217 paving triangles and 32 retained source features are unchanged. The original twelve-sheet manifest is unchanged, and 74 other data/model files retain their hashes.
+- `asset-preservation.json`: all 30 earlier Blender court/collision objects retain identical geometry and transforms. Only the flat playground paint object was added. Blender MCP export restored the user's original scene; earlier assets are retained under `Art/before-mong-kok-pocket-gardens/`.
+
+The game and capture completion markers are retained, but their process handles expired across an interrupted chat turn, so final process exit codes are not claimed. The editor import returned 0 and logged an Android SDK settings teardown diagnostic; the game test and capture logs contain no errors. `verification.json` records these distinctions, and `final-sha256.json` records the delivered files.
+
+### Play-pad edge correction — 20–21 October 2026
+
+The subsequent review found that conservative paving expansion and the capped harbour mask covered the play-pad edges. Evidence for the correction is in `evidence/mong-kok-play-pad-fix-2026-10-20/`.
+
+- `regression-before.log` exits 1 with `Paving erases the play-pad edge`; the new check reproduces the defect using the actual terrain shader in an isolated native viewport.
+- `regression-after.log` exits 0. `ANTILA_PLAY_BOUNDARY_OK` covers 72 inside/outside probes, 25 cm either side of all four edges, plus the centre. `ANTILA_PLAY_RENDER_OK` additionally proves asphalt still wins over the play surface. The existing road, building, recreation, asset-detail and footpath checks pass in the same run.
+- `build.log` reports **0 warnings / 0 errors**. `data-preservation.json` records 172 unchanged data, model and regeneration-tool files and passing source/layout checks.
+- `before-play-boundary.png` and `play-boundary.png` show the final material blend with flat diagnostic textures. `render-area.json` measures approximately **139.25 m²** of visible play colour against the authored **140 m²**, within the antialiased edge. This thresholded image measurement differs from the review's base-mip colour-weight measurement.
+- `capture.log` exits 0 with `ANTILA_PLAY_PAD_FIX_CAPTURE_OK`, eight native screenshots and no runtime errors. The [before/after gallery](../evidence/mong-kok-play-pad-fix-2026-10-20/compare.html) shows the restored outline. Five views away from the play pad are pixel-identical to the earlier captures; the other three change only around the pad (`image-comparison.json`).
+
+Run `./run.command -- --building-check` for the native rendered regression. It also runs in the native full self-test. Headless checks verify the saved play parameters but explicitly print `ANTILA_PLAY_RENDER_SKIPPED`, since the GPU image check requires a renderer. The full driving suite was not repeated for this material-only correction.

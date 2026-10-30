@@ -10,6 +10,7 @@ import json
 import math
 import re
 import sys
+import tempfile
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
@@ -40,6 +41,22 @@ NORTHWEST_BOUNDS = (-4600,-6000,0,-3900)
 KWAI_CHUNG_BOUNDS = (-6500,-8500,-3100,-4400)
 TSUEN_WAN_BOUNDS = (-8500,-11000,-3900,-6900)
 WEST_COAST_BOUNDS = (-13800,-11200,-6400,-6900)
+EAST_KOWLOON_BOUNDS = (550,-6400,3150,-100)
+# Required unnamed ground-level connections, ordered in the government's one-way direction.
+# Other unnamed access links remain excluded until their access and clearance are assessed.
+EAST_ROUNDABOUTS = [('Hereford / Renfrew',['TD_107211','TD_107576','TD_107598','TD_107575','TD_107601']),
+                   ('Ho Tung / Oxford',['TD_107564','TD_107580','TD_107235'])]
+WEST_ROUNDABOUTS = [('Kwai Yue / Kwai Hei',['TD_8457','TD_9137','TD_9138'])]
+REQUIRED_ROUNDABOUTS = EAST_ROUNDABOUTS + WEST_ROUNDABOUTS
+WESTERN_APPROACHES = ['TD_57333']
+# These source-current branches were inspected with the 2026-10-28 junction fix
+# and deliberately deferred: they extend beyond TD_57333 or are a separate spur.
+DEFERRED_CONNECTED_ROADS = {
+    'TD_297076': ('SHA TSUI ROAD',104.7),
+    'TD_59096': ('WING YIN STREET',214.9),
+    'TD_93429': ('WING SHUN STREET',49.2),
+    'TD_97744': ('WING SHUN STREET',109.0),
+}
 KOWLOON_STREETS = set('ARGYLE STREET|ARTHUR STREET|BATTERY STREET|BUTE STREET|CANTON ROAD|CHANGSHA STREET|CHI WO STREET|DUNDAS STREET|FA YUEN STREET|FIFE STREET|GASCOIGNE ROAD|HAK PO STREET|HAMILTON STREET|JORDAN ROAD|KANSU STREET|KWONG WA STREET|MAN CHEONG STREET|MAN MING LANE|MAN SING STREET|MAN WAI STREET|MAN YING STREET|MAN YUEN STREET|MARKET STREET|MAU LAM STREET|MONG KOK ROAD|NANKING STREET|NATHAN ROAD|NELSON STREET|NING PO STREET|PAK HOI STREET|PARKES STREET|PITT STREET|PORTLAND STREET|PRINCE EDWARD ROAD WEST|PUBLIC SQUARE STREET|RECLAMATION STREET|SAI YEE STREET|SAI YEUNG CHOI STREET SOUTH|SAIGON STREET|SHANGHAI STREET|SHANTUNG STREET|SHEK LUNG STREET|SOY STREET|TAK CHEONG LANE|TAK CHEONG STREET|TEMPLE STREET|TUNG CHOI STREET|TUNG KUN STREET|WAI CHING STREET|WATERLOO ROAD|WING SING LANE|WOOSUNG STREET|YIM PO FONG STREET|YIN CHONG STREET'.split("|"))
 KOWLOON = ['TD_104673', 'TD_104583', 'TD_104627', 'TD_105179', 'TD_104554', '-TD_104684', '-TD_104685', 'TD_104623', 'TD_104963', 'TD_104966', 'TD_104591', 'TD_104822', 'TD_104866', 'TD_104865', 'TD_104821', 'TD_104852', '-TD_104868', '-TD_104869', 'TD_104873', 'TD_104872', 'TD_104871', 'TD_105196', 'TD_105757', 'TD_106742', 'TD_106741', 'TD_105849', 'TD_105760', '-TD_105850', '-TD_105852', 'TD_106985', 'TD_105836', 'TD_105867', 'TD_105871', 'TD_105890']
 ISLAND_STREETS = set("GLOUCESTER ROAD|HENNESSY ROAD|HARBOUR ROAD|CONVENTION AVENUE|EXPO DRIVE|EXPO DRIVE EAST|FLEMING ROAD|TONNOCHY ROAD|MARSH ROAD|JAFFE ROAD|LOCKHART ROAD|JOHNSTON ROAD|PERCIVAL STREET|CANAL ROAD EAST|CANAL ROAD WEST|CAUSEWAY ROAD|YEE WO STREET|FENWICK STREET".split("|"))
@@ -84,6 +101,17 @@ TSUEN_WAN = ['-TD_59580', 'TD_60092', 'TD_57811', 'TD_60091', 'TD_60090', 'TD_27
 
 WEST_COAST = ['TD_271771', 'TD_271772', 'TD_261429', 'TD_92931', 'TD_92932', 'TD_92933', 'TD_92936', 'TD_93220', 'TD_272364', '-TD_271771', '-TD_92993', '-TD_271773', '-TD_93113', 'TD_93409', '-TD_93010', 'TD_93408', 'TD_93456', 'TD_93398', 'TD_111730', 'TD_111904', 'TD_111903', 'TD_93222', 'TD_93088', 'TD_96854', 'TD_93012', 'TD_93013', 'TD_93015', 'TD_93201', 'TD_265762', 'TD_164214', 'TD_93016', 'TD_93078', 'TD_93077', 'TD_93205', '-TD_96546', 'TD_96551', 'TD_96550', 'TD_93296', 'TD_93298', 'TD_93297', 'TD_93424', 'TD_93423', 'TD_165439', 'TD_93212', 'TD_110626', 'TD_110628', 'TD_110603', 'TD_110596', 'TD_110592', 'TD_110589', 'TD_110575', 'TD_110581', 'TD_110605', 'TD_110604', 'TD_110617', 'TD_110615', 'TD_93631', 'TD_93754', 'TD_93753', 'TD_93752', 'TD_93751', 'TD_93655', 'TD_93654', 'TD_93515', 'TD_93744', 'TD_116022', 'TD_93750', 'TD_93742', 'TD_93746', 'TD_93799', 'TD_96621', 'TD_98692', 'TD_93745', 'TD_93748', 'TD_93749']
 
+EAST_KOWLOON = ['ID_012620', 'ID_04550', 'TD_104615', 'TD_105206', 'TD_104990', 'TD_104606', 'TD_104511', '-TD_104986', 'TD_104987', 'TD_104513', 'TD_104510', '-TD_104988', 'TD_104989', 'TD_104512', '-TD_104984', 'TD_104985', 'TD_102104', '-TD_102105', '-TD_102106', 'TD_102273', 'TD_283746', 'TD_102274', '-TD_102154', '-TD_102267', 'TD_102230', '-TD_102217', 'TD_102194', 'TD_115828', '-TD_104072', '-TD_102234', '-TD_102235', 'TD_104074', 'TD_102197', 'TD_102198', 'TD_115826', 'TD_104073', 'TD_102214', 'TD_102261', '-TD_102267', 'TD_102230', '-TD_102217', '-TD_102215', 'TD_103738', '-TD_102218', '-TD_102219', 'TD_102229', '-TD_102221', '-TD_102222', 'TD_102228', '-TD_102225', '-TD_102452', 'TD_102451', 'TD_102172', '-TD_102269', 'TD_102550', '-TD_102548', 'TD_102549', 'TD_103565', 'TD_103571', 'TD_103570', 'TD_103572', 'TD_103568', 'TD_103567', 'TD_103575', 'TD_103574', '-TD_102556', '-TD_102529', 'TD_102533', 'TD_102546', '-TD_102552', 'TD_102566', 'TD_102567', 'TD_102565', 'TD_103633', '-TD_261278', 'TD_261276', 'TD_284230', 'TD_284229', 'TD_284792', 'TD_284841', 'TD_285567', 'TD_284888', 'TD_104007', 'TD_102528', 'TD_103554', 'TD_102563', 'TD_102561', 'TD_102673', 'TD_103798', 'TD_103791', 'TD_102569', 'TD_103586', 'TD_102709', 'TD_103767', '-TD_102416', 'TD_102711', '-TD_102712', '-TD_102713', 'TD_102690', '-TD_109796', 'TD_102677']
+WONG_TAI_SIN = ['-TD_102650','-TD_115861','-TD_102706','-TD_102390','-TD_102389','-TD_102402',
+                'TD_102381','-TD_102403','TD_102405','TD_102395','TD_102408','TD_102407',
+                'TD_102394','TD_102421','TD_102596','TD_102593','-TD_102594','-TD_102376',
+                '-TD_102380','-TD_271127','-TD_102589','TD_102591','-TD_107810','TD_102426',
+                'TD_102423','TD_102432','TD_102435','TD_102434','TD_102429','-TD_102665',
+                'TD_102580','TD_103436','TD_103488','TD_103731','TD_103486','TD_102669',
+                'TD_103804','TD_102670','TD_272331']
+WONG_TAI_SIN_NETWORK = ['TD_103730']
+SINGLE_LANE_WIDTHS = {'TD_103438':3.2,'TD_103954':3.0}
+
 def build(source):
     coast_data=json.loads((ROOT/'Data/west-kowloon-coast.json').read_text())
     northwest_coast=json.loads((ROOT/'Data/lai-chi-kok-coast.json').read_text())
@@ -102,15 +130,18 @@ def build(source):
     tsuen_region=unary_union([kwai_region,box(*TSUEN_WAN_BOUNDS)])
     west_land=unary_union([west_land,shape(west_coast['land']).difference(tsuen_region)])
     assert west_land.is_valid and west_land.geom_type=='Polygon', 'West coast land must join the existing mainland'
+    east_coast=json.loads((ROOT/'Data/east-kowloon-coast.json').read_text())
+    east_land=shape(east_coast['land'])
     island_coast=json.loads((ROOT/'Data/island-coast.json').read_text())
     island=shape(island_coast['land'])
     district_data=json.loads((ROOT/'Data/nathan-road.json').read_text())
     old_district=box(*district_data['bounds'])
     old_kowloon=unary_union([old_district,box(*KOWLOON_BOUNDS)])
-    ids = set(SOUTH+ISLAND+NORTH+[i.lstrip("-") for i in SCENIC+CENTRAL+KOWLOON+WEST+SHAM_SHUI_PO+LAI_CHI_KOK+KWAI_CHUNG+TSUEN_WAN+WEST_COAST])
-    # Current TD KMZ uses HK1980 geographic coordinates and renumbers KML IDs.
+    ids = set(SOUTH+ISLAND+NORTH+[i.lstrip("-") for i in SCENIC+CENTRAL+KOWLOON+WEST+SHAM_SHUI_PO+LAI_CHI_KOK+KWAI_CHUNG+TSUEN_WAN+WEST_COAST+EAST_KOWLOON+WONG_TAI_SIN+WONG_TAI_SIN_NETWORK])
+    ids.update(i for _,members in REQUIRED_ROUNDABOUTS for i in members)
+    ids.update(WESTERN_APPROACHES)
     # ROUTE_ID is the stable source key. Pin old sections to their source snapshot
-    # and validate the datum against shared geometry before connecting new roads.
+    # and validate a requested datum conversion against shared geometry before connecting new roads.
     previous = json.loads((ROOT/'Data/cross-harbour-source.geojson').read_text())
     existing = {f['properties']['ROUTE_ID']:f for f in previous['features']}
     transform = None
@@ -139,7 +170,8 @@ def build(source):
                 north=props.get('STREET_ENAME') in KOWLOON_STREETS and line.bounds[1]<KOWLOON_BOUNDS[3] and box(KOWLOON_BOUNDS[0],KOWLOON_BOUNDS[1],KOWLOON_BOUNDS[2],-1130).covers(line.buffer(12))
                 name=props.get('STREET_ENAME','')
                 west=(props.get('ELEVATION')=='0' or (props.get('ELEVATION')=='1' and name.startswith('CASTLE PEAK ROAD') and line.bounds[2]<TSUEN_WAN_BOUNDS[0])) and props.get('TRAVEL_DIRECTION')!='4' and name not in ('','-99','&lt;Null&gt;','TUEN MUN ROAD','TSUEN WAN ROAD') and not any(s in name for s in ('HIGHWAY','CROSSING','CORRIDOR','FLYOVER','INTERCHANGE')) and west_land.covers(line.buffer(12)) and line.difference(old_kowloon).length>1
-                if ident in ids or prior or north or west or (name in ISLAND_STREETS and island.covers(line.buffer(12))):
+                east=props.get('ELEVATION')=='0' and props.get('TRAVEL_DIRECTION')!='4' and name not in ('','-99','&lt;Null&gt;') and not any(s in name for s in ('HIGHWAY','CROSSING','CORRIDOR','FLYOVER','INTERCHANGE','TUNNEL')) and east_land.covers(line.buffer(12)) and line.difference(old_kowloon).length>1
+                if ident in ids or prior or north or west or east or (name in ISLAND_STREETS and island.covers(line.buffer(12))):
                     records[ident] = prior if prior else {'type':'Feature','properties':dict(props, source_id=ident, source_sha256=source_hash),
                                       'geometry':{'type':'LineString','coordinates':coords}}
             element.clear()
@@ -147,17 +179,32 @@ def build(source):
     assert matched>400, 'Road datum does not agree with the existing map'
     print('ANTILA_ROAD_DATUM_OK:',matched,'shared sections within 2.5 cm; pinned older revisions:',changed)
     original = {i:LineString([local(p) for p in f['geometry']['coordinates']]) for i,f in records.items()}
+    for name,members in REQUIRED_ROUNDABOUTS:
+        for ident,next_id in zip(members,members[1:]+members[:1]):
+            props=records[ident]['properties']
+            assert props['ELEVATION']=='0' and props['TRAVEL_DIRECTION']=='3',(name,'Roundabout source access changed')
+            assert math.dist(original[ident].coords[-1],original[next_id].coords[0])<.12,(name,'Roundabout source ring is open')
     # Retain only the connected island street component; source coordinates stay unmodified.
     nodes = {}
     for ident,line in original.items():
         for p in (line.coords[0],line.coords[-1]):nodes.setdefault(tuple(round(v,1) for v in p),set()).add(ident)
     retained={f['properties']['source_id'] for f in previous['features']}
     assert retained <= records.keys(), 'Previously imported streets must remain present'
-    connected=set(ids)|retained;pending=list(connected)
+    selected=set(ids)|retained;connected=set(selected);pending=list(connected)
     while pending:
         line=original[pending.pop()]
         for p in (line.coords[0],line.coords[-1]):
-            for ident in nodes[tuple(round(v,1) for v in p)]-connected:connected.add(ident);pending.append(ident)
+            for ident in nodes[tuple(round(v,1) for v in p)]-connected:
+                connected.add(ident);pending.append(ident)
+    deferred_reachable=(connected-selected)&DEFERRED_CONNECTED_ROADS.keys()
+    unreviewed=connected-selected-deferred_reachable
+    if deferred_reachable:
+        print('ANTILA_TUNNEL_REVIEW_DEFERRED: source sections and centreline lengths m:',
+              [(ident,*DEFERRED_CONNECTED_ROADS[ident]) for ident in sorted(deferred_reachable)])
+    if unreviewed:
+        print('ANTILA_TUNNEL_REVIEW_REQUIRED: reachable source sections not explicitly selected:',sorted(unreviewed))
+    # Preserve broad connected-road discovery, except sections explicitly deferred by source review.
+    connected.difference_update(DEFERRED_CONNECTED_ROADS.keys()-selected)
     # Preserve earlier road order as well as geometry (seeded scenery uses this order).
     records={i:records[i] for i in [f['properties']['source_id'] for f in previous['features']]+[i for i in records if i not in retained] if i in connected}
     original={i:original[i] for i in records}
@@ -232,8 +279,10 @@ def build(source):
             else:y=deck_height(ident,d,line.length)
             points.append([round(x,4),round(y,4),round(z,4)])
         elevated=any(p[1]>.01 for p in points)
-        # Retain turning room at the tight Hung Hing / Tonnochy approach below the flyover.
-        width=12 if ident in wide_junctions else 6 if elevated else 12
+        # These one-way Fung Mo approaches run beside level-1 decks. Their
+        # authored single-lane widths follow the measured source spacing and
+        # analytic full-bus clearance; they are not surveyed road widths.
+        width=SINGLE_LANE_WIDTHS.get(ident,12 if ident in wide_junctions else 6 if elevated else 12)
         roads.append({'id':ident,'name':records[ident]['properties']['STREET_ENAME'],
                       'tunnel':ident in tube_info,'ramp':ident in ('ID_024204','ID_024201'),
                       'elevated':elevated,'source_level':int(records[ident]['properties']['ELEVATION']),
@@ -241,12 +290,12 @@ def build(source):
                       'points':points})
     by_id = {r['id']:r for r in roads}
     routes = []
-    for name,members in [('Hung Hom → Hong Kong Island',SOUTH),('Wan Chai return loop',ISLAND),('Hong Kong Island → Kowloon',NORTH),('Wan Chai / Causeway Bay scenic drive',SCENIC),('Admiralty / Central loop',CENTRAL),('Jordan → Yau Ma Tei → Mong Kok',KOWLOON),('West Kowloon → Tai Kok Tsui → Sham Shui Po',WEST),('Mong Kok → Sham Shui Po',SHAM_SHUI_PO),('Sham Shui Po → Cheung Sha Wan → Lai Chi Kok',LAI_CHI_KOK),('Mei Foo → Lai King → Kwai Chung',KWAI_CHUNG),('Kwai Chung → Tsuen Wan',TSUEN_WAN),('Tsuen Wan → Ting Kau → Sham Tseng',WEST_COAST)]:
+    for name,members in [('Hung Hom → Hong Kong Island',SOUTH),('Wan Chai return loop',ISLAND),('Hong Kong Island → Kowloon',NORTH),('Wan Chai / Causeway Bay scenic drive',SCENIC),('Admiralty / Central loop',CENTRAL),('Jordan → Yau Ma Tei → Mong Kok',KOWLOON),('West Kowloon → Tai Kok Tsui → Sham Shui Po',WEST),('Mong Kok → Sham Shui Po',SHAM_SHUI_PO),('Sham Shui Po → Cheung Sha Wan → Lai Chi Kok',LAI_CHI_KOK),('Mei Foo → Lai King → Kwai Chung',KWAI_CHUNG),('Kwai Chung → Tsuen Wan',TSUEN_WAN),('Tsuen Wan → Ting Kau → Sham Tseng',WEST_COAST),('Hung Hom → Whampoa → To Kwa Wan → Kowloon City',EAST_KOWLOON),('Kowloon City → Wong Tai Sin',WONG_TAI_SIN)]:
         points = []
         for ident in members:
             reverse=ident.startswith('-');ident=ident.lstrip('-')
             p = by_id[ident]['points']
-            if members in (WEST,SHAM_SHUI_PO,LAI_CHI_KOK,KWAI_CHUNG,TSUEN_WAN,WEST_COAST):
+            if members in (WEST,SHAM_SHUI_PO,LAI_CHI_KOK,KWAI_CHUNG,TSUEN_WAN,WEST_COAST,EAST_KOWLOON,WONG_TAI_SIN):
                 assert records[ident]['properties']['TRAVEL_DIRECTION'] in (('1','2') if reverse else ('1','3')), 'New drive violates source travel direction'
             if reverse:
                 assert records[ident]['properties']['TRAVEL_DIRECTION'] in ('1','2'), 'Source direction forbids reversing this section'
@@ -255,7 +304,7 @@ def build(source):
             assert not points or math.dist(points[-1],p[0]) < .12, (name,ident,'gap')
             points.extend(p if not points else p[1:])
         routes.append({'name':name,'source_ids':members,'points':points})
-        if members in (WEST,SHAM_SHUI_PO,LAI_CHI_KOK,KWAI_CHUNG,TSUEN_WAN,WEST_COAST):
+        if members in (WEST,SHAM_SHUI_PO,LAI_CHI_KOK,KWAI_CHUNG,TSUEN_WAN,WEST_COAST,EAST_KOWLOON,WONG_TAI_SIN):
             for a,b,c in zip(points,points[1:],points[2:]):
                 dot=sum((b[i]-a[i])*(c[i]-b[i]) for i in range(3))/(math.dist(a,b)*math.dist(b,c))
                 assert dot>-.5, (name,'Drive turns back sharply; choose a continuous source route')
@@ -275,9 +324,10 @@ def build(source):
                 cutouts.append(LineString(run).buffer(5.4,cap_style=2));run=[]
         if run:cutouts.append(LineString(run).buffer(5.4,cap_style=2))
     bounds = district_data['bounds']
-    # shortcut: this inland map edge is authored, replace it when eastern Kowloon is sourced.
+    # Preserve the established TST apron; extend its former eastern cutoff with sourced land.
     district = box(bounds[0]-110,bounds[1]-130,bounds[2]+110,bounds[3]+120)
-    kowloon=unary_union([district,box(*KOWLOON_BOUNDS),west_land])
+    kowloon=unary_union([district,box(*KOWLOON_BOUNDS),west_land,east_land])
+    assert kowloon.is_valid and kowloon.geom_type=='Polygon', 'Eastern land must join the existing mainland'
     land = unary_union([kowloon,island])
     for road in roads:
         if not road['tunnel']:
@@ -287,7 +337,7 @@ def build(source):
     ground = land.difference(unary_union(cutouts))
     for street in district_data['side_roads']:
         assert ground.covers(LineString(street['points']).buffer(9)), (street['name'],'portal cut breaks the existing street')
-    water = box(WEST_COAST_BOUNDS[0]-500,WEST_COAST_BOUNDS[1]-250,2550,2350).difference(land)
+    water = box(WEST_COAST_BOUNDS[0]-500,WEST_COAST_BOUNDS[1]-250,EAST_KOWLOON_BOUNDS[2]+500,2350).difference(land)
     water_triangles = [list(t.exterior.coords)[:3] for t in constrained_delaunay_triangles(water).geoms]
     for road in roads:
         for x,y,z in road['points']:
@@ -307,26 +357,37 @@ def build(source):
         'terms':'https://data.gov.hk/en/terms-and-conditions', 'world_units_per_metre':1,
         'dictionary':'https://static.data.gov.hk/td/road-network-v2/dataspec/rdnet_dataspec.zip',
         'tunnel_reference':'https://www.td.gov.hk/en/transport_in_hong_kong/tunnels_and_bridges_n/location_map/index_t.html',
-        'note':'Original XY preserved in approximate local metre coordinates. ELEVATION is a relative road level, not metres. Depth 32 m, widths (6 m elevated carriageways; 12 m at the low Hung Hing / Tonnochy approach), 5.6 m tunnel interior and 7 m elevated decks with cosine ramps over 150 m outside shared level junction aprons are authored. Aprons extend until adjoining centreline branches separate by 7.5 m. Shorelines derive from LandsD iB1000 with recorded gap repairs. Turn restrictions are not inferred.'}
-    # Only outer edges remain: remove old internal north/west fences at the map seams.
-    border=kowloon.boundary.intersection(box(WEST_COAST_BOUNDS[0],WEST_COAST_BOUNDS[1],WEST_BOUNDS[2],WEST_BOUNDS[3])).difference(district.buffer(.1))
+        'note':'Original XY preserved in approximate local metre coordinates. ELEVATION is a relative road level, not metres. Road widths are authored: 6 m for elevated carriageways, 12 m for broad roads including the low Hung Hing / Tonnochy approach, 3.2 m for TD_103438 and 3.0 m for TD_103954, based on source spacing and analytic bus clearance; widths are not surveyed. Tunnel depth 32 m, 5.6 m interior and 7 m elevated decks with cosine ramps over 150 m outside shared level junction aprons are authored. Aprons extend until adjoining centreline branches separate by 7.5 m. Shorelines derive from LandsD iB1000 with recorded gap repairs. Turn restrictions are not inferred.'}
+    # Enclose the joined mainland, including the retained TST apron. Its old district
+    # rectangle is now internal; source seawalls below replace only coincident edges.
+    border=kowloon.boundary
     shore=unary_union([*[LineString(p) for p in coast_data['coastline']],
         unary_union([LineString(p) for p in northwest_coast['coastline']]).difference(box(*WEST_BOUNDS)),
         unary_union([LineString(p) for p in kwai_chung_coast['coastline']]).difference(prior_region),
         unary_union([LineString(p) for p in tsuen_wan_coast['coastline']]).difference(kwai_region),
-        unary_union([LineString(p) for p in west_coast['coastline']]).difference(tsuen_region)]).difference(district.buffer(.1))
+        unary_union([LineString(p) for p in west_coast['coastline']]).difference(tsuen_region),
+        unary_union([LineString(p) for p in east_coast['coastline']]).difference(unary_union([west_land,box(*KOWLOON_BOUNDS)]))]).difference(district.buffer(.1)).difference(unary_union(cutouts).buffer(1))
     def line_parts(g):
         return [list(p.coords) for p in (g.geoms if hasattr(g,'geoms') else [g]) if p.geom_type=='LineString' and p.length>.5]
-    output = {'metadata':metadata,'bounds':[WEST_COAST_BOUNDS[0]-80,WEST_COAST_BOUNDS[1]-80,ISLAND_BOUNDS[2]+80,ISLAND_BOUNDS[3]+50], 'island_bounds':ISLAND_BOUNDS, 'kowloon_north_bounds':KOWLOON_BOUNDS,
+    output = {'metadata':metadata,'bounds':[WEST_COAST_BOUNDS[0]-80,WEST_COAST_BOUNDS[1]-80,EAST_KOWLOON_BOUNDS[2]+80,ISLAND_BOUNDS[3]+50], 'island_bounds':ISLAND_BOUNDS, 'kowloon_north_bounds':KOWLOON_BOUNDS,
               'island_land':island_coast['land'],'island_coastline':line_parts(unary_union([LineString(p) for p in island_coast['coastline']]).difference(unary_union(cutouts).buffer(1))),
               'island_boundary':line_parts(island.boundary.intersection(box(*ISLAND_BOUNDS).boundary)), 'island_coast_metadata':island_coast['metadata'],
+              'kowloon_east_land':mapping(east_land),'east_kowloon_bounds':EAST_KOWLOON_BOUNDS,'east_coast_metadata':east_coast['metadata'],
               'kowloon_west_land':mapping(west_land),'kowloon_coastline':line_parts(shore),'kowloon_boundary':line_parts(border.difference(shore.buffer(.3))), 'coast_metadata':coast_data['metadata'],
               'kowloon_northwest_bounds':NORTHWEST_BOUNDS,'northwest_coast_metadata':northwest_coast['metadata'],'kwai_chung_bounds':KWAI_CHUNG_BOUNDS,'kwai_chung_coast_metadata':kwai_chung_coast['metadata'],
               'tsuen_wan_bounds':TSUEN_WAN_BOUNDS,'tsuen_wan_coast_metadata':tsuen_wan_coast['metadata'],
               'west_coast_bounds':WEST_COAST_BOUNDS,'west_coast_metadata':west_coast['metadata'],'roads':roads,
               'routes':routes,'tubes':tubes,'ground_triangles':ground_triangles,'water_triangles':water_triangles,'surface_triangles':surface_triangles}
-    (ROOT/'Data/cross-harbour-source.geojson').write_text(json.dumps({'type':'FeatureCollection','metadata':metadata,'features':list(records.values())},ensure_ascii=False,separators=(',',':')))
-    (ROOT/'Data/cross-harbour.json').write_text(json.dumps(output,ensure_ascii=False,separators=(',',':')))
+    payloads=[(ROOT/'Data/cross-harbour-source.geojson',json.dumps({'type':'FeatureCollection','metadata':metadata,'features':list(records.values())},ensure_ascii=False,separators=(',',':'),allow_nan=False)),
+              (ROOT/'Data/cross-harbour.json',json.dumps(output,ensure_ascii=False,separators=(',',':'),allow_nan=False))]
+    staged=[]
+    try:
+        for target,payload in payloads:
+            with tempfile.NamedTemporaryFile(dir=target.parent,prefix=target.name+'.',suffix='.part',delete=False) as stream:
+                stream.write(payload.encode('utf-8'));staged.append(Path(stream.name))
+        for temp,(target,_) in zip(staged,payloads):temp.replace(target)
+    finally:
+        for temp in staged:temp.unlink(missing_ok=True)
     print('ANTILA_TUNNEL_DATA_OK:',len(roads),'source sections;',[(t['name'],round(t['length_m'],1)) for t in tubes],'; continuous routes',len(routes))
 
 

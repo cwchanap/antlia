@@ -7,6 +7,9 @@ uniform vec2 harbour_size;
 uniform sampler2D recreation_mask : filter_linear_mipmap, repeat_disable;
 uniform vec2 recreation_origin;
 uniform vec2 recreation_size;
+// Authored rectangle: centre XZ, half-width/half-length; independent of map texel size.
+uniform vec4 play_area;
+uniform vec2 play_forward;
 uniform sampler2D asphalt : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D paving : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D grass : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
@@ -54,6 +57,13 @@ void fragment() {
     float joint = min(abs(fract(world_xz.x) - 0.5), abs(fract(world_xz.y) - 0.5));
     vec3 edging = texture(stone, world_xz / 0.6).rgb * mix(0.65, 1.0, smoothstep(0.006, 0.025, joint));
     color = mix(color, edging, smoothstep(0.1, 0.9, border) * masks.g);
+    // Preserve the small play pad over conservatively expanded paving. Asphalt still wins.
+    vec2 delta = world_xz - play_area.xy;
+    vec2 edge = abs(vec2(dot(delta,vec2(play_forward.y,-play_forward.x)),dot(delta,play_forward))) - play_area.zw;
+    float distance_to_play = max(edge.x,edge.y);
+    float feather = max(fwidth(distance_to_play),0.01);
+    float play = 1.0 - smoothstep(-feather,feather,distance_to_play);
+    color = mix(color,mix(vec3(0.42,0.16,0.10),grain,0.22),play);
     ALBEDO = mix(color, texture(asphalt, surface_uv).rgb, masks.r);
     ROUGHNESS = 0.96;
     SPECULAR = 0.15;

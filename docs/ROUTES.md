@@ -29,7 +29,7 @@ The table and lane fitting load before decorative scenery. A reserved corridor a
 
 | H3 stop | Chinese | Distance | Furniture | Passengers |
 | --- | --- | --- | --- | --- |
-| Hong Chong Road | 康莊道 | 435 m | shelter | 9 |
+| Hong Chong Road | 康莊道 | 525 m | shelter | 9 |
 | Tunnel Interchange | 紅隧轉車站 | 770 m | shelter | 14 |
 | Hung Hing Road | 鴻興道 | 3,040 m | shelter | 6 |
 | Marsh Road (terminus) | 馬師道 | 3,388 m | shelter | 4 |
@@ -38,7 +38,7 @@ The table and lane fitting load before decorative scenery. A reserved corridor a
 
 | Screen | Keys |
 | --- | --- |
-| Route select | Up / Down or 1–3 choose, Enter opens the briefing, a click selects a card. T, I, J, K, L, N, B, U and O start the free drives. A free drive has no service, so the bus blinds read NOT IN SERVICE and the map shows no route or stops. |
+| Route select | Up / Down or 1–3 choose, Enter opens the briefing, a click selects a card. T, I, J, K, L, N, B, U, O, P and Y start the free drives. A free drive has no service, so the bus blinds read NOT IN SERVICE and the map shows no route or stops. |
 | Briefing | Enter starts, C picks chase or cab view, Escape returns. |
 | Driving | Tab ends the route early. R restarts the same route. Escape pauses. |
 | Results | R drives the route again, Enter or Tab returns to route select. |
@@ -105,3 +105,7 @@ Runs used Godot 4.6.2 .NET on Linux in a cloud container. Captures used Xvfb wit
 - **Free drive presentation.** Starting a free drive used to keep the last previewed service on the bus blinds and on the map. The front blind now reads NOT IN SERVICE, the rear one is blank, and the minimap and M map show no route line, stops or stop list. This applies from route select and from the in-game shortcuts. `--route-check` covers both entry points, and `--route-capture` saves `free-drive-map.png`.
 - **Arrival times.** The results table's ARRIVED time was logged when boarding finished, at least 4 s after the bus reached the bay. It is now logged when the doors first open in the bay. `--route-check` requires each arrival to come more than 3.5 s before that stop's boarding finishes.
 - On the second round, `--route-check` passed with the same drives as above, every stop served. `--route-capture` exits 0 with eleven images. `free-drive-map.png` and `results-h1.png` were inspected: the free-drive map has no route, and the H1 terminus arrives at 03:38 in a 03:42 journey. Build: **0 warnings / 0 errors**.
+
+## Eastern map integration — 21 October 2026
+
+The sourced Hong Chong Road branch `TD_105213` passes through H3's earlier 435 m waiting area. The in-engine stop survey confirms that location cannot hold either a shelter or a pole. The fictional Hong Chong Road stop moves 90 m along the same route to 525 m, within the surveyed 510–540 m stretch of straight, steady, supported kerb with shelter clearance. Route alignments, all other stops and the 33-passenger total stay the same. The full service check is retained as the regression; evidence is in `evidence/east-kowloon-expansion-2026-10-21/`.

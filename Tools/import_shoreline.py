@@ -1,6 +1,6 @@
 """LandsD iB1000 tiles -> offline West Kowloon or island shore (approximate metres).
 
-Run with .venv-geodata/bin/python Tools/import_shoreline.py [--island|--northwest|--kwai-chung|--tsuen-wan|--west-coast] [--download].
+Run with .venv-geodata/bin/python Tools/import_shoreline.py [--island|--northwest|--kwai-chung|--tsuen-wan|--west-coast|--east-kowloon] [--download].
 --download refreshes all requested archives under /tmp; source features and provenance ship in Data.
 """
 import datetime
@@ -26,10 +26,15 @@ NORTHWEST = '--northwest' in sys.argv
 KWAI_CHUNG = '--kwai-chung' in sys.argv
 TSUEN_WAN = '--tsuen-wan' in sys.argv
 WEST_COAST = '--west-coast' in sys.argv
+EAST_KOWLOON = '--east-kowloon' in sys.argv
 SOURCE = 'https://portal.csdi.gov.hk/server/rest/services/common/landsd_rcd_1637223748322_25497/FeatureServer/0/query'
 BBOX = (114.145, 22.290, 114.175, 22.339)
 RAW = ROOT/'Data/west-kowloon-shoreline.geojson'
-if ISLAND:
+if EAST_KOWLOON:
+    BOUNDS = (550,-6400,3150,-100)
+    BBOX = (114.177,22.295,114.204,22.338)
+    RAW = ROOT/'Data/east-kowloon-shoreline.geojson'
+elif ISLAND:
     BOUNDS = (-2400,350,2050,2100)
     BBOX = (114.147,22.280,114.192,22.300)
     RAW = ROOT/'Data/island-shoreline.geojson'
@@ -83,7 +88,7 @@ def download():
         subprocess.run(['curl','--silent','--show-error','--fail','--location','--max-time','120',props['GML'],'-o',str(temp)],check=True)
         assert zipfile.is_zipfile(temp), 'Expected an iB1000 GML archive'
         with zipfile.ZipFile(temp) as archive:
-            for layer in ('Shoreline','CartoHydroLine',*(['TransportPolygon'] if ISLAND or TSUEN_WAN or WEST_COAST else []),*(['CartoLandCoverLine'] if WEST_COAST else [])):
+            for layer in ('Shoreline','CartoHydroLine',*(['TransportPolygon'] if ISLAND or TSUEN_WAN or WEST_COAST or EAST_KOWLOON else []),*(['CartoLandCoverLine'] if WEST_COAST else [])):
                 filename=tile+'/Layers/'+('LandCover' if layer=='CartoLandCoverLine' else 'Transportation' if layer=='TransportPolygon' else 'Hydrography')+'/'+layer+'.gml'
                 if filename not in archive.namelist():continue
                 root=ET.fromstring(archive.read(filename))
@@ -114,7 +119,7 @@ def download():
 def build():
     raw=json.loads(RAW.read_text())
     # The western shore joins the established district at x=-900; eastern TST is retained.
-    region=box(*BOUNDS) if ISLAND or NORTHWEST or KWAI_CHUNG or TSUEN_WAN or WEST_COAST else box(BOUNDS[0],BOUNDS[1],-900,BOUNDS[3])
+    region=box(*BOUNDS) if ISLAND or NORTHWEST or KWAI_CHUNG or TSUEN_WAN or WEST_COAST or EAST_KOWLOON else box(BOUNDS[0],BOUNDS[1],-900,BOUNDS[3])
     lines=[set_precision(LineString([local(p) for p in f['geometry']['coordinates']]),.001) for f in raw['features']]
     coast=unary_union(lines).intersection(region)
     parts=list(linemerge(coast).geoms);links=[]
@@ -127,7 +132,7 @@ def build():
             # Record every straight gap closure; never bridge a missing coastline wholesale.
             # Island and Tsuen Wan ferry-terminal outlines have longer interruptions than the western shore.
             # Every authored join is retained below; this is not surveyed terminal geometry.
-            if 1e-6<distance<=(120 if ISLAND or WEST_COAST else 60 if TSUEN_WAN else 12):links.append(LineString([point,nearest_points(point,rest)[1]]))
+            if 1e-6<distance<=(120 if ISLAND or WEST_COAST else 60 if TSUEN_WAN or EAST_KOWLOON else 12):links.append(LineString([point,nearest_points(point,rest)[1]]))
     joined=union_all([coast,*links],grid_size=.001 if WEST_COAST else None)
     if ISLAND:
         # A 10 cm weld closes near-coincident cartographic line ends; restore its inset afterwards.
@@ -139,9 +144,11 @@ def build():
         links=[p for p in links if p.intersection(shore.buffer(.3)).length>p.length*.8]
     else:
         faces=list(polygonize(union_all([joined,region.boundary],grid_size=.001 if WEST_COAST else None)))
-        mainland=next(p for p in faces if p.contains(Point(-11000,-9800) if WEST_COAST else Point(-6500,-9200) if TSUEN_WAN else Point(-4400,-7300) if KWAI_CHUNG else Point(-3000,-5100) if NORTHWEST else Point(-1000,-4000)))
-        land=Polygon(mainland.exterior) if NORTHWEST or KWAI_CHUNG or TSUEN_WAN or WEST_COAST else unary_union([Polygon(mainland.exterior),box(-900,BOUNDS[1],BOUNDS[2],BOUNDS[3])])
-        if WEST_COAST:
+        mainland=next(p for p in faces if p.contains(Point(1200,-2000) if EAST_KOWLOON else Point(-11000,-9800) if WEST_COAST else Point(-6500,-9200) if TSUEN_WAN else Point(-4400,-7300) if KWAI_CHUNG else Point(-3000,-5100) if NORTHWEST else Point(-1000,-4000)))
+        land=Polygon(mainland.exterior) if NORTHWEST or KWAI_CHUNG or TSUEN_WAN or WEST_COAST or EAST_KOWLOON else unary_union([Polygon(mainland.exterior),box(-900,BOUNDS[1],BOUNDS[2],BOUNDS[3])])
+        if EAST_KOWLOON:
+            assert land.area>5e6 and land.covers(Point(1800,-1300)) and not land.covers(Point(2800,-800)), 'Eastern Kowloon mainland / sea misplaced'
+        elif WEST_COAST:
             assert 24e6<land.area<25e6 and land.covers(Point(-11700,-9000)) and not land.covers(Point(-11500,-7200)), 'Sham Tseng mainland / sea misplaced'
         elif TSUEN_WAN:
             assert 15e6<land.area<16e6 and land.covers(Point(-6600,-9000)) and not land.covers(Point(-7200,-7600)), 'Tsuen Wan mainland / Rambler Channel misplaced'
@@ -154,14 +161,14 @@ def build():
             assert land.covers(Point(-1600,-700)) and not land.covers(Point(-2000,-800)), 'West Kowloon peninsula misplaced'
         # Fixed-precision intersections split rocky shores into tiny consecutive pieces;
         # recover the complete polygon edge before simplification and length filtering.
-        shore=(land.boundary.difference(region.boundary.buffer(.01)) if WEST_COAST else land.boundary.intersection(joined)).simplify(.25)
-        if TSUEN_WAN or WEST_COAST:links=[p for p in links if p.intersection(shore.buffer(.3)).length>p.length*.8]
+        shore=(land.boundary.difference(region.boundary.buffer(.01)) if WEST_COAST or EAST_KOWLOON else land.boundary.intersection(joined)).simplify(.25)
+        if TSUEN_WAN or WEST_COAST or EAST_KOWLOON:links=[p for p in links if p.intersection(shore.buffer(.3)).length>p.length*.8]
     parts=list(shore.geoms) if hasattr(shore,'geoms') else [shore]
     output=dict(metadata=raw['metadata']|dict(source_sha256=hashlib.sha256(RAW.read_bytes()).hexdigest(),origin_wgs84=ORIGIN,
-                processing='HK1980 Grid EPSG:2326 northing/easting to WGS84; approximate local metre projection; 1 mm topology grid; coast simplified within 0.25 m. Straight source gaps and map cuts are authored.'+(' Island: pier outlines included, 10 cm topology weld; ferry-terminal and tunnel-mouth joins up to 120 m are explicitly authored.' if ISLAND else ' Tsuen Wan: source pier outlines included; recorded terminal and seawall joins up to 60 m are authored.' if TSUEN_WAN else ' Ting Kau / Sham Tseng: source pier and connected rocky-shore outlines included; recorded joins up to 120 m are authored.' if WEST_COAST else ''),
+                processing='HK1980 Grid EPSG:2326 northing/easting to WGS84; approximate local metre projection; 1 mm topology grid; coast simplified within 0.25 m. Straight source gaps and map cuts are authored.'+(' Island: pier outlines included, 10 cm topology weld; ferry-terminal and tunnel-mouth joins up to 120 m are explicitly authored.' if ISLAND else ' Eastern Kowloon: source pier outlines included; recorded seawall joins up to 60 m are authored.' if EAST_KOWLOON else ' Tsuen Wan: source pier outlines included; recorded terminal and seawall joins up to 60 m are authored.' if TSUEN_WAN else ' Ting Kau / Sham Tseng: source pier and connected rocky-shore outlines included; recorded joins up to 120 m are authored.' if WEST_COAST else ''),
                 gap_closures=[list(p.coords) for p in links],max_gap_closure_m=max((p.length for p in links),default=0)),
                 bounds=BOUNDS,land=mapping(land),coastline=[list(p.coords) for p in parts if p.length>.5])
-    (ROOT/('Data/west-coast-coast.json' if WEST_COAST else 'Data/tsuen-wan-coast.json' if TSUEN_WAN else 'Data/kwai-chung-coast.json' if KWAI_CHUNG else 'Data/island-coast.json' if ISLAND else 'Data/lai-chi-kok-coast.json' if NORTHWEST else 'Data/west-kowloon-coast.json')).write_text(json.dumps(output,separators=(',',':')))
+    (ROOT/('Data/east-kowloon-coast.json' if EAST_KOWLOON else 'Data/west-coast-coast.json' if WEST_COAST else 'Data/tsuen-wan-coast.json' if TSUEN_WAN else 'Data/kwai-chung-coast.json' if KWAI_CHUNG else 'Data/island-coast.json' if ISLAND else 'Data/lai-chi-kok-coast.json' if NORTHWEST else 'Data/west-kowloon-coast.json')).write_text(json.dumps(output,separators=(',',':')))
     print('ANTILA_COAST_OK:',len(raw['features']),'source fragments;',round(land.area),'m² land;',round(shore.length),'m shoreline')
 
 

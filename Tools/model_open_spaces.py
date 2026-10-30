@@ -10,11 +10,56 @@ from pathlib import Path
 from mathutils import Vector
 
 ROOT=Path('/Users/chanwaichan/workspace/antila')
+MARKING_WIDTH=.11
+BASKETBALL_CIRCLE_RADIUS=1.8
+BASKETBALL_KEY_DEPTH=5.8
+BASKETBALL_MARKING_GAP=.1
 
 
-def build():
+def basketball_marking_parameters(length):
+    half_length=length/2-.3
+    line_clearance=MARKING_WIDTH+BASKETBALL_MARKING_GAP
+    radius=min(BASKETBALL_CIRCLE_RADIUS,max(0,(half_length-2*line_clearance)/3))
+    free_throw_offset=max(half_length-BASKETBALL_KEY_DEPTH,2*radius+line_clearance)
+    return half_length,radius,free_throw_offset
+
+
+def validate_basketball_markings(sports):
+    parameters={}
+    adjusted=[]
+    for court in sports:
+        if court['usage']!='BAC':continue
+        half_length,radius,offset=basketball_marking_parameters(court['length'])
+        legacy_offset=half_length-BASKETBALL_KEY_DEPTH
+        legacy_circle_gap=legacy_offset-2*BASKETBALL_CIRCLE_RADIUS-MARKING_WIDTH
+        legacy_baseline_gap=half_length-legacy_offset-BASKETBALL_CIRCLE_RADIUS-MARKING_WIDTH
+        legacy_clear=(legacy_offset>0 and legacy_circle_gap>=BASKETBALL_MARKING_GAP and
+                      legacy_baseline_gap>=BASKETBALL_MARKING_GAP)
+        circle_gap=offset-2*radius-MARKING_WIDTH
+        baseline_gap=half_length-offset-radius-MARKING_WIDTH
+        assert offset>0 and offset<half_length,\
+            f'{court["source_id"]}: basketball key crosses midcourt or court baseline'
+        assert circle_gap>=BASKETBALL_MARKING_GAP-1e-8,\
+            f'{court["source_id"]}: basketball circle strokes overlap'
+        assert baseline_gap>=BASKETBALL_MARKING_GAP-1e-8,\
+            f'{court["source_id"]}: basketball free-throw circle approaches the baseline stroke'
+        if legacy_clear:
+            assert radius==BASKETBALL_CIRCLE_RADIUS and offset==legacy_offset,\
+                f'{court["source_id"]}: standard basketball markings changed unnecessarily'
+        else:
+            adjusted.append(court['source_id'])
+        parameters[court['source_id']]=(radius,offset)
+    return parameters,adjusted
+
+
+def build(region='mong-kok'):
+    defaults={
+        'mong-kok':(ROOT/'Data/mong-kok-open-spaces.json',ROOT/'Assets/Models/mong-kok-recreation.glb',ROOT/'Art/mong-kok-recreation.blend'),
+        'east-kowloon':(ROOT/'Data/east-kowloon-open-spaces.json',ROOT/'Assets/Models/east-kowloon-recreation.glb',ROOT/'Art/east-kowloon-recreation.blend')}
+    if region not in defaults:raise ValueError('Unknown recreation region: '+region)
+    data_path,asset_path,blend_path=defaults[region]
     previous=bpy.context.window.scene
-    scene=bpy.data.scenes.new('Antila_MongKokRecreation')
+    scene=bpy.data.scenes.new('Antila_'+region.replace('-','_')+'Recreation')
     bpy.context.window.scene=scene
     try:
         materials=[]
@@ -24,10 +69,16 @@ def build():
             bs=next(n for n in mat.node_tree.nodes if n.type=='BSDF_PRINCIPLED')
             bs.inputs['Base Color'].default_value=(*color,1);bs.inputs['Roughness'].default_value=.85
             materials.append(mat)
-        data=json.loads((ROOT/'Data/mong-kok-open-spaces.json').read_text())
+        data=json.loads(data_path.read_text())
+        basketball_markings,adjusted_basketball_ids=validate_basketball_markings(data['sports'])
+        if region=='east-kowloon':
+            assert len(basketball_markings)==23 and len(adjusted_basketball_ids)==2,\
+                'Reviewed east-Kowloon BAC inventory or dimension-adjusted count changed'
+        checked_marking_vertices=0
         for court in data['sports']:
             vertices=[];faces=[];indices=[];cv=[];cf=[]
             forward=Vector(court['forward']);right=Vector((forward.y,-forward.x))
+            source_forward=forward.copy();source_right=right.copy()
             center=Vector(court['center']);shift=Vector((0,0))
             def point(p):
                 q=shift+right*p[0]+forward*p[1]
@@ -47,7 +98,7 @@ def build():
                 face([a+p for p in reversed(ring)],mat,solid);face([b+p for p in ring],mat,solid)
                 for i,p in enumerate(ring):
                     q=ring[(i+1)%8];face([a+p,a+q,b+q,b+p],mat,solid)
-            def stripe(a,b,width=.11):
+            def stripe(a,b,width=MARKING_WIDTH):
                 a,b=Vector(a),Vector(b);d=b-a
                 if d.length<.001:return
                 n=Vector((-d.y,d.x)).normalized()*width/2
@@ -94,9 +145,15 @@ def build():
                     for x in (-w,w):beam((x,0,0),(x,0,1.08),.05)
                     beam((-w,0,.96),(w,0,.96),.022,2,False);net(-w,w,0,.9)
                 else:
-                    circle(0,0,1.8)
+                    circle_radius,free_throw_offset=basketball_markings[court['source_id']]
+                    circle(0,0,circle_radius)
+                    # Keep the penalty box and its stroke inside the fitted rectangle on narrow courts.
+                    penalty_half_width=min(2.45,max(0,w-MARKING_WIDTH/2))
+                    assert penalty_half_width+MARKING_WIDTH/2<=w+1e-8, 'Narrow court penalty marking exceeds the safe fit'
                     for end in (-1,1):
-                        y=end*(l-.8);rectangle(-2.45,end*l,2.45,end*(l-5.8));circle(0,end*(l-5.8),1.8)
+                        y=end*(l-.8);free_throw_y=end*free_throw_offset
+                        rectangle(-penalty_half_width,end*l,penalty_half_width,free_throw_y)
+                        circle(0,free_throw_y,circle_radius)
                         beam((0,end*(l-.15),0),(0,end*(l-.15),3.8),.09)
                         beam((0,end*(l-.15),3.5),(0,y,3.5),.07)
                         face([(-.9,y,2.9),(.9,y,2.9),(.9,y,4),(-.9,y,4)],2,True)
@@ -104,6 +161,14 @@ def build():
                         for i in range(20):
                             a=i*math.tau/20;b=(i+1)*math.tau/20
                             beam((.23*math.cos(a),hoop+.23*math.sin(a),3.05),(.23*math.cos(b),hoop+.23*math.sin(b),3.05),.018,3,False)
+            for face_indices,material_index in zip(faces,indices):
+                if material_index!=0:continue
+                for vertex_index in face_indices:
+                    x,y,_=vertices[vertex_index];local=Vector((x,-y))
+                    across=abs(local.dot(source_right));along=abs(local.dot(source_forward))
+                    assert across<=court['width']/2+1e-5 and along<=court['length']/2+1e-5, \
+                        f'{court["source_id"]}: court paint leaves its fitted source rectangle'
+                    checked_marking_vertices+=1
             for name,vs,fs,mi in [('Court',vertices,faces,indices),('Collision',cv,cf,None)]:
                 mesh=bpy.data.meshes.new(name);mesh.from_pydata(vs,[],fs);mesh.update()
                 bm=bmesh.new();bm.from_mesh(mesh);bmesh.ops.recalc_face_normals(bm,faces=bm.faces);bm.to_mesh(mesh);bm.free()
@@ -112,13 +177,40 @@ def build():
                     for poly,index in zip(mesh.polygons,mi):poly.material_index=index
                 obj=bpy.data.objects.new(name+'_'+court['source_id'],mesh);scene.collection.objects.link(obj)
                 obj.location=(center.x,-center.y,0)
+        # Authored pavement games; separate from the government sports outlines.
+        # Paint has no raised collision geometry and cannot obstruct the garden paths.
+        for play in data.get('play_areas',[]):
+            center=Vector(play['center']);forward=Vector(play['forward']);right=Vector((forward.y,-forward.x))
+            vertices=[];faces=[]
+            def stripe(a,b,width=.08):
+                a,b=Vector(a),Vector(b);n=Vector((-(b-a).y,(b-a).x)).normalized()*width/2
+                points=[]
+                for p in (a+n,b+n,b-n,a-n):
+                    q=right*p.x+forward*p.y;points.append((q.x,-q.y,.045))
+                start=len(vertices);vertices.extend(points);faces.append(tuple(range(start,start+4)))
+            def loop(points):
+                for a,b in zip(points,points[1:]+points[:1]):stripe(a,b)
+            for row in range(7):
+                for x in ([-1,0] if row in (2,4,6) else [-.5]):
+                    z=-5+row
+                    loop([(x,z),(x+1,z),(x+1,z+.95),(x,z+.95)])
+            for radius in (1,2):
+                loop([(math.cos(i*math.tau/48)*radius,4+math.sin(i*math.tau/48)*radius) for i in range(48)])
+            assert all(abs(Vector((x,-y)).dot(right))<play['width']/2 and
+                       abs(Vector((x,-y)).dot(forward))<play['length']/2 for x,y,z in vertices)
+            mesh=bpy.data.meshes.new('Play markings');mesh.from_pydata(vertices,[],faces);mesh.materials.append(materials[0])
+            bm=bmesh.new();bm.from_mesh(mesh);bmesh.ops.recalc_face_normals(bm,faces=bm.faces);bm.to_mesh(mesh);bm.free();mesh.update()
+            obj=bpy.data.objects.new('Play_'+play['site'],mesh);scene.collection.objects.link(obj);obj.location=(center.x,-center.y,0)
         bpy.ops.object.select_all(action='DESELECT')
         for obj in scene.objects:obj.select_set(True)
         bpy.context.view_layer.objects.active=next(iter(scene.objects))
-        bpy.ops.export_scene.gltf(filepath=str(ROOT/'Assets/Models/mong-kok-recreation.glb'),export_format='GLB',
+        print('ANTILA_RECREATION_PAINT_BOUNDS_OK:',region,checked_marking_vertices,'marking vertices within fitted source rectangles')
+        print('ANTILA_RECREATION_BASKETBALL_MARKINGS_OK:',region,len(basketball_markings),'BAC courts;',
+              len(adjusted_basketball_ids),'dimension-adjusted:',','.join(adjusted_basketball_ids) or 'none')
+        bpy.ops.export_scene.gltf(filepath=str(asset_path),export_format='GLB',
             use_selection=True,use_active_scene=True,export_yup=True,export_apply=True)
-        bpy.data.libraries.write(str(ROOT/'Art/mong-kok-recreation.blend'),{scene})
-        print('ANTILA_RECREATION_MODEL_OK:',len(data['sports']),'courts;',len(scene.objects),'visual/collision objects')
+        bpy.data.libraries.write(str(blend_path),{scene})
+        print('ANTILA_RECREATION_MODEL_OK:',region,len(data['sports']),'courts;',len(data.get('play_areas',[])),'authored play markings;',len(scene.objects),'objects')
     finally:bpy.context.window.scene=previous
 
 

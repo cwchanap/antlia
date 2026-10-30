@@ -34,6 +34,7 @@ public partial class Main
             StopIndex!=0 || Passengers!=0 || Bus.DoorsOpen || Bus.Reverse || !Bus.IsPhysicsProcessing() ||
             !Hud.ServiceInstruction.StartsWith("33 m"))throw new Exception("Restart did not restore H1/world state");
         await CheckBuildings();
+        if(_restartCycle==0)await CheckPocketGardenRendering();
         if(DisplayServer.GetName()!="headless")
         {
             RenderingServer.ForceDraw(false);
@@ -44,10 +45,11 @@ public partial class Main
         }
         if(Volatile.Read(ref _restartLog.Errors)>0)throw new Exception("Restart world validation emitted engine errors");
         GD.Print($"ANTILA_RESTART_STATE_OK: cycle {_restartCycle}; {meshes} meshes / {shapes} collision shapes; H1 ready");
-        if(_restartCycle==7)
+        if(_restartCycle==9)
         {
             OS.RemoveLogger(_restartLog);_restartLog.Dispose();_restartLog=null;
-            GD.Print("ANTILA_RESTART_CHECKS_OK: 7 reloads from paused map, island drive, northwest drive, Kwai Chung drive, Tsuen Wan drive, west coast drive and completed service; no engine errors");
+            GD.Print("ANTILA_RESTART_CHECKS_OK: 9 reloads from paused map, island drive, northwest drive, Kwai Chung drive, Tsuen Wan drive, west coast drive, east Kowloon drive, Wong Tai Sin drive and completed service; no engine errors");
+            if(OS.GetCmdlineUserArgs().Contains("--restart-capture")){CaptureEastKowloon();return;}
             QuitGame();return;
         }
         if(_restartCycle==0)
@@ -60,6 +62,8 @@ public partial class Main
         else if(_restartCycle==3)StartHarbourDrive(9);
         else if(_restartCycle==4)StartHarbourDrive(10);
         else if(_restartCycle==5)StartHarbourDrive(11);
+        else if(_restartCycle==6)StartHarbourDrive(12);
+        else if(_restartCycle==7)StartHarbourDrive(13);
         else
         {
             foreach(var stop in Map.Stops)

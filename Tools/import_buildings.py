@@ -36,7 +36,29 @@ def polygons(geometry):
             yield from polygons(part)
 
 
-from import_tunnel import ISLAND_BOUNDS, KOWLOON_BOUNDS, WEST_BOUNDS, NORTHWEST_BOUNDS, KWAI_CHUNG_BOUNDS, TSUEN_WAN_BOUNDS, WEST_COAST_BOUNDS
+def local_geometry(geometry):
+    geometry_type=geometry.get('type')
+    coordinates=geometry.get('coordinates')
+    members=[coordinates] if geometry_type=='Polygon' else coordinates if geometry_type=='MultiPolygon' else None
+    if not isinstance(members,list) or not members:raise ValueError('Expected a non-empty building Polygon or MultiPolygon')
+    parts=[]
+    for rings in members:
+        if not isinstance(rings,list) or not rings:raise ValueError('Missing building polygon rings')
+        for ring in rings:
+            if not isinstance(ring,list) or len(ring)<4 or ring[0]!=ring[-1]:raise ValueError('Invalid building polygon ring')
+            for point in ring:
+                if not isinstance(point,list) or len(point) not in (2,3) or any(type(v) not in (int,float) or not math.isfinite(v) for v in point):
+                    raise ValueError('Invalid building polygon coordinate')
+                if not (-180<=point[0]<=180 and -90<=point[1]<=90):raise ValueError('Expected WGS84 building coordinates')
+        part=make_valid(Polygon([local(p) for p in rings[0]],[[local(p) for p in ring] for ring in rings[1:]]))
+        if part.is_empty or part.area<=0:raise ValueError('Empty building footprint')
+        parts.append(part)
+    polygon=make_valid(union_all(parts))
+    if polygon.is_empty or polygon.area<=0:raise ValueError('Empty building footprint')
+    return polygon
+
+
+from import_tunnel import ISLAND_BOUNDS, KOWLOON_BOUNDS, WEST_BOUNDS, NORTHWEST_BOUNDS, KWAI_CHUNG_BOUNDS, TSUEN_WAN_BOUNDS, WEST_COAST_BOUNDS, EAST_KOWLOON_BOUNDS
 ISLAND_BBOX = (ORIGIN[0]+ISLAND_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-ISLAND_BOUNDS[3]/111320,
                ORIGIN[0]+ISLAND_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-ISLAND_BOUNDS[1]/111320)
 
@@ -56,8 +78,35 @@ TSUEN_WAN_BBOX = (ORIGIN[0]+TSUEN_WAN_BOUNDS[0]/(111320*math.cos(math.radians(OR
 WEST_COAST_BBOX = (ORIGIN[0]+WEST_COAST_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-WEST_COAST_BOUNDS[3]/111320,
                    ORIGIN[0]+WEST_COAST_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-WEST_COAST_BOUNDS[1]/111320)
 
-def download_island(north=False, west=False, northwest=False, kwai_chung=False, tsuen_wan=False, west_coast=False):
-    bbox = WEST_COAST_BBOX if west_coast else TSUEN_WAN_BBOX if tsuen_wan else KWAI_CHUNG_BBOX if kwai_chung else NORTHWEST_BBOX if northwest else WEST_BBOX if west else KOWLOON_BBOX if north else ISLAND_BBOX
+EAST_KOWLOON_BBOX = (ORIGIN[0]+EAST_KOWLOON_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-EAST_KOWLOON_BOUNDS[3]/111320,
+                     ORIGIN[0]+EAST_KOWLOON_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-EAST_KOWLOON_BOUNDS[1]/111320)
+
+def download_island(north=False, west=False, northwest=False, kwai_chung=False, tsuen_wan=False, west_coast=False, east_kowloon=False):
+    bbox = EAST_KOWLOON_BBOX if east_kowloon else WEST_COAST_BBOX if west_coast else TSUEN_WAN_BBOX if tsuen_wan else KWAI_CHUNG_BBOX if kwai_chung else NORTHWEST_BBOX if northwest else WEST_BBOX if west else KOWLOON_BBOX if north else ISLAND_BBOX
+    target=ROOT/('Data/east-kowloon-buildings.geojson' if east_kowloon else 'Data/west-coast-buildings.geojson' if west_coast else 'Data/tsuen-wan-buildings.geojson' if tsuen_wan else 'Data/kwai-chung-buildings.geojson' if kwai_chung else 'Data/lai-chi-kok-buildings.geojson' if northwest else 'Data/west-kowloon-buildings.geojson' if west else 'Data/kowloon-north-buildings.geojson' if north else 'Data/island-buildings.geojson')
+    previous_bytes=target.read_bytes() if east_kowloon and target.exists() else None
+    previous=json.loads(previous_bytes) if previous_bytes else None
+    if previous is not None and not isinstance(previous,dict):raise ValueError('Invalid saved east-Kowloon building source')
+    previous_features=previous.get('features') if previous else []
+    previous_metadata=previous.get('metadata') if previous else {}
+    if previous is not None:
+        if previous.get('type')!='FeatureCollection' or not isinstance(previous_features,list) or not isinstance(previous_metadata,dict):
+            raise ValueError('Invalid saved east-Kowloon building source')
+        if any(not isinstance(f,dict) or not isinstance(f.get('properties'),dict) for f in previous_features):
+            raise ValueError('Invalid saved east-Kowloon building feature')
+        previous_ids=[f['properties'].get('OBJECTID') for f in previous_features]
+        if any(type(i) is not int for i in previous_ids) or len(set(previous_ids))!=len(previous_ids):
+            raise ValueError('Invalid or duplicate saved east-Kowloon building OBJECTID')
+        previous_csuids=[f['properties'].get('BuildingCSUID') for f in previous_features]
+        if any(not isinstance(uid,str) or not uid.strip() for uid in previous_csuids) or len(set(previous_csuids))!=len(previous_csuids):
+            raise ValueError('Invalid or duplicate saved east-Kowloon BuildingCSUID')
+        previous_provenance=previous_metadata.get('merge_provenance',{})
+        original_metadata=previous_provenance.get('preserved_source_metadata',previous_metadata) if isinstance(previous_provenance,dict) else previous_metadata
+        previous_bbox=original_metadata.get('bbox_wgs84') if isinstance(original_metadata,dict) else None
+        if not isinstance(previous_bbox,list) or len(previous_bbox)!=4 or any(type(v) not in (int,float) or not math.isfinite(v) for v in previous_bbox):
+            raise ValueError('Missing previous east-Kowloon query bounds')
+        previous_ids=set(previous_ids);previous_csuids=set(previous_csuids)
+        previous_north=local([previous_bbox[0],previous_bbox[3]])[1]
     query = dict(geometry=','.join(map(str,bbox)),geometryType='esriGeometryEnvelope',
                  inSR=4326,spatialRel='esriSpatialRelIntersects',where='1=1')
     def request(**params):
@@ -74,7 +123,7 @@ def download_island(north=False, west=False, northwest=False, kwai_chung=False, 
         if page.get('type')!='FeatureCollection' or not isinstance(page.get('features'),list) or not page['features']:
             raise ValueError('Invalid or empty building page before count reached')
         features.extend(page['features'])
-    ids=set()
+    ids=set();csuids=set();local_polygons=[]
     for feature in features:
         if not isinstance(feature,dict) or feature.get('type')!='Feature': raise ValueError('Invalid building feature')
         props=feature.get('properties');geometry=feature.get('geometry')
@@ -88,34 +137,86 @@ def download_island(north=False, west=False, northwest=False, kwai_chung=False, 
                 raise ValueError(f'Invalid building {field}')
         if props.get('BuildingNameEN') is not None and not isinstance(props['BuildingNameEN'],str):
             raise ValueError('Invalid building name')
-        if not isinstance(geometry,dict) or geometry.get('type')!='Polygon': raise ValueError('Expected a building Polygon')
-        rings=geometry.get('coordinates')
-        if not isinstance(rings,list) or not rings: raise ValueError('Missing building polygon rings')
-        for ring in rings:
-            if not isinstance(ring,list) or len(ring)<4 or ring[0]!=ring[-1]: raise ValueError('Invalid building polygon ring')
-            for point in ring:
-                if not isinstance(point,list) or len(point) not in (2,3) or any(type(v) not in (int,float) or not math.isfinite(v) for v in point):
-                    raise ValueError('Invalid building polygon coordinate')
-                if not (-180<=point[0]<=180 and -90<=point[1]<=90): raise ValueError('Expected WGS84 building coordinates')
+        if not isinstance(geometry,dict):raise ValueError('Missing building geometry')
         # Match the builder's repair step; source polygons need not already be valid.
-        polygon=make_valid(Polygon([local(p) for p in rings[0]],[[local(p) for p in ring] for ring in rings[1:]]))
-        if polygon.is_empty or polygon.area<=0: raise ValueError('Empty building footprint')
-        ids.add(props['OBJECTID'])
-    if len(features)!=count or len(ids)!=count: raise ValueError('Incomplete or duplicate building extract')
-    metadata=dict(source=SOURCE,bbox_wgs84=bbox,retrieved_utc=datetime.datetime.now(datetime.timezone.utc).isoformat())
-    target=ROOT/('Data/west-coast-buildings.geojson' if west_coast else 'Data/tsuen-wan-buildings.geojson' if tsuen_wan else 'Data/kwai-chung-buildings.geojson' if kwai_chung else 'Data/lai-chi-kok-buildings.geojson' if northwest else 'Data/west-kowloon-buildings.geojson' if west else 'Data/kowloon-north-buildings.geojson' if north else 'Data/island-buildings.geojson')
-    contents=json.dumps(dict(type='FeatureCollection',metadata=metadata,features=features),ensure_ascii=False,separators=(',',':'),allow_nan=False)
+        polygon=local_geometry(geometry)
+        ids.add(props['OBJECTID']);csuids.add(props['BuildingCSUID']);local_polygons.append(polygon)
+    if len(features)!=count or len(ids)!=count or len(csuids)!=count: raise ValueError('Incomplete or duplicate building extract')
+    retrieved_utc=datetime.datetime.now(datetime.timezone.utc).isoformat()
+    query_features_sha256=hashlib.sha256(json.dumps(features,ensure_ascii=False,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+    merged_features=features;merge_provenance=None
+    if previous is not None:
+        west_south=local([bbox[0],bbox[1]]);east_north=local([bbox[2],bbox[3]])
+        expanded_bounds=[west_south[0],east_north[1],east_north[0],west_south[1]]
+        northern_strip=box(expanded_bounds[0],expanded_bounds[1],expanded_bounds[2],previous_north)
+        additions=[];occupied_ids=set(previous_ids);next_internal_id=max(previous_ids|ids,default=0)+1;id_remaps=[]
+        for feature,polygon in zip(features,local_polygons):
+            props=feature['properties'];source_id=props['OBJECTID'];uid=props['BuildingCSUID']
+            if uid in previous_csuids or polygon.intersection(northern_strip).area<=.01:continue
+            if source_id in occupied_ids:
+                internal_id=next_internal_id;next_internal_id+=1
+                feature={**feature,'properties':{**props,'source_OBJECTID':source_id,'OBJECTID':internal_id}}
+                id_remaps.append({'BuildingCSUID':uid,'source_OBJECTID':source_id,'internal_OBJECTID':internal_id})
+            internal_id=feature['properties']['OBJECTID']
+            if internal_id in occupied_ids:raise ValueError(f'Duplicate merged east-Kowloon OBJECTID {internal_id}')
+            occupied_ids.add(internal_id);additions.append(feature)
+        merged_features=previous_features+additions
+        original_provenance=previous_metadata.get('merge_provenance',{})
+        original_provenance=original_provenance if isinstance(original_provenance,dict) else {}
+        original_source_sha256=original_provenance.get('preserved_source_sha256') if isinstance(original_provenance,dict) else None
+        original_source_metadata=original_provenance.get('preserved_source_metadata') if isinstance(original_provenance,dict) else None
+        original_feature_count=original_provenance.get('preserved_feature_count') if isinstance(original_provenance,dict) else None
+        previous_added_csuids=original_provenance.get('added_csuids')
+        if previous_added_csuids is None:
+            base_count=original_feature_count if type(original_feature_count) is int else len(previous_features)
+            if not 0<=base_count<=len(previous_features):raise ValueError('Invalid preserved east-Kowloon feature count')
+            previous_added_csuids=[f['properties']['BuildingCSUID'] for f in previous_features[base_count:]]
+        previous_remaps=original_provenance.get('objectid_remaps',[])
+        if not isinstance(previous_added_csuids,list) or any(not isinstance(uid,str) for uid in previous_added_csuids) or not isinstance(previous_remaps,list):
+            raise ValueError('Invalid previous east-Kowloon merge provenance')
+        missing_csuids=sorted(previous_csuids-csuids)
+        remaps=previous_remaps+id_remaps
+        merged_ids=[f['properties']['OBJECTID'] for f in merged_features]
+        merged_csuids=[f['properties']['BuildingCSUID'] for f in merged_features]
+        if len(set(merged_ids))!=len(merged_ids) or len(set(merged_csuids))!=len(merged_csuids):
+            raise ValueError('Duplicate identity in merged east-Kowloon source')
+        added_csuids=sorted(set(previous_added_csuids)|{f['properties']['BuildingCSUID'] for f in additions})
+        if not set(added_csuids).issubset(set(merged_csuids)):raise ValueError('Missing previously merged east-Kowloon addition')
+        added_features={f['properties']['BuildingCSUID']:f for f in merged_features if f['properties']['BuildingCSUID'] in set(added_csuids)}
+        added_objectids=sorted(f['properties'].get('source_OBJECTID',f['properties']['OBJECTID']) for f in added_features.values())
+        if len(added_features)!=len(added_csuids):raise ValueError('Duplicate east-Kowloon addition identity')
+        total_added=len(added_csuids)
+        merge_provenance=dict(strategy='preserve saved eastern features verbatim; append only unseen records intersecting the expanded northern strip',
+            preserved_source_sha256=original_source_sha256 or hashlib.sha256(previous_bytes).hexdigest(),
+            preserved_source_metadata=original_source_metadata or previous_metadata,
+            preserved_feature_count=original_feature_count or len(previous_features),
+            donor_source_sha256=hashlib.sha256(previous_bytes).hexdigest(),
+            donor_source_metadata={key:previous_metadata.get(key) for key in ('source','bbox_wgs84','retrieved_utc','query_feature_count','query_features_sha256')},
+            query_feature_count=count,query_features_sha256=query_features_sha256,
+            objectid_semantics='OBJECTID is the unique layout/cache key; source_OBJECTID records the upstream ID when a new feature ID collides with a preserved feature',
+            added_feature_count=total_added,cumulative_added_feature_count=total_added,incremental_added_feature_count=len(additions),added_csuids=added_csuids,
+            added_csuids_sha256=hashlib.sha256(json.dumps(added_csuids,separators=(',',':')).encode()).hexdigest(),
+            added_objectids_sha256=hashlib.sha256(json.dumps(added_objectids,separators=(',',':')).encode()).hexdigest(),
+            objectid_remaps=remaps,missing_service_csuids=missing_csuids,
+            geometry_vintage_semantics='preserved features retain their original source geometry and attributes; appended features use the recorded current query',
+            shared_height_ordering='The file-level retrieved_utc remains pinned to the preserved source snapshot so historical east-Kowloon heights keep their prior precedence',
+            expanded_bounds_local=expanded_bounds,previous_north_boundary_local_z=previous_north)
+    metadata=dict(source=SOURCE,bbox_wgs84=list(bbox),retrieved_utc=previous_metadata.get('retrieved_utc',retrieved_utc) if east_kowloon and previous is not None else retrieved_utc,
+                  query_feature_count=count,query_features_sha256=query_features_sha256)
+    if east_kowloon and previous is not None:metadata['query_retrieved_utc']=retrieved_utc
+    if merge_provenance is not None:metadata['merge_provenance']=merge_provenance
+    contents=json.dumps(dict(type='FeatureCollection',metadata=metadata,features=merged_features),ensure_ascii=False,separators=(',',':'),allow_nan=False)
     with tempfile.NamedTemporaryFile(dir=target.parent,prefix=target.name+'.',suffix='.part',delete=False) as staged:
         pending=Path(staged.name)
     try:
         pending.write_text(contents,encoding='utf-8')
         pending.replace(target)
     finally:pending.unlink(missing_ok=True)
-    print('WEST_COAST_BUILDINGS_DOWNLOADED:' if west_coast else 'TSUEN_WAN_BUILDINGS_DOWNLOADED:' if tsuen_wan else 'KWAI_CHUNG_BUILDINGS_DOWNLOADED:' if kwai_chung else 'NORTHWEST_BUILDINGS_DOWNLOADED:' if northwest else 'WEST_BUILDINGS_DOWNLOADED:' if west else 'NORTH_BUILDINGS_DOWNLOADED:' if north else 'ISLAND_BUILDINGS_DOWNLOADED:',count,flush=True)
+    print('EAST_KOWLOON_BUILDINGS_DOWNLOADED:' if east_kowloon else 'WEST_COAST_BUILDINGS_DOWNLOADED:' if west_coast else 'TSUEN_WAN_BUILDINGS_DOWNLOADED:' if tsuen_wan else 'KWAI_CHUNG_BUILDINGS_DOWNLOADED:' if kwai_chung else 'NORTHWEST_BUILDINGS_DOWNLOADED:' if northwest else 'WEST_BUILDINGS_DOWNLOADED:' if west else 'NORTH_BUILDINGS_DOWNLOADED:' if north else 'ISLAND_BUILDINGS_DOWNLOADED:',count,flush=True)
 
 
-def build(island=False, north=False, west=False, northwest=False, kwai_chung=False, tsuen_wan=False, west_coast=False):
-    raw = ROOT / ("Data/west-coast-buildings.geojson" if west_coast else "Data/tsuen-wan-buildings.geojson" if tsuen_wan else "Data/kwai-chung-buildings.geojson" if kwai_chung else "Data/lai-chi-kok-buildings.geojson" if northwest else "Data/west-kowloon-buildings.geojson" if west else "Data/kowloon-north-buildings.geojson" if north else "Data/island-buildings.geojson" if island else "Data/buildings.geojson")
+def build(island=False, north=False, west=False, northwest=False, kwai_chung=False, tsuen_wan=False, west_coast=False, east_kowloon=False):
+    raw = ROOT / ("Data/east-kowloon-buildings.geojson" if east_kowloon else "Data/west-coast-buildings.geojson" if west_coast else "Data/tsuen-wan-buildings.geojson" if tsuen_wan else "Data/kwai-chung-buildings.geojson" if kwai_chung else "Data/lai-chi-kok-buildings.geojson" if northwest else "Data/west-kowloon-buildings.geojson" if west else "Data/kowloon-north-buildings.geojson" if north else "Data/island-buildings.geojson" if island else "Data/buildings.geojson")
     features = json.loads(raw.read_text())["features"]
     roads = json.loads((ROOT / "Data/nathan-road.json").read_text())
     boundary = box(*(KOWLOON_BOUNDS if north else ISLAND_BOUNDS if island else roads['bounds']))
@@ -135,6 +236,9 @@ def build(island=False, north=False, west=False, northwest=False, kwai_chung=Fal
     if west_coast:
         coast=json.loads((ROOT/'Data/west-coast-coast.json').read_text())
         boundary=shape(coast['land']).difference(union_all([box(*TSUEN_WAN_BOUNDS),box(*KWAI_CHUNG_BOUNDS),box(*WEST_BOUNDS),box(*NORTHWEST_BOUNDS),box(*roads['bounds']),box(*KOWLOON_BOUNDS)]))
+    if east_kowloon:
+        coast=json.loads((ROOT/'Data/east-kowloon-coast.json').read_text())
+        boundary=shape(coast['land']).difference(union_all([box(*WEST_COAST_BOUNDS),box(*TSUEN_WAN_BOUNDS),box(*KWAI_CHUNG_BOUNDS),box(*WEST_BOUNDS),box(*NORTHWEST_BOUNDS),box(*roads['bounds']),box(*KOWLOON_BOUNDS)]))
     buffers = [LineString(roads["road_points"]).buffer(13.5, quad_segs=2, join_style="mitre")]
     for road in roads["side_roads"]:
         width = 18 if road["name"] in WIDE else 12
@@ -148,15 +252,13 @@ def build(island=False, north=False, west=False, northwest=False, kwai_chung=Fal
     turning_zone = LineString(roads["points"]).interpolate(503).buffer(32, quad_segs=8)
     turn_clearance = road_zone.buffer(2, quad_segs=2, join_style="mitre").intersection(turning_zone)
     exclusion = union_all([PARK, road_zone, turn_clearance])
-    source_polys = [make_valid(Polygon([local(p) for p in f["geometry"]["coordinates"][0]],
-                      [[local(p) for p in ring] for ring in f["geometry"]["coordinates"][1:]])) for f in features]
+    source_polys = [local_geometry(f["geometry"]) for f in features]
     base_sources = [raw] if island else [ROOT/'Data'/name for name in
-        ('buildings.geojson','kowloon-north-buildings.geojson','west-kowloon-buildings.geojson','lai-chi-kok-buildings.geojson','kwai-chung-buildings.geojson','tsuen-wan-buildings.geojson','west-coast-buildings.geojson')]
+        ('buildings.geojson','kowloon-north-buildings.geojson','west-kowloon-buildings.geojson','lai-chi-kok-buildings.geojson','kwai-chung-buildings.geojson','tsuen-wan-buildings.geojson','west-coast-buildings.geojson','east-kowloon-buildings.geojson')]
     snapshots = [json.loads(path.read_text()) for path in base_sources]
     snapshots.sort(key=lambda data: datetime.datetime.fromisoformat(data.get('metadata',{}).get('retrieved_utc','2026-09-13T00:00:00+00:00')))
     base_features = [f for snapshot in snapshots for f in snapshot['features']]
-    base_polys = source_polys if island else [make_valid(Polygon([local(p) for p in f['geometry']['coordinates'][0]],
-        [[local(p) for p in ring] for ring in f['geometry']['coordinates'][1:]])) for f in base_features]
+    base_polys = source_polys if island else [local_geometry(f['geometry']) for f in base_features]
     tree = STRtree(base_polys)
     parent = list(range(len(base_features)))
 
@@ -250,9 +352,9 @@ def build(island=False, north=False, west=False, northwest=False, kwai_chung=Fal
                 continue
             point = patch.representative_point()
             pavement_patches.append({"center": [point.x,point.y], "polygon": list(patch.exterior.coords)[:-1]})
-    assert (west_coast or tsuen_wan or kwai_chung or northwest or west or north or island or pavement_patches) and all(Polygon(p["polygon"]).is_valid for p in pavement_patches)
+    assert (east_kowloon or west_coast or tsuen_wan or kwai_chung or northwest or west or north or island or pavement_patches) and all(Polygon(p["polygon"]).is_valid for p in pavement_patches)
     names = {b["name"] for b in output}
-    if not (island or north or west or northwest or kwai_chung or tsuen_wan or west_coast):
+    if not (island or north or west or northwest or kwai_chung or tsuen_wan or west_coast or east_kowloon):
         assert len(features) == 1718 and len(output) > 900 and area > 650000
         assert any("MASTERPIECE" in n.upper() for n in names)
         assert max(b["height"] for b in output) > 240
@@ -261,27 +363,28 @@ def build(island=False, north=False, west=False, northwest=False, kwai_chung=Fal
     assert min(b["height"] for b in output) > 0
     meta = {"provider": "Lands Department, HKSAR Government / CSDI Portal", "source": SOURCE,
             "terms": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC", "retrieved_utc": json.loads(raw.read_text()).get('metadata',{}).get('retrieved_utc','2026-09-13'),
-            "source_sha256": hashlib.sha256(raw.read_bytes()).hexdigest(), "bbox_wgs84": WEST_COAST_BBOX if west_coast else TSUEN_WAN_BBOX if tsuen_wan else KWAI_CHUNG_BBOX if kwai_chung else NORTHWEST_BBOX if northwest else WEST_BBOX if west else KOWLOON_BBOX if north else ISLAND_BBOX if island else BBOX, "origin_wgs84": ORIGIN,
+            "source_sha256": hashlib.sha256(raw.read_bytes()).hexdigest(), "bbox_wgs84": EAST_KOWLOON_BBOX if east_kowloon else WEST_COAST_BBOX if west_coast else TSUEN_WAN_BBOX if tsuen_wan else KWAI_CHUNG_BBOX if kwai_chung else NORTHWEST_BBOX if northwest else WEST_BBOX if west else KOWLOON_BBOX if north else ISLAND_BBOX if island else BBOX, "origin_wgs84": ORIGIN,
             "source_parts": len(features), "rendered_parts": len(output), "source_parts_retained": len({b["id"] for b in output}),
             "source_parts_clipped": clipped, "fallback_height_parts": missing, "footprint_area_m2": round(area),
             "volume_m3": round(sum(p.area*b["height"] for p,b in zip(actual,output))),
             "styles": dict(Counter(b["style"] for b in output)),
             "note": "Derived game massing, not survey-grade reconstruction. Flat ground; connected-part minimum base datum; upper-envelope podium/tower silhouettes. Road clearance 3.5m beyond authored carriageways including the Cross-Harbour surface approaches, plus 2m within 32m of the Nathan/Granville bus turn; authored park omitted. Missing heights use storeys x 3.2m or 9.6m. Facades are generated artwork, not surveyed photographs."}
     meta["small_pavement_gaps_filled"] = len(pavement_patches)
-    if island or north or west or northwest or kwai_chung or tsuen_wan or west_coast:
+    if island or north or west or northwest or kwai_chung or tsuen_wan or west_coast or east_kowloon:
         meta['note'] = 'Derived expansion corridor massing on the authored land apron, not survey-grade reconstruction. Original WGS84 footprints and relative roof heights; flat ground; connected-part minimum base datum and upper-envelope podium/tower silhouettes. Buildings clipped to the land boundary and 3.5m beyond the surface carriageways. Missing heights use storeys x 3.2m or 9.6m. Facades, paving and vegetation are authored; selected street centrelines come from the Transport Department; the coastline remains authored.'
-    if west or northwest or kwai_chung or tsuen_wan or west_coast:meta['note']=meta['note'].replace('authored land apron','government-derived land boundary').replace('the coastline remains authored','the western coastline comes from LandsD iB1000 Shoreline and CartoHydroLine seawall/high-water features, with recorded short gap repairs; prior building regions are excluded to avoid duplicate geometry')
+    if east_kowloon or west or northwest or kwai_chung or tsuen_wan or west_coast:meta['note']=meta['note'].replace('authored land apron','government-derived land boundary').replace('the coastline remains authored','the western coastline comes from LandsD iB1000 Shoreline and CartoHydroLine seawall/high-water features, with recorded short gap repairs; prior building regions are excluded to avoid duplicate geometry')
+    if east_kowloon:meta['note']=meta['note'].replace('western coastline','eastern coastline')
     if west_coast:meta['note']=meta['note'].replace('with recorded short gap repairs','plus connected CartoLandCoverLine rock outlines and pier outlines, with recorded authored gap repairs up to 115.34 m')
     if island:
         meta['note']=meta['note'].replace('authored land apron','government-derived land boundary').replace('the coastline remains authored','the island shoreline comes from LandsD iB1000 with recorded authored ferry-terminal and tunnel-mouth joins')
         meta['coast_sha256']=hashlib.sha256((ROOT/'Data/island-coast.json').read_bytes()).hexdigest()
     else:
         meta['base_sources_sha256'] = {str(path.relative_to(ROOT)):hashlib.sha256(path.read_bytes()).hexdigest() for path in base_sources}
-        meta['note'] += ' Base datums are reconciled across all seven Kowloon extracts before regional clipping; duplicate BuildingCSUID records share one group. TopHeight and fallback Storeys use the newest retrieved_utc record per BuildingCSUID (original undated extract: 2026-09-13 UTC; ties prefer west coast, Tsuen Wan, Kwai Chung, northwest, west, north, original). Each region retains its own source footprint and OBJECTID.'
-    (ROOT / ("Data/west-coast-layout.json" if west_coast else "Data/tsuen-wan-layout.json" if tsuen_wan else "Data/kwai-chung-layout.json" if kwai_chung else "Data/lai-chi-kok-layout.json" if northwest else "Data/west-kowloon-layout.json" if west else "Data/kowloon-north-layout.json" if north else "Data/island-building-layout.json" if island else "Data/building-layout.json")).write_text(json.dumps({"metadata": meta, "buildings": output, "pavement_patches": pavement_patches}, ensure_ascii=False, separators=(",", ":")))
+        meta['note'] += ' Base datums are reconciled across all eight Kowloon extracts before regional clipping; duplicate BuildingCSUID records share one group. TopHeight and fallback Storeys use the newest retrieved_utc record per BuildingCSUID (original undated extract: 2026-09-13 UTC; ties prefer east Kowloon, west coast, Tsuen Wan, Kwai Chung, northwest, west, north, original). Each region retains its own source footprint and OBJECTID.'
+    (ROOT / ("Data/east-kowloon-layout.json" if east_kowloon else "Data/west-coast-layout.json" if west_coast else "Data/tsuen-wan-layout.json" if tsuen_wan else "Data/kwai-chung-layout.json" if kwai_chung else "Data/lai-chi-kok-layout.json" if northwest else "Data/west-kowloon-layout.json" if west else "Data/kowloon-north-layout.json" if north else "Data/island-building-layout.json" if island else "Data/building-layout.json")).write_text(json.dumps({"metadata": meta, "buildings": output, "pavement_patches": pavement_patches}, ensure_ascii=False, separators=(",", ":")))
     print("BUILDING_LAYOUT_OK:", json.dumps(meta, ensure_ascii=False))
 
 
 if __name__ == "__main__":
-    if '--download' in sys.argv: download_island('--north' in sys.argv, '--west' in sys.argv, '--northwest' in sys.argv, '--kwai-chung' in sys.argv, '--tsuen-wan' in sys.argv, '--west-coast' in sys.argv)
-    build('--island' in sys.argv, '--north' in sys.argv, '--west' in sys.argv, '--northwest' in sys.argv, '--kwai-chung' in sys.argv, '--tsuen-wan' in sys.argv, '--west-coast' in sys.argv)
+    if '--download' in sys.argv: download_island('--north' in sys.argv, '--west' in sys.argv, '--northwest' in sys.argv, '--kwai-chung' in sys.argv, '--tsuen-wan' in sys.argv, '--west-coast' in sys.argv, '--east-kowloon' in sys.argv)
+    build('--island' in sys.argv, '--north' in sys.argv, '--west' in sys.argv, '--northwest' in sys.argv, '--kwai-chung' in sys.argv, '--tsuen-wan' in sys.argv, '--west-coast' in sys.argv, '--east-kowloon' in sys.argv)

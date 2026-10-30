@@ -5,6 +5,7 @@ using System.Linq;
 
 public partial class Hud : Control
 {
+    private const string DataCredit="Maps / buildings / parks © HKSAR Govt · TD / LandsD iB1000 · 28 Oct 2026";
     public Main Game = null!;
     private readonly SystemFont _font = new() { FontNames = new[] { "Avenir Next", "Noto Sans", "sans-serif" } };
     private readonly Color _paper = new("f4edda"), _muted = new("afc0b8"), _mint = new("95dbc0");
@@ -57,6 +58,11 @@ public partial class Hud : Control
     public static Vector2 MapStopLabelAt(int count,int i)=>new(1105,228+(count-1-i)*(count>4?22:28));
 
     private static readonly (string Label,Vector3 At,Vector2 Offset)[] MapDistricts={
+        ("KOWLOON CITY",new Vector3(1750,0,-3900),new Vector2(160,-60)),
+        ("TO KWA WAN",new Vector3(1900,0,-2700),new Vector2(155,-65)),
+        ("HUNG HOM",new Vector3(1300,0,-1400),new Vector2(180,-80)),
+        ("WHAMPOA",new Vector3(1850,0,-1100),new Vector2(160,-65)),
+        ("WONG TAI SIN",new Vector3(1740,0,-5920),new Vector2(-30,-46)),
         ("SHAM TSENG",new Vector3(-11720,0,-7940),new Vector2(-100,65)),
         ("TING KAU",new Vector3(-9400,0,-8260),new Vector2(-110,50)),
         ("TSUEN WAN",new Vector3(-6250,0,-8870),new Vector2(-150,-5)),
@@ -70,7 +76,7 @@ public partial class Hud : Control
         ("WEST KOWLOON",new Vector3(-1420,0,-870),new Vector2(-265,-8)),
         ("MONG KOK",new Vector3(-300,0,-2930),new Vector2(120,-5)),
         ("YAU MA TEI",new Vector3(-140,0,-1940),new Vector2(135,0)),
-        ("JORDAN",new Vector3(-70,0,-1110),new Vector2(205,-20)),
+        ("JORDAN",new Vector3(-70,0,-1110),new Vector2(205,4)),
         ("TSIM SHA TSUI",new Vector3(-180,0,-470),new Vector2(-200,10)),
         ("TSIM SHA TSUI EAST",new Vector3(590,0,-460),new Vector2(170,62)),
         ("CROSS-HARBOUR TUNNEL · 1.86 km",new Vector3(975,0,400),new Vector2(100,55)),
@@ -226,7 +232,7 @@ public partial class Hud : Control
             Panel(420,757,565,46);
             Text("ONCOMING LANE  —  Drive on the left",459,786,17,new Color("f2b16c"));
         }
-        Text("Maps / buildings / parks © HKSAR Govt · TD / LandsD · 19 Oct 2026",31,889,9,_muted);
+        Text(DataCredit,31,889,9,_muted);
         if(Game.Complete)DrawResults();
         else if(Game.Paused)
         {
@@ -303,7 +309,7 @@ public partial class Hud : Control
                 Text(label,labelAt.X,labelAt.Y,13,_muted);
             }
             Text($"Approx. {bounds.Size.X/1000:0.00} km east–west  ×  {bounds.Size.Y/1000:0.00} km north–south",112,759,16,_paper);
-            Text("T Tunnel • I Island • J Central • K Nathan • L West • N Lai Chi Kok • B Kwai Chung • U Tsuen Wan • O Coast (stopped)",112,784,13,_mint);
+            Text("T Tunnel • I Island • J Central • K Nathan • L West • N Lai Chi Kok • B Kwai Chung • U Tsuen Wan • O Coast • P East • Y Wong Tai Sin (stopped)",112,784,13,_mint);
         }
         var bus=Point(Game.Bus.GlobalPosition);
         DrawCircle(bus,9,_panel);

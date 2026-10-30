@@ -1,6 +1,10 @@
 # Government building layout — 13 September 2026
 
-The [15 October coastal expansion](WEST_COAST_EXPANSION.md) adds a seventh Kowloon source extract and a Ting Kau / Sham Tseng building GLB. The 18 October Mong Kok correction brings current scene totals to 31,404 parts and 2,456 render/collision chunk pairs. Earlier counts below describe their recorded snapshots.
+
+The [24 October Wong Tai Sin extension](WONG_TAI_SIN_EXPANSION.md) brings the current total to **39,946 derived parts in 3,135 render/collision chunk pairs**, including 8,528 eastern parts. Its northern asset contains 1,666 parts in 202 chunk pairs. Earlier counts below apply to their recorded snapshots.
+
+The [21 October eastern Kowloon expansion](EAST_KOWLOON_EXPANSION.md) adds the eighth Kowloon source extract and three district GLBs. That snapshot: **38,259 derived parts in 2,932 render/collision chunk pairs**, including 6,840 new eastern parts. Earlier counts below apply to their recorded snapshots.
+The [15 October coastal expansion](WEST_COAST_EXPANSION.md) adds a seventh Kowloon source extract and a Ting Kau / Sham Tseng building GLB. The 18 October Mong Kok correction recorded 31,404 parts and 2,456 render/collision chunk pairs at that snapshot. Earlier counts below describe their recorded snapshots.
 
 The 8 October 2026 [government-map corrections](GOVERNMENT_MAP_FIXES.md) supersede the earlier island boundary, flattened elevated-road geometry and exact-metre-scale wording below. Earlier verification records apply to their original snapshots.
 

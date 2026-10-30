@@ -86,14 +86,15 @@ public partial class Hud
                 Text($"{card.Path.Length/1000:0.00} km   •   {card.Stops.Count} stops   •   {card.Difficulty}",r.Position.X+96,r.Position.Y+80,13,_mint);
                 Text(card.Summary,r.Position.X+96,r.Position.Y+99,12,_muted);
             }
-            var free=RouteCard(Game.Routes.Count);
+            var free=new Rect2(60,190+Game.Routes.Count*124,520,120);
             Card(free,false);
             DrawRect(new(free.Position,new(76,free.Size.Y)),new Color("41504b"));
             Text("HK",free.Position.X+16,free.Position.Y+64,26);
             Text("Free drive",free.Position.X+96,free.Position.Y+34,20);
             Text("No stops or scoring. Press a key while stopped:",free.Position.X+96,free.Position.Y+57,13,_muted);
             Text("T Tunnel   I Island   J Central   K Nathan   L West",free.Position.X+96,free.Position.Y+80,12,_paper);
-            Text("N Lai Chi Kok   B Kwai Chung   U Tsuen Wan   O Coast",free.Position.X+96,free.Position.Y+99,12,_paper);
+            Text("N Lai Chi Kok   B Kwai Chung   U Tsuen Wan",free.Position.X+96,free.Position.Y+95,11,_paper);
+            Text("O Coast   P East   Y Wong Tai Sin",free.Position.X+96,free.Position.Y+108,11,_paper);
         }
         Panel(620,64,760,756);
         Text($"{route.Number}   {route.Name}",640,98,18);
@@ -113,7 +114,7 @@ public partial class Hud
         Panel(60,836,1320,40);
         Text(Game.Briefing?"ENTER  Start driving        C  Camera        ESC  Back to routes        V  Sound":
             $"↑ / ↓  Choose        1–{Game.Routes.Count}  Pick        ENTER  Briefing        Click a card to select        V  "+(AudioServer.IsBusMute(0)?"Unmute":"Sound"),80,862,13,_paper);
-        Text("Roads / buildings / coast © HKSAR Govt · TD / LandsD · 15 Oct 2026",31,889,9,_muted);
+        Text(DataCredit,31,889,9,_muted);
     }
 
     private void DrawBriefing(ServiceRoute route)

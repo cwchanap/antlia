@@ -6,6 +6,7 @@ from pathlib import Path
 from mathutils import Vector
 
 ROOT = Path('/Users/chanwaichan/workspace/antila')
+SINGLE_LANE_APPROACHES = {'TD_103438','TD_103954'}
 data = json.loads((ROOT/'Data/cross-harbour.json').read_text())
 previous = bpy.context.window.scene
 if previous.name.startswith('Antila_CrossHarbour'):
@@ -85,7 +86,10 @@ try:
                 a=Vector((a[0],0,a[1]));b=Vector((b[0],0,b[1]));side=(b-a).cross(Vector((0,1,0))).normalized()*.3
                 k=len(vs)
                 vs.extend(p+side*s+Vector((0,h,0)) for p in (a,b) for s,h in [(-1,-2.2),(1,-2.2),(1,1),(-1,1)])
-                fs.extend(tuple(k+j for j in face) for face in [(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)])
+                # Outward faces make the wall top and both approaches collide from outside.
+                fs.extend(tuple(k+j for j in reversed(face)) for face in [(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)])
+                top=fs[-2]
+                assert (vs[top[1]]-vs[top[0]]).cross(vs[top[2]]-vs[top[0]]).y>0, 'Seawall top faces inward'
         mesh(tag,vs,fs,exterior)
     vertices = [Vector((p[0],.035,p[1])) for tri in data['surface_triangles'] for p in tri]
     faces=[]
@@ -210,7 +214,7 @@ try:
                     # Solid lane divider inside the tunnel, broken lines on approaches.
                     if not road['tunnel'] and i%3:continue
                     if not road['tunnel'] and any(((points[i]+points[i+1])/2-p).length<12 for p in junctions):continue
-                    specs=[(-.065,.065,.055)]
+                    specs=[] if road['id'] in SINGLE_LANE_APPROACHES and road['width']<5 else [(-.065,.065,.055)]
                     if road['tunnel']:specs += [(-3.78,-3.66,.055),(3.66,3.78,.055)]
                     for left,right,y in specs:
                         a=points[i];b=points[i+1]

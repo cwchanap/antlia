@@ -34,7 +34,7 @@
       "start": 22,
       "legs": [{"drive": 0}, {"drive": 1, "to": 480}],
       "stops": [
-        {"name": "Hong Chong Road", "zh": "康莊道", "distance": 435, "passengers": 9},
+        {"name": "Hong Chong Road", "zh": "康莊道", "distance": 525, "passengers": 9},
         {"name": "Tunnel Interchange", "zh": "紅隧轉車站", "distance": 770, "passengers": 14},
         {"name": "Hung Hing Road", "zh": "鴻興道", "distance": 3040, "passengers": 6},
         {"name": "Marsh Road", "zh": "馬師道", "distance": 3388, "passengers": 4}

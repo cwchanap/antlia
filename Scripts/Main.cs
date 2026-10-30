@@ -36,7 +36,7 @@ public partial class Main : Node3D
 
     public override void _Ready()
     {
-        SelfTest = OS.GetCmdlineUserArgs().Contains("--map-check") || OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--west-coast-check") || OS.GetCmdlineUserArgs().Contains("--tsuen-wan-check") || OS.GetCmdlineUserArgs().Contains("--hud-check") || OS.GetCmdlineUserArgs().Contains("--restart-check") || OS.GetCmdlineUserArgs().Contains("--route-check") || OS.GetCmdlineUserArgs().Contains("--stop-survey");
+        SelfTest = OS.GetCmdlineUserArgs().Contains("--map-check") || OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--east-kowloon-check") || OS.GetCmdlineUserArgs().Contains("--wong-tai-sin-check") || OS.GetCmdlineUserArgs().Contains("--west-coast-check") || OS.GetCmdlineUserArgs().Contains("--tsuen-wan-check") || OS.GetCmdlineUserArgs().Contains("--hud-check") || OS.GetCmdlineUserArgs().Contains("--restart-check") || OS.GetCmdlineUserArgs().Contains("--route-check") || OS.GetCmdlineUserArgs().Contains("--stop-survey");
         RegisterInput();
         Map = new RoadMap();
         PrepareParkEntrances();
@@ -44,6 +44,7 @@ public partial class Main : Node3D
         BuildGovernmentBuildings();
         LoadRoutes(); // Reserve service stop space before placing decorative street furniture.
         BuildMongKokOpenSpaces();
+        BuildEasternOpenSpaces();
         BuildHarbourScenery();
         BuildStreet();
         BuildNeighborhoods();
@@ -67,6 +68,7 @@ public partial class Main : Node3D
         UpdateCamera(1, true);
         if(!_harbourLaunchConsumed && OS.GetCmdlineUserArgs().Contains("--harbour"))
         { _harbourLaunchConsumed=true;StartHarbourDrive(); }
+        if(OS.GetCmdlineUserArgs().Contains("--east-kowloon-review"))CallDeferred(MethodName.CaptureEastKowloon);
         if(OS.GetCmdlineUserArgs().Contains("--harbour-review"))CallDeferred(MethodName.CaptureHarbour);
         if (SelfTest) CallDeferred(MethodName.RunChecks);
         if (OS.GetCmdlineUserArgs().Contains("--capture")) CallDeferred(MethodName.CaptureViews);
@@ -76,7 +78,7 @@ public partial class Main : Node3D
         if (OS.GetCmdlineUserArgs().Contains("--building-review") || OS.GetCmdlineUserArgs().Contains("--footpath-review") || OS.GetCmdlineUserArgs().Contains("--road-review")) CallDeferred(MethodName.ReviewScenery);
         // A restart replays the chosen route; a fresh launch opens route select unless a check or capture drives it.
         if(_pendingRoute>=0)BeginRoute(_pendingRoute);
-        else if(!SelfTest && !OS.GetCmdlineUserArgs().Any(a=>a is "--harbour" or "--harbour-review" or "--capture" or "--audio-review" or "--signal-capture" or "--building-review" or "--footpath-review" or "--road-review"))ShowRouteSelect();
+        else if(!SelfTest && !OS.GetCmdlineUserArgs().Any(a=>a is "--harbour" or "--harbour-review" or "--east-kowloon-review" or "--capture" or "--audio-review" or "--signal-capture" or "--building-review" or "--footpath-review" or "--road-review"))ShowRouteSelect();
         GD.Print($"ANTILA_READY: government map loaded; {Routes.Count} routes, {Routes.Sum(r=>r.Stops.Count)} stops; Blender GLBs; C# driving");
     }
 
@@ -85,7 +87,7 @@ public partial class Main : Node3D
         foreach (var (name, key) in new (string, Key)[] {
             ("accelerate", Key.W), ("brake", Key.S), ("steer_left", Key.A), ("steer_right", Key.D),
             ("handbrake", Key.Space), ("doors", Key.E), ("camera", Key.C), ("reverse", Key.Q),
-            ("tunnel", Key.T), ("island", Key.I), ("central", Key.J), ("kowloon", Key.K), ("west", Key.L), ("northwest", Key.N), ("kwai_chung", Key.B), ("tsuen_wan", Key.U), ("west_coast", Key.O), ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V),
+            ("tunnel", Key.T), ("island", Key.I), ("central", Key.J), ("kowloon", Key.K), ("west", Key.L), ("northwest", Key.N), ("kwai_chung", Key.B), ("tsuen_wan", Key.U), ("west_coast", Key.O), ("east_kowloon", Key.P), ("wong_tai_sin", Key.Y), ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V),
             ("routes", Key.Tab), ("confirm", Key.Enter), ("menu_up", Key.Up), ("menu_down", Key.Down) })
         {
             if (InputMap.HasAction(name)) continue;
@@ -249,25 +251,7 @@ public partial class Main : Node3D
             for (int x=-8;x<=8;x+=2) Mark(s,x,1,3.6f,"dedec7");
             Mark(s-7,-5,9,.24f,"e3dfc9");
         }
-        var bounds=Map.Bounds.Grow(22);
-        foreach(bool vertical in new[]{false,true})
-        foreach(float edge in vertical?new[]{bounds.Position.X,bounds.End.X}:new[]{bounds.Position.Y,bounds.End.Y})
-        {
-            float low=vertical?bounds.Position.Y:bounds.Position.X,high=vertical?bounds.End.Y:bounds.End.X,cursor=low;
-            void Barrier(float start,float end)
-            {
-                if(end<=start)return;
-                Box(this,vertical?new(edge,.65f,(start+end)/2):new((start+end)/2,.65f,edge),
-                    vertical?new(.6f,1.3f,end-start):new(end-start,1.3f,.6f),"bb653f",true);
-            }
-            foreach(var p in HarbourRoads.Where(r=>!r.Tunnel).SelectMany(r=>r.Points)
-                .Where(p=>Mathf.Abs((vertical?p.X:p.Z)-edge)<8).OrderBy(p=>vertical?p.Z:p.X))
-            {
-                float along=vertical?p.Z:p.X;
-                Barrier(cursor,Mathf.Min(along-12,high));cursor=Mathf.Max(cursor,along+12);
-            }
-            Barrier(cursor,high);
-        }
+        // The harbour model encloses the joined mainland; the original district is internal.
 
     }
 
@@ -467,6 +451,8 @@ public partial class Main : Node3D
         if(e.IsActionPressed("northwest")){StartHarbourDrive(8);return;}
         if(e.IsActionPressed("kwai_chung")){StartHarbourDrive(9);return;}
         if(e.IsActionPressed("tsuen_wan")){StartHarbourDrive(10);return;}
+        if(e.IsActionPressed("east_kowloon")){StartHarbourDrive(12);return;}
+        if(e.IsActionPressed("wong_tai_sin")){StartHarbourDrive(13);return;}
         if(e.IsActionPressed("west_coast")){StartHarbourDrive(11);return;}
         if(e.IsActionPressed("routes") && !MapOpen)
         {
@@ -796,11 +782,13 @@ public partial class Main : Node3D
             if(OS.GetCmdlineUserArgs().Contains("--hud-check")){CheckHud();await CheckReviewRegressions();QuitGame();return;}
             if(OS.GetCmdlineUserArgs().Contains("--map-check")){CheckGovernmentMap();QuitGame();return;}
             CheckStreetClearance();
-            if(OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--west-coast-check") || OS.GetCmdlineUserArgs().Contains("--tsuen-wan-check")){await CheckHarbour();QuitGame();return;}
+            if(OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--east-kowloon-check") || OS.GetCmdlineUserArgs().Contains("--wong-tai-sin-check") || OS.GetCmdlineUserArgs().Contains("--west-coast-check") || OS.GetCmdlineUserArgs().Contains("--tsuen-wan-check")){await CheckHarbour();QuitGame();return;}
             CheckRoadMarkings();
             if(OS.GetCmdlineUserArgs().Contains("--road-check")) { QuitGame(); return; }
             await CheckBuildings();
             CheckMongKokOpenSpaces();
+            CheckEasternOpenSpaces();
+            await CheckPocketGardenRendering();
             CheckAssetDetails();
             await CheckFootpaths();
             if(OS.GetCmdlineUserArgs().Contains("--footpath-check")) { QuitGame(); return; }
@@ -862,9 +850,9 @@ public partial class Main : Node3D
             initial=Bus.Position;
             for(int i=0;i<30;i++)await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
             Check(Bus.Position.Z>initial.Z+1,"physical reverse travel");
-            Bus.ResetAt(new Vector3(Map.Bounds.End.X+7,0,-550),-Mathf.Pi/2);
+            Bus.ResetAt(EastBoundaryProbe-Vector3.Right*15,-Mathf.Pi/2);
             for(int i=0;i<85;i++)await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
-            Check(Bus.Collisions>0 && Bus.Position.X<Map.Bounds.End.X+17,$"outer barrier must block the bus: contacts={Bus.Collisions}, position={Bus.Position}");
+            Check(Bus.Collisions>0 && Bus.Position.X<EastBoundaryProbe.X-2,$"outer barrier must block the bus: contacts={Bus.Collisions}, position={Bus.Position}");
             Bus.TestThrottle=0;Bus.TestBrake=0;
             await CheckSideStreet("HAIPHONG ROAD",350,true);
             await CheckSideStreet("GRANVILLE ROAD",503,false);
@@ -972,7 +960,7 @@ public partial class Main : Node3D
         CurrentStreet();
         Check(_streetLookupPosition==Bus.Position,"Crossing the below-ground cutoff must bypass the movement threshold");
         var unnamed=HarbourRoads.Where(r=>r.Name is "-99" or "&lt;Null&gt;").ToArray();
-        Check(unnamed.Count(r=>r.Name=="&lt;Null&gt;")==2,"Both Ting Kau unnamed connectors must be covered");
+        Check(unnamed.Count(r=>r.Name=="&lt;Null&gt;")==13,"Two Ting Kau connectors, eight eastern roundabout sections and three Kwai Chung roundabout sections must be covered");
         foreach(var road in unnamed)
         {
             Bus.Position=road.Points[road.Points.Count/2];
@@ -982,7 +970,7 @@ public partial class Main : Node3D
         Check(CurrentStreet()=="NATHAN ROAD","Named street must restore after an unnamed connector");
         Bus.GlobalTransform=saved;NoticeTime=notice;HarbourDrive=harbour;StopIndex=stopIndex;
         if(failures.Count>0)throw new Exception(string.Join("; ",failures));
-        GD.Print($"ANTILA_HUD_CHECKS_OK: north/south correct and oncoming lanes in both modes; turning/junction guards; island, depth and endpoint exploration; H1 distance/boarding/missed-stop guidance; street cache movement and vertical/route jumps; {unnamed.Length} unnamed links including both Ting Kau connectors and named-street restore");
+        GD.Print($"ANTILA_HUD_CHECKS_OK: north/south correct and oncoming lanes in both modes; turning/junction guards; island, depth and endpoint exploration; H1 distance/boarding/missed-stop guidance; street cache movement and vertical/route jumps; {unnamed.Length} unnamed links including Ting Kau and eastern roundabouts; named-street restore");
     }
 
     private async System.Threading.Tasks.Task CheckReviewRegressions()

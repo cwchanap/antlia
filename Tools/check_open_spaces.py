@@ -15,10 +15,55 @@ from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 import import_open_spaces as importer
+from shapely import union_all
+from shapely.geometry import Polygon, Point, LineString
+
+
+def check_gardens(source,target):
+    raw=json.loads(source);data=json.loads(target)
+    expected={'1503005143':3646.11,'1503005266':3918.03,'1503005193':716.70,
+              '1503005468':2267.98,'1810041992':1757.65}
+    assert {g['site'] for g in data['gardens']}==set(expected)
+    assert len(data['surfaces'])==17 and len(data['sports'])==15 and len(data['play_areas'])==1
+    assert sum(s['fixtures'] for s in data['sites'] if s['id'] not in expected)==273
+    def poly(rings):return Polygon(rings[0],rings[1:])
+    buildings=union_all([poly(b['rings']) for name in ('kowloon-north-layout','west-kowloon-layout')
+                        for b in json.loads((importer.ROOT/f'Data/{name}.json').read_text())['buildings']])
+    roads=union_all([LineString([(p[0],p[2]) for p in r['points']]).buffer(max(12,r['width'])/2+3.5,join_style='mitre')
+                    for r in json.loads((importer.ROOT/'Data/cross-harbour.json').read_text())['roads']
+                    if not r['tunnel'] or r.get('ramp',False)])
+    for garden in data['gardens']:
+        uid=garden['site'];parts=[]
+        for f in raw['features']:
+            if f['properties'].get('SITEID')!=uid:continue
+            rings=f['geometry']['coordinates']
+            parts.append(poly([[importer.local(p) for p in ring] for ring in rings]))
+        site=union_all(parts);paths=union_all([poly(r) for r in garden['paths']]);access=union_all([poly(r) for r in garden['access']])
+        assert abs(site.area-expected[uid])<.02,uid+': source tile pieces lost'
+        assert union_all([poly(r) for r in garden['rings']]).symmetric_difference(site).area<.01
+        assert paths.area>80 and paths.difference(site).area<.01
+        assert paths.intersection(buildings).area<.01 and paths.intersection(roads).area<.01
+        fixtures=[f for f in data['fixtures'] if f['site']==uid]
+        assert len(fixtures)>=3 and any(f['asset']=='bench' for f in fixtures)
+        assert any(f['asset'] in ('street-tree','banyan','planter') for f in fixtures)
+        for f in fixtures:
+            p=Point(f['position']);r=f['radius']
+            assert site.covers(p.buffer(r)),uid+': furniture leaves source boundary'
+            assert access.distance(p)>=r-.01,uid+': entrance obstructed'
+            assert buildings.distance(p)>r and roads.distance(p)>r
+            if f['asset'] in ('street-tree','banyan'):assert paths.distance(p)>=r,uid+': tree on path'
+    play=data['play_areas'][0];assert play['site']=='1503005266' and play['kind']=='authored_play'
+    pad=poly(play['rings']);garden=next(g for g in data['gardens'] if g['site']==play['site'])
+    assert union_all([poly(r) for r in garden['rings']]).covers(pad)
+    assert pad.intersection(union_all([poly(r) for r in garden['paths']])).area<.01
+    assert pad.intersection(buildings).area<.01 and pad.intersection(roads).area<.01
+    assert abs(sum(Polygon(t).area for t in play['triangles'])-140)<.01
+    print('ANTILA_POCKET_GARDEN_DATA_OK: five complete source sites; bounded paving, planting, clear access and separate authored play pad')
 
 
 def check(cache,manifest_path):
     source=importer.SOURCE.read_bytes();target=importer.TARGET.read_bytes()
+    check_gardens(source,target)
     manifest=json.loads(manifest_path.read_text())
     # A successful refresh must actually replace different bytes and update the source hash.
     manifest['retrieved_utc']='2099-01-01T00:00:00+00:00'

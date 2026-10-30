@@ -1,8 +1,10 @@
 """Regress building downloads and regional heights without changing shipped data."""
 import copy
 import contextlib
+import hashlib
 import io
 import json
+import math
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -81,6 +83,100 @@ def check_download():
     print(f'ANTILA_BUILDING_DOWNLOAD_OK: seven regional paginated refreshes; {len(rejected)} rejected responses and two file failures preserve cache bytes')
 
 
+def check_east_kowloon_merge():
+    root=importer.ROOT
+    original=json.loads((root/'Data/east-kowloon-buildings.geojson').read_text())
+    saved_metadata=original['metadata'].get('merge_provenance',{}).get('preserved_source_metadata',original['metadata'])
+    old_bbox=saved_metadata['bbox_wgs84']
+    old_north=importer.local([old_bbox[0],old_bbox[3]])[1]
+
+    def geo(px,pz):
+        return [importer.ORIGIN[0]+px/(111320*math.cos(math.radians(importer.ORIGIN[1]))),
+                importer.ORIGIN[1]-pz/111320]
+    def feature(object_id,x,z,csuid=None):
+        ring=[geo(x-4,z-4),geo(x+4,z-4),geo(x+4,z+4),geo(x-4,z+4)]
+        ring.append(ring[0])
+        return {'type':'Feature','properties':{'OBJECTID':object_id,'BuildingCSUID':csuid or f'east-{object_id}',
+                'BuildingBlockType':'Building','BaseHeight':4,'TopHeight':12,'Storeys':3,'BuildingNameEN':f'Building {object_id}'},
+                'geometry':{'type':'Polygon','coordinates':[ring]}}
+
+    old_features=[feature(71001,1000,-1500),feature(71002,1250,-4300)]
+    previous={'type':'FeatureCollection','metadata':{'source':importer.SOURCE,'bbox_wgs84':old_bbox,
+              'retrieved_utc':'2026-10-21T07:10:03+00:00'},'features':old_features}
+    planned_bounds=(550,-6400,3150,-100)
+    southwest=geo(planned_bounds[0],planned_bounds[3]);northeast=geo(planned_bounds[2],planned_bounds[1])
+    planned_bbox=(southwest[0],southwest[1],northeast[0],northeast[1])
+    northern=feature(71002,1500,(planned_bounds[1]+old_north)/2,'east-new-81001')
+    southern=feature(81002,1800,-2500)
+    multipart=feature(81003,1600,(planned_bounds[1]+old_north)/2)
+    second_part=feature(81003,1650,(planned_bounds[1]+old_north)/2)
+    multipart['geometry']={'type':'MultiPolygon','coordinates':[multipart['geometry']['coordinates'],second_part['geometry']['coordinates']]}
+    local_multipart=importer.local_geometry(multipart['geometry'])
+    assert local_multipart.geom_type=='MultiPolygon' and len(local_multipart.geoms)==2, 'MultiPolygon source parts were lost during local projection'
+    expected_area=sum(importer.Polygon([importer.local(point) for point in rings[0]]).area for rings in multipart['geometry']['coordinates'])
+    assert abs(local_multipart.area-expected_area)<.01, 'MultiPolygon projection changed the source area'
+    changed_old=copy.deepcopy(old_features[0]);changed_old['properties'].update(OBJECTID=72001,TopHeight=999)
+    refreshed=[changed_old,northern,southern,multipart]
+    duplicate_csuid=copy.deepcopy(changed_old);duplicate_csuid['properties']['OBJECTID']=72002
+    def page(items):return {'type':'FeatureCollection','features':items}
+
+    with tempfile.TemporaryDirectory(prefix='antila-east-building-merge-') as directory:
+        trial=Path(directory);(trial/'Data').mkdir()
+        target=trial/'Data/east-kowloon-buildings.geojson'
+        target.write_text(json.dumps(previous,separators=(',',':')))
+        baseline_hash=hashlib.sha256(target.read_bytes()).hexdigest()
+        def refresh(responses):
+            responses=iter(responses);queries=[]
+            def response(url,**kwargs):
+                queries.append(importer.urllib.parse.parse_qs(importer.urllib.parse.urlparse(url).query))
+                payload=next(responses)
+                if isinstance(payload,Exception):raise payload
+                return io.BytesIO(payload if isinstance(payload,bytes) else json.dumps(payload).encode())
+            with patch.object(importer,'ROOT',trial),patch.object(importer,'EAST_KOWLOON_BBOX',planned_bbox), \
+                 patch.object(importer.urllib.request,'urlopen',response), \
+                 contextlib.redirect_stdout(io.StringIO()):
+                importer.download_island(east_kowloon=True)
+            return queries
+
+        queries=refresh([{'count':4},page(refreshed[:2]),page(refreshed[2:])])
+        updated=json.loads(target.read_text())
+        assert updated['features'][:2]==old_features, 'Eastern merge changed or removed preserved records'
+        assert len(updated['features'])==4 and updated['features'][3]['properties']['BuildingCSUID']==multipart['properties']['BuildingCSUID'], 'Merge admitted a southern feature or missed a northern multipart feature'
+        assert updated['features'][2]['properties']['source_OBJECTID']==71002 and updated['features'][2]['properties']['OBJECTID']>81003, 'Colliding upstream ID was not preserved and remapped'
+        assert len({f['properties']['OBJECTID'] for f in updated['features']})==4 and len({f['properties']['BuildingCSUID'] for f in updated['features']})==4
+        assert updated['metadata']['bbox_wgs84']==list(planned_bbox)
+        assert updated['metadata']['retrieved_utc']==previous['metadata']['retrieved_utc'], 'Mixed-vintage merge changed the file-level height ordering date'
+        assert importer.datetime.datetime.fromisoformat(updated['metadata']['query_retrieved_utc']).utcoffset()==importer.datetime.timedelta(0)
+        assert updated['metadata']['merge_provenance']['preserved_source_sha256']==baseline_hash
+        assert updated['metadata']['merge_provenance']['query_feature_count']==4
+        assert updated['metadata']['merge_provenance']['preserved_source_metadata']==previous['metadata']
+        assert updated['metadata']['merge_provenance']['added_feature_count']==2
+        assert updated['metadata']['merge_provenance']['added_csuids']==sorted([northern['properties']['BuildingCSUID'],multipart['properties']['BuildingCSUID']])
+        assert updated['metadata']['merge_provenance']['missing_service_csuids']==['east-71002']
+        assert updated['metadata']['merge_provenance']['objectid_remaps']==[{'BuildingCSUID':'east-new-81001','source_OBJECTID':71002,'internal_OBJECTID':81004}]
+        assert queries[0]['geometry']==[','.join(map(str,planned_bbox))]
+
+        saved=target.read_bytes()
+        refresh([{'count':4},page(refreshed[:2]),page(refreshed[2:])])
+        repeated=json.loads(target.read_text())
+        assert repeated['features']==updated['features'], 'repeat refresh duplicated or rewrote eastern features'
+        assert repeated['metadata']['merge_provenance']['preserved_source_sha256']==baseline_hash
+        assert repeated['metadata']['merge_provenance']['donor_source_sha256']==hashlib.sha256(saved).hexdigest()
+        assert repeated['metadata']['merge_provenance']['cumulative_added_feature_count']==2
+        assert repeated['metadata']['merge_provenance']['added_feature_count']==2 and repeated['metadata']['merge_provenance']['incremental_added_feature_count']==0
+        assert repeated['metadata']['merge_provenance']['added_csuids_sha256']==updated['metadata']['merge_provenance']['added_csuids_sha256']
+        saved=target.read_bytes()
+        for label,responses in [('duplicate_ids',[{'count':2},page([changed_old,changed_old])]),
+                                ('duplicate_csuids',[{'count':2},page([changed_old,duplicate_csuid])]),
+                                ('short_page',[{'count':4},page(refreshed[:3]),page([])])]:
+            try:refresh(responses)
+            except ValueError:pass
+            else:raise AssertionError(f'{label}: incomplete east-kowloon response was accepted')
+            assert target.read_bytes()==saved, f'{label}: incomplete east-kowloon refresh replaced the preserved source'
+        assert not list((trial/'Data').glob('*.part')), 'temporary file leaked after rejected east refresh'
+    print('ANTILA_EAST_BUILDING_MERGE_OK: old records preserved; only northern additions merged; incomplete refresh preserves cache bytes')
+
+
 def check():
     root = importer.ROOT
     cases = {'3503618508T20260615': (149.6, None, 143.5),
@@ -89,7 +185,7 @@ def check():
         trial = Path(directory)
         (trial/'Data').mkdir()
         for name in ('nathan-road.json','cross-harbour.json','west-kowloon-coast.json',
-                     'island-coast.json','buildings.geojson','west-kowloon-buildings.geojson','lai-chi-kok-buildings.geojson','kwai-chung-buildings.geojson','tsuen-wan-buildings.geojson','west-coast-buildings.geojson'):
+                     'island-coast.json','buildings.geojson','west-kowloon-buildings.geojson','lai-chi-kok-buildings.geojson','kwai-chung-buildings.geojson','tsuen-wan-buildings.geojson','west-coast-buildings.geojson','east-kowloon-buildings.geojson'):
             (trial/'Data'/name).symlink_to(root/'Data'/name)
         raw = json.loads((root/'Data/kowloon-north-buildings.geojson').read_text())
         for feature in raw['features']:
@@ -130,4 +226,5 @@ def check():
 
 if __name__ == '__main__':
     check_download()
+    check_east_kowloon_merge()
     check()

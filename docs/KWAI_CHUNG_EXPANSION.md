@@ -2,11 +2,37 @@
 
 The connected map continues west and north from Mei Foo through Lai King into Kwai Chung. **B while stopped** starts a **5.358 km exploration drive** at the previous Lai Chi Kok route endpoint. **M** shows the map and **R** returns to H1. The authored itinerary follows Lai Wan Road, Lai King Hill Road, Kwai Chung Road, Kwai Yik Road, Hing Fong Road and Kwai Fuk Road. It adds no passenger service or turn-by-turn guidance.
 
+## Kwai Yue / Kwai Hei junction restoration
+
+The 28 October 2026 western review restored the source-directed, ground-level roundabout that closes the visible gap between Kwai Yue Street (`TD_9097`) and Kwai Hei Street (`TD_57784`). The three `Roundabout` sections are one-way (`TRAVEL_DIRECTION=3`) and connect in this order:
+
+| Source ID | Source length |
+| --- | ---: |
+| `TD_8457` | 23.99 m |
+| `TD_9137` | 22.81 m |
+| `TD_9138` | 20.48 m |
+
+The selected approach is `TD_57333` Wing Shun Street, 646.72 m, classified as bidirectional (`TRAVEL_DIRECTION=1`). The junction checks follow its source coordinate order. It adds no scheduled service or authored itinerary route; endpoint checks cover the two named-street links and the Wing Shun branch.
+
+The fresh TD CENTERLINE archive used for this repair has SHA-256 `3df2c43b6f19bf7b34e0022d60d7cf5bd148ae0e0f001191879333d46ba66e52` and validated WGS84 coordinates. It is imported directly without `--hk1980`. The importer also discovered four connected candidates that are deliberately deferred from this scoped repair:
+
+| Source ID | Name | Source length | Review disposition |
+| --- | --- | ---: | --- |
+| `TD_297076` | Sha Tsui Road | 104.7 m | Separate dead-end connected to already retained roads |
+| `TD_59096` | Wing Yin Street | 214.9 m | Branch beyond the selected Wing Shun approach |
+| `TD_93429` | Wing Shun Street | 49.2 m | Continuation beyond `TD_57333` |
+| `TD_97744` | Wing Shun Street | 109.0 m | Continuation beyond `TD_57333` |
+
+The 7,223 pre-existing source and road objects, all 14 route arrays, tunnel profiles and existing coast/ground geometry remain unchanged. The final road dataset contains 7,227 sections, including only the four reviewed additions above.
+
+The cached-footprint Kwai Chung layout was rebuilt without a download. It retains 3,425 building parts, clips two footprints beside `TD_57333`, updates a nearby street-frontage record and increases pavement patches from 389 to 391. Other regional building layouts are unchanged. Rebuild the harbour model and the Kwai Chung building partition through Blender MCP; keep unchanged Kwai Chung East and Lai King model exports.
+
 Bounds are **8.71 km east–west × 10.73 km north–south**, `[-6580,-8580,2130,2150]` in world X/Z. The selection rectangle is `[-6500,-8500,-3100,-4400]`; 10,653,812 m² of land is added beyond earlier regions. These are loaded bounds, not continuous road coverage. The established approximate metre projection has about 0.53% north–south stretch.
 
 ## Government sources
 
 - [Transport Department Road Network (2nd Generation)](https://data.gov.hk/en-data/dataset/hk-td-tis_15-road-network-v2): the full official CENTERLINE.kmz downloaded 12 October 2026 UTC is reused, SHA-256 `dcd0632d9d0f72bee549e24307b28ed98b17963c30899de0675d5e1163586735`. HK1980 geographic EPSG:4611 is converted to WGS84 before local projection. Stable ROUTE_ID preserves all preceding source records and road objects.
+- The later 28 October junction repair uses the fresh WGS84 archive/hash recorded above; its coordinates are used directly before local projection. Do not apply the historical HK1980 conversion to this archive.
 - 1,191 new connected ground-level road sections give **4,626 expansion sections and ten routes**. All 3,435 earlier roads, nine routes, tunnel profiles and original H1 data are unchanged. The 59-section new route obeys source travel-direction attributes; this does not establish vehicle-access or junction turn restrictions. Highways and unrelated raised interchanges are omitted from this expansion.
 - [Lands Department building footprints](https://portal.csdi.gov.hk/csdi-webpage/dataset/landsd_rcd_1637211194312_35158): **4,690 source records**, count-checked and unique by OBJECTID, retrieved `2026-10-13T14:04:28.268122+00:00`. WGS84 query bounds `[114.1092119978996, 22.334525691699607, 114.14222233745981, 22.371356449874238]`. Raw SHA-256 `b612b211c966464bc7e7e1c4b161f93ad81e5cdaf5c633736c64e669bccafc4f`.
 - [Lands Department iB1000 tile index](https://portal.csdi.gov.hk/server/rest/services/common/landsd_rcd_1637223748322_25497/FeatureServer/0): **48 GML tiles, 330 shoreline/seawall/high-water fragments**, retrieved `2026-10-13T14:05:55.432086+00:00`. Each archive URL, revision and hash is retained in `Data/kwai-chung-shoreline.geojson`. GML EPSG:2326 northing/easting is transformed to WGS84. There are **28 recorded source-gap joins**, at most **5.37 m**; these joins are authored. All prior coast extracts and the land inside their rectangles remain unchanged.
@@ -30,6 +56,8 @@ The new region has **3,422 derived building parts**. Earlier regions are exclude
 .venv-geodata/bin/python Tools/import_buildings.py --north
 .venv-geodata/bin/python Tools/import_buildings.py
 ```
+
+For the reviewed junction refresh, pass the fresh WGS84 CENTERLINE archive to `Tools/import_tunnel.py` without `--hk1980`, then rebuild the cached Kwai Chung layout with `.venv-geodata/bin/python Tools/import_buildings.py --kwai-chung` (no download flag).
 
 Through Blender MCP execute `Tools/model_tunnel.py`, then `Tools/model_government_buildings.py` with `KWAI_CHUNG=True` and `NORTHWEST=True` separately. Keep each GLB below 100 MB and preserve `cross-harbour.glb.import`'s compression-disabled setting. Retain old exports for any other region whose rebuilt building/paving arrays are unchanged.
 
