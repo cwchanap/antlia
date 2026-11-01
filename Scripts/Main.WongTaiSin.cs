@@ -82,6 +82,7 @@ public partial class Main
             using var ground=PhysicsRayQueryParameters3D.Create(lane+Vector3.Up*2,lane-Vector3.Up,1);
             Check(GetWorld3D().DirectSpaceState.IntersectRay(ground).Count>0,$"Wong Tai Sin lane lacks ground support at {lane}");support++;
         }
+        _kerbGrid=null;
         GD.Print($"ANTILA_WONG_TAI_SIN_READY_OK: {route.Count} directed route points, {lots} northern buildings and {support} asphalt / road / ground probes");
     }
 

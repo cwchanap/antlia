@@ -17,6 +17,8 @@ Generated with the **built-in imagegen tool** on 12 September 2026. These are or
 | asphalt.png | 1254 × 1254 | Main road and side streets; shared world-coordinate UVs, 2-metre repeat |
 | paving.png | 1254 × 1254 | Footpaths; 2-metre repeat |
 
+The Cross-Harbour GLB's asphalt material uses the same `Assets/Textures/asphalt.png` resource at import; only its albedo reference is remapped, so the original UVs and material settings remain unchanged. See [Cross-Harbour model imports](CROSS_HARBOUR.md#models-and-texture) for the shared texture hook and hidden-surface import setting.
+
 The Blender file packs the wall and shopfront images, and the GLBs embed them. The road images are loaded from the project by Godot. Mipmaps and anisotropic filtering keep the road textures readable at shallow viewing angles. The original scene view is retained in `evidence/chase-before-textures.png`; updated views use the normal capture filenames.
 
 The saved image sizes above are the actual tool outputs; the prompts below retain their originally requested sizes. Building height variation also scales wall tiles vertically. These are albedo-only materials; surface relief remains in the mesh geometry.

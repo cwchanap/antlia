@@ -122,8 +122,21 @@ public partial class Main
     private void CheckAssetDetails()
     {
         void Check(bool ok,string message){if(!ok)throw new Exception(message);}
-        Check(_harbour.FindChildren("RoadSurface","MeshInstance3D",true,false).Cast<MeshInstance3D>().All(m=>!m.Visible),
-            "Flat harbour asphalt must share the terrain surface instead of overlapping district roads");
+        Check(!_harbour.FindChildren("RoadSurface","MeshInstance3D",true,false).Cast<MeshInstance3D>().Any(),
+            "Hidden harbour RoadSurface must be skipped at import instead of retaining its render and shadow buffers");
+        var importedMaterials=FindChildren("*","MeshInstance3D",true,false).Cast<MeshInstance3D>().Where(m=>m.Mesh!=null)
+            .SelectMany(m=>Enumerable.Range(0,m.Mesh.GetSurfaceCount()).Select(m.Mesh.SurfaceGetMaterial)).OfType<StandardMaterial3D>()
+            .Concat(FindChildren("*","MultiMeshInstance3D",true,false).Cast<MultiMeshInstance3D>().Where(m=>m.Multimesh?.Mesh!=null)
+                .SelectMany(m=>Enumerable.Range(0,m.Multimesh!.Mesh.GetSurfaceCount()).Select(m.Multimesh.Mesh.SurfaceGetMaterial)).OfType<StandardMaterial3D>()).ToArray();
+        foreach(var (materialPrefix,textureName) in new[]{("Antila_banyan bark","banyan-bark"),("Antila_banyan leaf cutout","banyan-leaves"),
+            ("Antila_tactile_ochre","pavement-stone"),("CHT_exterior_stone","pavement-stone"),("CHT_asphalt","asphalt")})
+        {
+            string path=$"res://Assets/Textures/{textureName}.png";var texture=GD.Load<Texture2D>(path);
+            var matches=importedMaterials.Where(m=>m.ResourceName.StartsWith(materialPrefix,StringComparison.Ordinal)).ToArray();
+            Check(matches.Length>0,$"Expected imported {materialPrefix} material");
+            Check(texture!=null && matches.All(m=>m.AlbedoTexture is { } albedo && albedo.ResourcePath==path && albedo.GetInstanceId()==texture.GetInstanceId()),
+                $"Imported {materialPrefix} materials must share canonical texture {path}");
+        }
         var sun=FindChildren("*","DirectionalLight3D",true,false).Cast<DirectionalLight3D>().Single();
         Check(sun.LightCullMask==1,"Sun must exclude the tunnel render layer");
         var ceilings=_harbour.FindChildren("Ceiling*","MeshInstance3D",true,false).Cast<MeshInstance3D>().ToArray();

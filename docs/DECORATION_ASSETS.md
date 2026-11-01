@@ -24,6 +24,8 @@ The tree silhouette is informed by the [Hong Kong Zoological and Botanical Garde
 - `Assets/Models/banyan.glb`, `bench.glb`, `bin.glb`, `planter.glb`: exported models, with images embedded where used.
 - `Art/antila-assets.blend`: editable source scene with packed images.
 
+The banyan, street-tree and planter GLBs retain their embedded source images. Godot's `Tools/remap_shared_glb_textures.gd` import hook redirects only their bark and leaf albedo references to the canonical PNGs above, preserving the imported material settings and sharing the same texture resources at runtime.
+
 The canopy uses alpha cutouts rather than blended transparency. It is static; there is no wind animation. Props are decorative and do not add collision bodies. Boarding zones remain clear. The lawn is a flat textured surface.
 
 All three saved PNGs are 1254 × 1254. The leaf alpha channel was checked for both transparent and opaque pixels. Exported tree and planter materials were checked for `alphaMode: MASK` and double-sided rendering. The tree has 1,924 triangles. Model exports assert valid, finite UVs. The final in-game views were visually inspected; `evidence/park-before-decoration.png` retains the earlier park for comparison.

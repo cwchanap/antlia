@@ -24,7 +24,7 @@ The visual reference is the Highways Department's [pedestrian crossing kerb/foot
 
 All exports contain one mesh. The new models are decorative; the park wall openings also modify the actual collision bodies. Existing bus handling, service stops and traffic-light timings are retained. No performance benchmark is claimed.
 
-The built-in imagegen tool generated `Assets/Textures/pavement-stone.png` (1254 × 1254). The terrain uses it for the stone border and the tactile model embeds a tinted version in its material. Mipmaps and anisotropic sampling are enabled for the ground texture. Existing herringbone paving is reused.
+The built-in imagegen tool generated `Assets/Textures/pavement-stone.png` (1254 × 1254). The terrain uses it for the stone border; Godot's shared-texture import hook redirects the tactile-paver material to the same image while retaining its ochre tint. Mipmaps and anisotropic sampling are enabled for the ground texture. Existing herringbone paving is reused.
 
 ## Verification and views
 

@@ -98,6 +98,7 @@ public partial class Main
             route.Path.FindTurns();
             Routes.Add(route);
         }
+        _kerbGrid=null;
         Route=Routes[0];
     }
 
@@ -370,6 +371,7 @@ public partial class Main
         async Task Frames(int count){for(int i=0;i<count;i++)await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);}
         void Press(string action)=>_UnhandledInput(new InputEventAction {Action=action,Pressed=true});
         await Frames(1);
+        Check(_kerbGrid==null,"kerb index released after fitting scheduled routes");
         Check(Routes.Select(r=>r.Number).SequenceEqual(new[]{"H1","H2","H3"}),"three services H1, H2 and H3");
         var h1=Routes[0];
         Check(h1.Nathan && h1.Path.Points.Count==231 && Mathf.Abs(h1.Path.Length-Map.Length)<.5f && h1.Stops.Count==3 && h1.TotalPassengers==26,$"H1 keeps the Nathan Road corridor and its three stops: {h1.Path.Points.Count} points, {h1.Path.Length} m");
