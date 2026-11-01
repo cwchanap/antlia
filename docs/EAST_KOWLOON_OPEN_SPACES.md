@@ -97,3 +97,7 @@ The final checker exits 0 with 18 rejected cases: 15 ZIP refreshes and three sav
 The fresh full in-engine suite exits 0 with all 20 regional/ramp drives, H1/H2/H3, both side-street turns, the original 1.08 km drive, all 37 path/support probes, 38 sports probes, 437 clear infield probes, 788 clear fixtures and 25 colliders. Build: **0 warnings / 0 errors**. Runtime content and all models remain unchanged, so native rendering and Blender export were not repeated. Fresh government downloads, scene-reload stress and performance benchmarks were also not repeated.
 
 [Verification record](../evidence/east-sports-fragment-fix-2026-10-23/verification.json), [failing regression](../evidence/east-sports-fragment-fix-2026-10-23/baseline.log), [passing refresh checks](../evidence/east-sports-fragment-fix-2026-10-23/green.log), [full engine suite](../evidence/east-sports-fragment-fix-2026-10-23/self-test.log).
+
+## Shared terrain initialization — 31 October 2026
+
+Mong Kok initializes its bounds, play-area parameters, paving and fittings; the immediately following eastern builder creates the single combined recreation mask from both source datasets. The earlier standalone Mong Kok mask was never rendered and is no longer generated or uploaded. Native SHA-256 comparisons cover all three final terrain images and all their mip levels, with 44 matching records before and after this cleanup. Surface data, bounds and collision remain unchanged. See `evidence/allocator-memory-2026-10-31/` for the comparison and native checks.

@@ -442,8 +442,13 @@ def validate_images(unique_images: dict[str, tuple[str, bytes]], expected_count:
             f"expected {expected_count} unique source PNGs, found {len(unique_images)}")
 
 
-def write_texture_import(image_path: Path) -> None:
-    Path(f"{image_path}.import").write_text(TEXTURE_IMPORT_CONFIG, encoding="utf-8")
+def write_texture_import(image_path: Path, existing_uid: str | None = None) -> None:
+    import_path = Path(f"{image_path}.import")
+    if existing_uid is None and import_path.is_file():
+        existing_uid = godot_config_value(import_path.read_text(encoding="utf-8"), "remap", "uid")
+    config = (TEXTURE_IMPORT_CONFIG.replace("[remap]\n", f"[remap]\nuid={existing_uid}\n")
+              if existing_uid is not None else TEXTURE_IMPORT_CONFIG)
+    import_path.write_text(config, encoding="utf-8")
 
 
 def godot_config_value(contents: str, section: str, key: str) -> str | None:
@@ -478,6 +483,10 @@ def check_texture_import(import_path: Path) -> None:
 def generate() -> dict:
     sources = sorted(MODEL_DIR.glob("*-buildings.glb"))
     require(len(sources) == SOURCE_COUNT, f"expected {SOURCE_COUNT} source GLBs, found {len(sources)}")
+    existing_texture_uids = {
+        path.name: godot_config_value(path.read_text(encoding="utf-8"), "remap", "uid")
+        for path in TEXTURE_DIR.glob("*.png.import")
+    }
     if OUTPUT_DIR.exists():
         require((OUTPUT_DIR / MARKER).is_file(), f"refusing to replace unowned directory {OUTPUT_DIR}")
         shutil.rmtree(OUTPUT_DIR)
@@ -518,7 +527,7 @@ def generate() -> dict:
     for filename, payload in sorted(unique_images.values()):
         texture_path = TEXTURE_DIR / filename
         texture_path.write_bytes(payload)
-        write_texture_import(texture_path)
+        write_texture_import(texture_path, existing_texture_uids.get(f"{filename}.import"))
     manifest = {"version": 1, "sources": manifest_sources, "chunks": manifest_chunks}
     MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return {
@@ -756,9 +765,19 @@ def self_test() -> None:
             "synthetic bounds did not include geometry overhang and node translation")
     with tempfile.TemporaryDirectory() as directory:
         texture_path = Path(directory) / "facade.png"
-        write_texture_import(texture_path)
         import_path = Path(f"{texture_path}.import")
+        import_path.write_text('[remap]\nimporter="texture"\ntype="CompressedTexture2D"\n'
+                               'uid="uid://synthetic"\nmetadata={\n"vram_texture": false\n}\n\n'
+                               '[params]\ncompress/mode=0\nmipmaps/generate=false\n', encoding="utf-8")
+        existing_uid = godot_config_value(import_path.read_text(encoding="utf-8"), "remap", "uid")
+        write_texture_import(texture_path)
         check_texture_import(import_path)
+        require(godot_config_value(import_path.read_text(encoding="utf-8"), "remap", "uid") == existing_uid,
+                "texture import writer did not preserve the UID after multiline metadata")
+        import_path.unlink()
+        write_texture_import(texture_path, existing_uid)
+        require(godot_config_value(import_path.read_text(encoding="utf-8"), "remap", "uid") == existing_uid,
+                "texture import writer did not preserve a UID after generated-directory cleanup")
         for mipmaps in ("false", None):
             import_path.write_text(TEXTURE_IMPORT_CONFIG.replace("mipmaps/generate=true\n", "")
                                    if mipmaps is None else

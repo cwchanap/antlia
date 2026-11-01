@@ -17,13 +17,8 @@ public partial class Main
         var root=data.RootElement;var bounds=root.GetProperty("bounds");
         _recreationBounds=new(bounds[0].GetSingle(),bounds[1].GetSingle(),bounds[2].GetSingle(),bounds[3].GetSingle());
         Vector2[] Polygon(JsonElement points)=>points.EnumerateArray().Select(p=>new Vector2(p[0].GetSingle(),p[1].GetSingle())).ToArray();
-        var surfaces=root.GetProperty("surfaces").EnumerateArray().SelectMany(s=>s.GetProperty("triangles").EnumerateArray()
-            .Select(t=>(Polygon(t),s.GetProperty("kind").GetString() switch {"field"=>0,"court"=>1,_=>2}))).ToArray();
-        using(var mask=Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),Array.Empty<Vector2[]>(),
-            _recreationBounds,Array.Empty<(Vector2,Vector2,float)>(),2,surfaces))
-            _terrain.SetShaderParameter("recreation_mask",ImageTexture.CreateFromImage(mask));
-        _terrain.SetShaderParameter("recreation_origin",_recreationBounds.Position);
-        _terrain.SetShaderParameter("recreation_size",_recreationBounds.Size);
+        int surfaceTriangles=root.GetProperty("surfaces").EnumerateArray().Sum(s=>s.GetProperty("triangles").GetArrayLength());
+        // BuildEasternOpenSpaces creates the one combined recreation texture after both datasets are ready.
         var play=root.GetProperty("play_areas").EnumerateArray().Single();var pc=play.GetProperty("center");var pf=play.GetProperty("forward");
         _terrain.SetShaderParameter("play_area",new Vector4(pc[0].GetSingle(),pc[1].GetSingle(),play.GetProperty("width").GetSingle()/2,play.GetProperty("length").GetSingle()/2));
         _terrain.SetShaderParameter("play_forward",new Vector2(pf[0].GetSingle(),pf[1].GetSingle()));
@@ -44,7 +39,7 @@ public partial class Main
             foreach(var mesh in asset.FindChildren("*","MeshInstance3D",true,false).Cast<MeshInstance3D>())mesh.VisibilityRangeEnd=900;
             _islandDetails.Add((at,radius));_recreationProps.Add((fixture.GetProperty("site").GetString()!,at,radius));
         }
-        GD.Print($"ANTILA_OPEN_SPACES: {root.GetProperty("sites").GetArrayLength()} sourced sites; {surfaces.Length} sports surface triangles; 1 authored play pad; {_recreationProps.Count} authored fixtures");
+        GD.Print($"ANTILA_OPEN_SPACES: {root.GetProperty("sites").GetArrayLength()} sourced sites; {surfaceTriangles} sports surface triangles; 1 authored play pad; {_recreationProps.Count} authored fixtures");
     }
 
     private async Task CheckMongKokOpenSpaces()
