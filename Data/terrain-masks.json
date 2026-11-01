@@ -1,0 +1,41 @@
+{
+  "recreation_mask": {
+    "bounds": [
+      -6529,
+      -9276,
+      9648,
+      9026
+    ],
+    "width": 8192,
+    "height": 7664,
+    "format": "Rgb8",
+    "mipLevels": 14,
+    "sha256": "2AD326E2C613485C8FAAF2C4AC68AED94E68C5211E61E3DE336142F00694B4C5"
+  },
+  "surface_mask": {
+    "bounds": [
+      -1011.441,
+      -1191.124,
+      2059.961,
+      1241.218
+    ],
+    "width": 6180,
+    "height": 3724,
+    "format": "Rgb8",
+    "mipLevels": 13,
+    "sha256": "D30BA94E09F144CB5DCBEAC31DCBA9C785FEFDC9817D888CAA5903385B01F880"
+  },
+  "harbour_mask": {
+    "bounds": [
+      -13880,
+      -11280,
+      17110,
+      13430
+    ],
+    "width": 9246,
+    "height": 7258,
+    "format": "Rgb8",
+    "mipLevels": 14,
+    "sha256": "F9CCFEE698F85C1EDFA580E44A6DB42490C0E29689B42FBEA9D7969C6AF16DC8"
+  }
+}

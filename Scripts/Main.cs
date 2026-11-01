@@ -37,6 +37,12 @@ public partial class Main : Node3D
 
     public override void _Ready()
     {
+        try{BuildScene();}
+        catch(Exception error){GD.PushError((SelfTest?"ANTILA_SELF_TEST_FAILED: ":"ANTILA_STARTUP_FAILED: ")+error);QuitGame(1);}
+    }
+
+    private void BuildScene()
+    {
         if(OS.GetCmdlineUserArgs().Contains("--streaming-loader-check")){CallDeferred(nameof(RunBuildingLoaderCheck));return;}
         SelfTest = OS.GetCmdlineUserArgs().Contains("--map-check") || OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--east-kowloon-check") || OS.GetCmdlineUserArgs().Contains("--wong-tai-sin-check") || OS.GetCmdlineUserArgs().Contains("--west-coast-check") || OS.GetCmdlineUserArgs().Contains("--tsuen-wan-check") || OS.GetCmdlineUserArgs().Contains("--hud-check") || OS.GetCmdlineUserArgs().Contains("--restart-check") || OS.GetCmdlineUserArgs().Contains("--route-check") || OS.GetCmdlineUserArgs().Contains("--stop-survey");
         RegisterInput();
@@ -59,6 +65,7 @@ public partial class Main : Node3D
         BuildRoadDetails();
         BuildFootpaths();
         FinishStreetMeshes();
+        if(FinishTerrainMasks())return;
         Bus = new BusController { Notify = ShowNotice, Moved = CheckSignalCrossing, BeforeReset = EnsureBuildingsAt, BeforePhysics = UpdateBuildingStreaming };
         AddChild(Bus);
         Bus.ResetAt(Map.At(22, -7.3f), Map.Heading(22));
@@ -351,16 +358,13 @@ public partial class Main : Node3D
         }
         _paint.Clear();
         var pads=_lots.SelectMany(l=>Geometry2D.OffsetPolygon(l.Polygon,3)).Concat(_pavementPatches.Select(p=>p.Polygon));
-        using(var mask=Map.CreateSurfaceMask(_park,ParkPaths(),pads))
-        {
-            var texture=ImageTexture.CreateFromImage(mask);_terrain.SetShaderParameter("surface_mask",texture);
-            _harbourPaint.SetShaderParameter("district_mask",texture);
-        }
+        var texture=TerrainMask("surface_mask",Map.Bounds,()=>Map.CreateSurfaceMask(_park,ParkPaths(),pads));
+        _terrain.SetShaderParameter("surface_mask",texture);_harbourPaint.SetShaderParameter("district_mask",texture);
         var harbourRoads=HarbourRoads.Where(r=>!r.Tunnel).SelectMany(r=>Enumerable.Range(1,r.Points.Count-1)
             .Where(i=>Mathf.Max(r.Points[i-1].Y,r.Points[i].Y)<.05f)
             .Select(i=>(new Vector2(r.Points[i-1].X,r.Points[i-1].Z),new Vector2(r.Points[i].X,r.Points[i].Z),6f)));
-        using(var mask=Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),pads.Concat(_harbourPaving),HarbourBounds,harbourRoads,2))
-            _terrain.SetShaderParameter("harbour_mask",ImageTexture.CreateFromImage(mask));
+        _terrain.SetShaderParameter("harbour_mask",TerrainMask("harbour_mask",HarbourBounds,
+            ()=>Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),pads.Concat(_harbourPaving),HarbourBounds,harbourRoads,2)));
         _terrain.SetShaderParameter("harbour_origin",HarbourBounds.Position);_terrain.SetShaderParameter("harbour_size",HarbourBounds.Size);
     }
 

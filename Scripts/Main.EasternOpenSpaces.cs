@@ -17,15 +17,17 @@ public partial class Main
         var root=data.RootElement;var bounds=root.GetProperty("bounds");
         _recreationBounds=_recreationBounds.Merge(new Rect2(bounds[0].GetSingle(),bounds[1].GetSingle(),bounds[2].GetSingle(),bounds[3].GetSingle()));
         Vector2[] Points(JsonElement row)=>row.EnumerateArray().Select(p=>new Vector2(p[0].GetSingle(),p[1].GetSingle())).ToArray();
-        var surfaces=new List<(Vector2[] Polygon,int Channel)>();
-        foreach(var region in new[]{mongKok.RootElement,root})
-            foreach(var surface in region.GetProperty("surfaces").EnumerateArray())
-                foreach(var triangle in surface.GetProperty("triangles").EnumerateArray())
-                    surfaces.Add((Points(triangle),surface.GetProperty("kind").GetString() switch {"field"=>0,"court"=>1,_=>2}));
-        float maskResolution=Mathf.Min(2,8192f/Mathf.Max(_recreationBounds.Size.X,_recreationBounds.Size.Y));
-        using(var mask=Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),Array.Empty<Vector2[]>(),
-            _recreationBounds,Array.Empty<(Vector2,Vector2,float)>(),maskResolution,surfaces))
-            _terrain.SetShaderParameter("recreation_mask",ImageTexture.CreateFromImage(mask));
+        _terrain.SetShaderParameter("recreation_mask",TerrainMask("recreation_mask",_recreationBounds,()=>
+        {
+            var surfaces=new List<(Vector2[] Polygon,int Channel)>();
+            foreach(var region in new[]{mongKok.RootElement,root})
+                foreach(var surface in region.GetProperty("surfaces").EnumerateArray())
+                    foreach(var triangle in surface.GetProperty("triangles").EnumerateArray())
+                        surfaces.Add((Points(triangle),surface.GetProperty("kind").GetString() switch {"field"=>0,"court"=>1,_=>2}));
+            float resolution=Mathf.Min(2,8192f/Mathf.Max(_recreationBounds.Size.X,_recreationBounds.Size.Y));
+            return Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),Array.Empty<Vector2[]>(),
+                _recreationBounds,Array.Empty<(Vector2,Vector2,float)>(),resolution,surfaces);
+        }));
         _terrain.SetShaderParameter("recreation_origin",_recreationBounds.Position);
         _terrain.SetShaderParameter("recreation_size",_recreationBounds.Size);
         foreach(var triangle in root.GetProperty("paving").EnumerateArray())_harbourPaving.Add(Points(triangle));

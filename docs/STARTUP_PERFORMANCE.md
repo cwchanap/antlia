@@ -72,3 +72,40 @@ The Mong Kok builder now leaves recreation-texture creation to the immediately f
 Fresh normal-recipe observations before/after this small cleanup measured 5,451.43 / 5,462.88 MiB peak and 4,201.86 / 4,238.88 MiB at the live idle menu. This does not demonstrate an overall process-memory reduction; the improvement is the avoided initialization work. The same native viewport and temporary screen-edge placement were used.
 
 Managed-collection and macOS allocator-relief experiments were discarded: collection reduced the managed heap but did not reliably reduce startup peak, and native allocator relief returned zero bytes. No forced startup GC or platform-specific allocator code is retained. Larger gains should first target pre-baking the static terrain masks to avoid runtime raster buffers, then area-based terrain and prop residency. Savings from those changes have not been measured. Records are in `evidence/allocator-memory-2026-10-31/`.
+
+
+## Baked terrain masks
+
+Normal play loads three lossless RGB data textures from `Assets/Textures/TerrainMasks/`, avoiding the large managed raster buffers and repeated polygon/stroke work on every launch. `RoadMap.CreateSurfaceMask` remains the sole generator; the existing builders supply the same ordered lots, pavement, park paths, roads and recreation triangles. Shader origins, sizes, channels, filtering and image budgets remain unchanged. The terrain still resides globally; this change does not tile or stream it.
+
+The PNG import settings retain mipmaps, disable lossy compression and disable automatic 3D compression detection. `Data/terrain-masks.json` records each image's bounds, dimensions, format, mip count and full pixel/mip SHA-256. Ordinary startup checks bounds and dimensions without reading the large images back from the renderer. There is no runtime generation fallback.
+
+When changing road/building/open-space data, mask inputs or rasterizer behavior, regenerate and verify with the Mono engine:
+
+```sh
+./run.command --headless -- --bake-terrain
+./run.command --headless -- --terrain-mask-check
+./run.command -- --building-check
+```
+
+The first command assembles the usual source geometry and writes all three PNGs and metadata, then exits before bus/HUD construction. The next invocation imports the saved PNGs before the check runs. `--terrain-mask-check` regenerates the current expected images and checks exact RGB pixels, every mip level and world bounds against the imported assets, then exits. The full `--self-test` includes this asset comparison. `--surface-check` continues to test the synthetic rasterizer cases independently. Regeneration and checking need only the existing C# build and Godot; no Python or network dependency is added to play.
+
+
+### Local measurements — 31 October 2026
+
+Two normal-recipe comparisons used the same 1280 × 800 native viewport and temporary unfocused screen-edge placement. Each recorded a live menu snapshot after at least 20 seconds, then intentionally terminated the game (exit 143). The first optimized sample used the direct-load prototype; the second used the final bounds/metadata-validated loader.
+
+| Sample | Ready, seconds | Peak physical footprint, MiB | Live menu, MiB |
+| --- | ---: | ---: | ---: |
+| Runtime generation, first | 48.59 | 4,827.02 | 4,448.35 |
+| Saved textures, prototype | 36.19 | 4,826.49 | 4,014.57 |
+| Runtime generation, repeat | 45.52 | 4,922.18 | 4,375.64 |
+| Saved textures, final loader | 40.06 | 4,635.47 | 4,014.52 |
+
+Menu physical footprint fell by **361–434 MiB (8.25–9.75%)**. Startup peak improvement ranged from negligible to about 287 MiB, so these observations do not establish a consistent large peak reduction. The below-4 GiB peak goal remains unmet. Renderer texture telemetry stays at 888,412,266 bytes: the terrain remains resident, and the saving comes from avoiding runtime generation work and buffers. The three source PNGs total 3,684,289 bytes (3.51 MiB), with derived import caches stored separately.
+
+These are local observations, not a formal benchmark, steady-driving measurement or ordinary foreground/manual-play result. Detailed process-tree samples, live `vmmap` snapshots and ready times are in `evidence/prebaked-terrain-2026-10-31/startup-comparison.json`. Functional checks allocate image references/readbacks and must not be used as normal-play memory measurements.
+
+The checker validates the full CPU image/mip digest against metadata, then compares fresh and imported textures through the same rendering backend. Native readback differs from CPU bytes at mip level 1; using a fresh reference upload preserves an exact comparison without a tolerance. The original and imported native textures matched in all 44 image/mip records, including every base pixel.
+
+Final verification passed all six functional gates: headless generation, headless and native exact asset checks, the native image/mip proof, native building/terrain checks, and nine headless reloads restoring ten validated world states. The native check passed 985 roof and 72 rendered boundary probes, park coverage and footpaths. The final C# build has 0 warnings / 0 errors, functional engine logs have no warnings/errors, and all 36 recorded runtime input/DLL hashes stayed unchanged. Missing metadata, changed bounds, a stale digest and a one-pixel PNG change each produced the expected exit 1; original files were restored. A fresh code review and independent measurement/prose check found no actionable issues. Full driving, manual keyboard play and export packaging were not rerun. See the [trial report](../evidence/prebaked-terrain-2026-10-31/REPORT.md) and [validation record](../evidence/prebaked-terrain-2026-10-31/validation.json).
