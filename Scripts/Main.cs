@@ -28,6 +28,7 @@ public partial class Main : Node3D
     private ShaderMaterial _terrain = null!;
     private readonly List<Vector3> _parkPath = new(){new(-80,0,-430),new(-145,0,-520),new(-180,0,-660),new(-315,0,-720),new(-310,0,-835),new(-100,0,-880)};
     private readonly Dictionary<string, StandardMaterial3D> _materials = new();
+    private readonly Dictionary<Vector3,BoxMesh> _boxMeshes = new();
     private readonly Dictionary<string, PackedScene> _assetScenes = new();
     private static bool _harbourLaunchConsumed;
     private readonly SystemFont _font = new() { FontNames = new[] { "PingFang HK", "Noto Sans CJK TC", "sans-serif" } };
@@ -36,9 +37,13 @@ public partial class Main : Node3D
 
     public override void _Ready()
     {
+        if(OS.GetCmdlineUserArgs().Contains("--streaming-loader-check")){CallDeferred(nameof(RunBuildingLoaderCheck));return;}
         SelfTest = OS.GetCmdlineUserArgs().Contains("--map-check") || OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--east-kowloon-check") || OS.GetCmdlineUserArgs().Contains("--wong-tai-sin-check") || OS.GetCmdlineUserArgs().Contains("--west-coast-check") || OS.GetCmdlineUserArgs().Contains("--tsuen-wan-check") || OS.GetCmdlineUserArgs().Contains("--hud-check") || OS.GetCmdlineUserArgs().Contains("--restart-check") || OS.GetCmdlineUserArgs().Contains("--route-check") || OS.GetCmdlineUserArgs().Contains("--stop-survey");
         RegisterInput();
+        SelfTest |= OS.GetCmdlineUserArgs().Contains("--streaming-check");
+        SelfTest |= OS.GetCmdlineUserArgs().Contains("--map-buffer-check");
         Map = new RoadMap();
+        if(OS.GetCmdlineUserArgs().Contains("--surface-check")){CallDeferred(MethodName.RunChecks);return;}
         PrepareParkEntrances();
         BuildEnvironment();
         BuildGovernmentBuildings();
@@ -54,7 +59,7 @@ public partial class Main : Node3D
         BuildRoadDetails();
         BuildFootpaths();
         FinishStreetMeshes();
-        Bus = new BusController { Notify = ShowNotice, Moved = CheckSignalCrossing };
+        Bus = new BusController { Notify = ShowNotice, Moved = CheckSignalCrossing, BeforeReset = EnsureBuildingsAt, BeforePhysics = UpdateBuildingStreaming };
         AddChild(Bus);
         Bus.ResetAt(Map.At(22, -7.3f), Map.Heading(22));
         Camera = new Camera3D { Fov = 62, Far = 3200, Near = .7f, Current = true };
@@ -112,7 +117,8 @@ public partial class Main : Node3D
 
     private MeshInstance3D Box(Node3D parent, Vector3 at, Vector3 size, string color, bool solid = false)
     {
-        var box = new MeshInstance3D { Position = at, Mesh = new BoxMesh { Size = size }, MaterialOverride = Material(color) };
+        if(!_boxMeshes.TryGetValue(size,out var mesh))_boxMeshes[size]=mesh=new BoxMesh {Size=size};
+        var box = new MeshInstance3D { Position = at, Mesh = mesh, MaterialOverride = Material(color) };
         parent.AddChild(box);
         if (solid)
         {
@@ -525,6 +531,7 @@ public partial class Main : Node3D
         await ToSignal(RenderingServer.Singleton,RenderingServer.SignalName.FramePostDraw);
         GetViewport().GetTexture().GetImage().SavePng(ProjectSettings.GlobalizePath("res://evidence/park-stop.png"));
         SetProcess(false);
+        EnsureBuildingsAt(Map.At(parkStop,-9.5f));
         Camera.Position=Map.At(parkStop+18,-9.8f)+Vector3.Up*3.5f;
         Camera.LookAt(Map.At(parkStop,-9.5f)+Vector3.Up*1.8f);
         await ToSignal(RenderingServer.Singleton,RenderingServer.SignalName.FramePostDraw);
@@ -562,6 +569,7 @@ public partial class Main : Node3D
         Hud.Visible=false;
         // A clear survey view makes the full extent readable above the street-level haze.
         GetChildren().OfType<WorldEnvironment>().First().Environment.FogEnabled=false;
+        EnsureBuildingsAt(new(0,0,-600));
         Camera.Near=10;Camera.Far=3200;Camera.Position=new(20,1200,200);Camera.LookAt(new(0,0,-600));
         await ToSignal(GetTree().CreateTimer(.5f),SceneTreeTimer.SignalName.Timeout);
         await ToSignal(RenderingServer.Singleton,RenderingServer.SignalName.FramePostDraw);
@@ -571,6 +579,7 @@ public partial class Main : Node3D
             ("junction-chatham",new Vector3(485,95,-390),new Vector3(355,0,-510)),
             ("density-block",new Vector3(80,175,-780),new Vector3(-210,0,-1030))})
         {
+            EnsureBuildingsAt(target);
             Camera.Position=position;Camera.LookAt(target);
             await ToSignal(RenderingServer.Singleton,RenderingServer.SignalName.FramePostDraw);
             GetViewport().GetTexture().GetImage().SavePng(ProjectSettings.GlobalizePath($"res://evidence/{name}.png"));
@@ -749,20 +758,26 @@ public partial class Main : Node3D
         Bus.TestThrottle=0;Bus.TestBrake=0;Bus.TestSteer=0;
     }
 
-    private void CheckStreetClearance()
+    private async System.Threading.Tasks.Task CheckStreetClearance()
     {
-        var roadQuery=new PhysicsShapeQueryParameters3D {
+        using var roadQuery=new PhysicsShapeQueryParameters3D {
             Shape=new BoxShape3D {Size=new(2.48f,4.2f,10.55f)},CollisionMask=1,
             Exclude=new Godot.Collections.Array<Rid>(_traffic.Select(t=>t.Body.GetRid()))};
         int roadSamples=0;
         var driveSamples=Map.StreetSamples(10).Select(s=>(s.Point,s.Forward))
             .Concat(Map.RoadPoints.Take(Map.RoadPoints.Count-1).Select((p,i)=>(p,(Map.RoadPoints[i+1]-p).Normalized())));
-        foreach(var (p,f) in driveSamples)
+        bool streamingCheck=_buildingStreamingCheck;_buildingStreamingCheck=true;
+        try
         {
-            roadQuery.Transform=new(new Basis(Vector3.Up,Mathf.Atan2(-f.X,-f.Z)),p+Vector3.Up*2.3f);
-            var hits=GetWorld3D().DirectSpaceState.IntersectShape(roadQuery,1);
-            if(hits.Count>0)throw new Exception($"road obstructed near {Map.NearestStreet(p).Name}: {p}; {(hits[0]["collider"].AsGodotObject() as Node)?.GetPath()}");roadSamples++;
+            foreach(var (p,f) in driveSamples)
+            {
+                if(PrepareBuildingProbe(p))await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+                roadQuery.Transform=new(new Basis(Vector3.Up,Mathf.Atan2(-f.X,-f.Z)),p+Vector3.Up*2.3f);
+                var hits=GetWorld3D().DirectSpaceState.IntersectShape(roadQuery,1);
+                if(hits.Count>0)throw new Exception($"road obstructed near {Map.NearestStreet(p).Name}: {p}; {(hits[0]["collider"].AsGodotObject() as Node)?.GetPath()}");roadSamples++;
+            }
         }
+        finally{EnsureBuildingsAt(Bus.Position);_buildingStreamingCheck=streamingCheck;}
         GD.Print($"ANTILA_ROAD_AUDIT_OK: {roadSamples} bus-sized road clearance queries, including both former Nathan Road barriers");
     }
 
@@ -771,22 +786,26 @@ public partial class Main : Node3D
         try
         {
             void Check(bool ok,string message) { if(!ok)throw new Exception(message); }
+            if(OS.GetCmdlineUserArgs().Contains("--map-buffer-check")){Hud.CheckMapGeometry();await CheckMapBufferBudget();QuitGame();return;}
             await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
-            foreach(var size in new[]{new Vector2(8200,1),new Vector2(1,8200)})
-                using(var mask=Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),Array.Empty<Vector2[]>(),
-                    new Rect2(Vector2.Zero,size),Array.Empty<(Vector2,Vector2,float)>(),2))
-                    Check(mask.GetWidth()<=16384 && mask.GetHeight()<=16384,"Expanded surface mask exceeds the 16K texture budget");
+            CheckSurfaceMasks();
+            CheckSharedBoxMeshes();
+            if(OS.GetCmdlineUserArgs().Contains("--surface-check")){QuitGame();return;}
+            Hud.CheckMapGeometry();
+            CheckHarbourSceneryFiltering();
+            if(OS.GetCmdlineUserArgs().Contains("--self-test"))await CheckBuildingStreaming();
+            if(OS.GetCmdlineUserArgs().Contains("--streaming-check")){await CheckBuildingStreaming();QuitGame();return;}
             if(OS.GetCmdlineUserArgs().Contains("--restart-check")){await CheckRestart();return;}
             if(OS.GetCmdlineUserArgs().Contains("--stop-survey")){await SurveyStops();return;}
             if(OS.GetCmdlineUserArgs().Contains("--route-check")){await CheckRoutes();QuitGame();return;}
             if(OS.GetCmdlineUserArgs().Contains("--hud-check")){CheckHud();await CheckReviewRegressions();QuitGame();return;}
-            if(OS.GetCmdlineUserArgs().Contains("--map-check")){CheckGovernmentMap();QuitGame();return;}
-            CheckStreetClearance();
+            if(OS.GetCmdlineUserArgs().Contains("--map-check")){await CheckGovernmentMap();QuitGame();return;}
+            await CheckStreetClearance();
             if(OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--east-kowloon-check") || OS.GetCmdlineUserArgs().Contains("--wong-tai-sin-check") || OS.GetCmdlineUserArgs().Contains("--west-coast-check") || OS.GetCmdlineUserArgs().Contains("--tsuen-wan-check")){await CheckHarbour();QuitGame();return;}
             CheckRoadMarkings();
             if(OS.GetCmdlineUserArgs().Contains("--road-check")) { QuitGame(); return; }
             await CheckBuildings();
-            CheckMongKokOpenSpaces();
+            await CheckMongKokOpenSpaces();
             CheckEasternOpenSpaces();
             await CheckPocketGardenRendering();
             CheckAssetDetails();

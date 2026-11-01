@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Text.Json;
 
 public partial class Main
@@ -46,7 +47,7 @@ public partial class Main
         GD.Print($"ANTILA_OPEN_SPACES: {root.GetProperty("sites").GetArrayLength()} sourced sites; {surfaces.Length} sports surface triangles; 1 authored play pad; {_recreationProps.Count} authored fixtures");
     }
 
-    private void CheckMongKokOpenSpaces()
+    private async Task CheckMongKokOpenSpaces()
     {
         using var data=JsonDocument.Parse(FileAccess.GetFileAsString("res://Data/mong-kok-open-spaces.json"));
         var root=data.RootElement;
@@ -90,17 +91,27 @@ public partial class Main
         }
         GD.Print("ANTILA_ANCHOR_PITCHES_OK: four goal frames across the combined outline; fittings inside source bounds");
         using var layout=JsonDocument.Parse(FileAccess.GetFileAsString("res://Data/kowloon-north-layout.json"));
+        var original=Bus.Position;bool priorStreamingCheck=_buildingStreamingCheck;_buildingStreamingCheck=true;
         int roofs=0;
-        foreach(var building in layout.RootElement.GetProperty("buildings").EnumerateArray().Where(b=>new[]{228041,263953,226983,82955}.Contains(b.GetProperty("id").GetInt32())))
+        try
         {
-            var c=building.GetProperty("center");float h=building.GetProperty("height").GetSingle();
-            var p=new Vector3(c[0].GetSingle(),h,c[1].GetSingle());
-            using var ray=PhysicsRayQueryParameters3D.Create(p+Vector3.Up*2,p-Vector3.Up,1);
-            var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
-            if(hit.Count==0 || Mathf.Abs(hit["position"].AsVector3().Y-h)>.05f)throw new Exception("Restored Mong Kok roof collision missing at "+p);
-            roofs++;
+            foreach(var building in layout.RootElement.GetProperty("buildings").EnumerateArray().Where(b=>new[]{228041,263953,226983,82955}.Contains(b.GetProperty("id").GetInt32())))
+            {
+                var c=building.GetProperty("center");float h=building.GetProperty("height").GetSingle();
+                var p=new Vector3(c[0].GetSingle(),h,c[1].GetSingle());
+                if(PrepareBuildingProbe(p))await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+                using var ray=PhysicsRayQueryParameters3D.Create(p+Vector3.Up*2,p-Vector3.Up,1);
+                var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
+                if(hit.Count==0 || Mathf.Abs(hit["position"].AsVector3().Y-h)>.05f)throw new Exception("Restored Mong Kok roof collision missing at "+p);
+                roofs++;
+            }
+            if(roofs!=5)throw new Exception("Restored Mong Kok building components missing");
         }
-        if(roofs!=5)throw new Exception("Restored Mong Kok building components missing");
+        finally
+        {
+            try { EnsureBuildingsAt(original);await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame); }
+            finally { _buildingStreamingCheck=priorStreamingCheck; }
+        }
         GD.Print($"ANTILA_RESTORED_ROOFS_OK: {roofs} probes across the four reported building IDs");
         GD.Print($"ANTILA_OPEN_SPACES_OK: {samples} sourced surfaces, 1 authored play pad, {_recreationProps.Count} clear fixtures, {colliders.Count} court collision meshes");
     }

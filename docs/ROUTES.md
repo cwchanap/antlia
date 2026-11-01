@@ -59,12 +59,17 @@ The harbour roads are government centrelines given authored widths: 12 m on the 
 
 `--stop-survey` prints the fitted lane every 25 m and every 5 m stretch that is straight, at ground level, steady in lane and has pavement for a shelter (S) or a pole (P). The stops above were chosen from that output.
 
+## Map drawing
+
+The minimap, expanded M map and route-select map simplify and cull their road-background lines for HUD rendering. Polyline endpoints are preserved exactly, and simplified linework stays within 0.35 physical output pixel of its source. Viewport culling keeps segments that can touch the padded canvas; same-class lines are batched into `DrawMultiline` calls. Resizing the presentation refreshes the map canvases and textures. This affects map drawing only; road data, route geometry, collision and driving physics keep their existing source geometry. The native `--map-buffer-check` passed its 2880 × 1800 resize and texture-refresh check; see [startup performance](STARTUP_PERFORMANCE.md) for the render-buffer readings.
+
 ## Reproduce checks and views
 
 ```sh
 ./run.command --headless -- --route-check            # data, menu flow, missed stop, abandoned trip, then H1, H2 and H3 driven
 ./run.command --headless -- --route-check --route=H2 # the same, driving only H2
 ./run.command --headless -- --stop-survey            # candidate stop sites and fitted lanes for H2 and H3
+./run.command -- --map-buffer-check                  # native renderer only; HUD geometry, buffers and 2x resize refresh
 ./run.command -- --route-capture                     # evidence/routes/*.png: menu, briefing, staged bays, tube, H2/H3 maps, free-drive map, H1 results
 ./run.command --headless -- --self-test              # includes --route-check after the harbour drives
 ```

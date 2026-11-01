@@ -115,6 +115,8 @@ public partial class Main
             ("hong-chong-stop",Routes[2].Path.At(Routes[2].Stops[0].Distance-22,Routes[2].Stops[0].Lane+6)+Vector3.Up*9,
                 Routes[2].Path.At(Routes[2].Stops[0].Distance,Routes[2].Stops[0].Lane-3.8f)+Vector3.Up*2)})
         {
+            EnsureBuildingsAt(p.Y<20?p:target);
+            await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
             Camera.Position=p;Camera.LookAt(target);
             await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);RenderingServer.ForceDraw(false);
             using var image=GetViewport().GetTexture().GetImage();

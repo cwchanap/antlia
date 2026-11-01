@@ -148,17 +148,32 @@ public partial class Main
             var surface=mask.GetPixel((int)(uv.X*mask.GetWidth()),(int)(uv.Y*mask.GetHeight()));
             Check(surface.G>.99f && surface.R<.01f,"pedestrian detail must sit on the pavement");
         }
-        foreach(var entrance in _parkEntrances)
-            for(float t=0;t<=1;t+=.05f)
-            {
-                var p=entrance.A.Lerp(entrance.B,t);
-                Check(_footpathObstacles.All(o=>o.Center.DistanceTo(p)>o.Radius+1.2f),"park entrance must leave room beside tree trunks and furniture");
-                query.Transform=new(Basis.Identity,p+Vector3.Up);
-                Check(GetWorld3D().DirectSpaceState.IntersectShape(query,1).Count==0,"park entrance must pass through an open wall gap");
-                var uv=(new Vector2(p.X,p.Z)-Map.Bounds.Position)/Map.Bounds.Size;
-                var surface=mask.GetPixel((int)(uv.X*mask.GetWidth()),(int)(uv.Y*mask.GetHeight()));
-                Check(surface.G>.99f && surface.R<.01f,"park entry path must be paved and clear of the road");
-            }
+        var original=Bus.Position;bool priorStreamingCheck=_buildingStreamingCheck;_buildingStreamingCheck=true;
+        Vector3? lastProbe=null;
+        try
+        {
+            foreach(var entrance in _parkEntrances)
+                for(float t=0;t<=1;t+=.05f)
+                {
+                    var p=entrance.A.Lerp(entrance.B,t);
+                    Check(_footpathObstacles.All(o=>o.Center.DistanceTo(p)>o.Radius+1.2f),"park entrance must leave room beside tree trunks and furniture");
+                    if(lastProbe==null || lastProbe.Value.DistanceSquaredTo(p)>400)
+                    {
+                        if(PrepareBuildingProbe(p))await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+                        lastProbe=p;
+                    }
+                    query.Transform=new(Basis.Identity,p+Vector3.Up);
+                    Check(GetWorld3D().DirectSpaceState.IntersectShape(query,1).Count==0,"park entrance must pass through an open wall gap");
+                    var uv=(new Vector2(p.X,p.Z)-Map.Bounds.Position)/Map.Bounds.Size;
+                    var surface=mask.GetPixel((int)(uv.X*mask.GetWidth()),(int)(uv.Y*mask.GetHeight()));
+                    Check(surface.G>.99f && surface.R<.01f,"park entry path must be paved and clear of the road");
+                }
+        }
+        finally
+        {
+            try { EnsureBuildingsAt(original);await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame); }
+            finally { _buildingStreamingCheck=priorStreamingCheck; }
+        }
         GD.Print("ANTILA_FOOTPATHS_OK: pavement furniture clearance; open crossing landings; two connected park paths and wall gaps");
     }
 }

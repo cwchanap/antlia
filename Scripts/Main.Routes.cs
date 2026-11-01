@@ -503,7 +503,10 @@ public partial class Main
             string folder=ProjectSettings.GlobalizePath("res://evidence/routes");DirAccess.MakeDirRecursiveAbsolute(folder);
             async Task Save(string name)
             {
-                for(int i=0;i<4;i++)await ToSignal(RenderingServer.Singleton,RenderingServer.SignalName.FramePostDraw);
+                for(int i=0;i<4;i++)
+                {
+                    await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);RenderingServer.ForceDraw(false);
+                }
                 using var image=GetViewport().GetTexture().GetImage();
                 if(image.SavePng($"{folder}/{name}.png")!=Error.Ok)throw new Exception($"capture {name} failed");
                 GD.Print($"ANTILA_ROUTE_CAPTURE: {name}.png");
@@ -550,33 +553,48 @@ public partial class Main
 
     private async Task SurveyStops()
     {
-        await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+        var original=Bus.Position;bool priorStreamingCheck=_buildingStreamingCheck;_buildingStreamingCheck=true;
         var envelope=new PhysicsShapeQueryParameters3D {Shape=new BoxShape3D {Size=new(2.6f,3,11)},CollisionMask=1};
-        foreach(var route in Routes.Where(r=>!r.Nathan))
+        Vector3? lastProbe=null;
+        try
         {
-            var path=route.Path;var runs=new List<string>();float runStart=-1,last=-1;string kinds="";
-            GD.Print($"ANTILA_SURVEY_LANES {route.Number}: "+string.Join(" ",Enumerable.Range(0,(int)(path.Length/25)).Select(k=>$"{k*25}:{path.BaseLane(k*25):0.0}")));
-            for(float d=40;d<path.Length-15;d+=5)
+            await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+            foreach(var route in Routes.Where(r=>!r.Nathan))
             {
-                float lane=path.BaseLane(d)-.4f;
-                bool ground=Enumerable.Range(-4,9).All(k=>Mathf.Abs(path.At(d+k*5).Y)<.05f);
-                bool straight=Mathf.Abs(Mathf.AngleDifference(path.Heading(d-12),path.Heading(d+12)))<Mathf.DegToRad(6);
-                bool steady=Enumerable.Range(-4,9).All(k=>Mathf.Abs(path.BaseLane(d+k*5)-lane-.4f)<.35f);
-                bool shelter=ShelterFits(path,d,lane),pole=PoleFits(path,d,lane);
-                string why=shelter || pole?"":SiteFailure(path.At(d+4,lane-2.6f),.3f);
-                foreach(int k in new[]{-1,0,1})if(why=="" && !shelter && !pole)why=SiteFailure(path.At(d+k*3-1,lane-3.3f),.4f);
-                envelope.Transform=new(new Basis(Vector3.Up,path.Heading(d)),path.At(d,lane)+Vector3.Up*2.3f);
-                bool body=GetWorld3D().DirectSpaceState.IntersectShape(envelope,1).Count==0;
-                bool ok=ground && straight && steady && (shelter || pole) && body;
-                if(ok && runStart<0){runStart=d;kinds="";}
-                if(ok)kinds+=shelter?"S":"P";
-                if(!ok && runStart>=0){runs.Add($"{runStart:0}-{last:0} {kinds}");runStart=-1;}
-                if(ok)last=d;
-                if(d%25==0)GD.Print($"ANTILA_SURVEY_ROW {route.Number} {d:0}: lane={lane:0.0} g={ground} s={straight} steady={steady} shelter={shelter} pole={pole} site={why} b={body} {path.StreetAt(d)}");
+                var path=route.Path;var runs=new List<string>();float runStart=-1,last=-1;string kinds="";
+                GD.Print($"ANTILA_SURVEY_LANES {route.Number}: "+string.Join(" ",Enumerable.Range(0,(int)(path.Length/25)).Select(k=>$"{k*25}:{path.BaseLane(k*25):0.0}")));
+                for(float d=40;d<path.Length-15;d+=5)
+                {
+                    float lane=path.BaseLane(d)-.4f;var position=path.At(d,lane);
+                    bool ground=Enumerable.Range(-4,9).All(k=>Mathf.Abs(path.At(d+k*5).Y)<.05f);
+                    bool straight=Mathf.Abs(Mathf.AngleDifference(path.Heading(d-12),path.Heading(d+12)))<Mathf.DegToRad(6);
+                    bool steady=Enumerable.Range(-4,9).All(k=>Mathf.Abs(path.BaseLane(d+k*5)-lane-.4f)<.35f);
+                    bool shelter=ShelterFits(path,d,lane),pole=PoleFits(path,d,lane);
+                    string why=shelter || pole?"":SiteFailure(path.At(d+4,lane-2.6f),.3f);
+                    foreach(int k in new[]{-1,0,1})if(why=="" && !shelter && !pole)why=SiteFailure(path.At(d+k*3-1,lane-3.3f),.4f);
+                    if(lastProbe==null || lastProbe.Value.DistanceSquaredTo(position)>400)
+                    {
+                        if(PrepareBuildingProbe(position))await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+                        lastProbe=position;
+                    }
+                    envelope.Transform=new(new Basis(Vector3.Up,path.Heading(d)),position+Vector3.Up*2.3f);
+                    bool body=GetWorld3D().DirectSpaceState.IntersectShape(envelope,1).Count==0;
+                    bool ok=ground && straight && steady && (shelter || pole) && body;
+                    if(ok && runStart<0){runStart=d;kinds="";}
+                    if(ok)kinds+=shelter?"S":"P";
+                    if(!ok && runStart>=0){runs.Add($"{runStart:0}-{last:0} {kinds}");runStart=-1;}
+                    if(ok)last=d;
+                    if(d%25==0)GD.Print($"ANTILA_SURVEY_ROW {route.Number} {d:0}: lane={lane:0.0} g={ground} s={straight} steady={steady} shelter={shelter} pole={pole} site={why} b={body} {path.StreetAt(d)}");
+                }
+                if(runStart>=0)runs.Add($"{runStart:0}-{last:0} {kinds}");
+                GD.Print($"ANTILA_SURVEY {route.Number} length {path.Length:0}: "+string.Join(", ",runs));
+                GD.Print($"ANTILA_SURVEY_TURNS {route.Number}: "+string.Join(", ",path.Turns.Select(t=>$"{t.Distance:0}{(t.Direction>0?"L":"R")} {t.Street}")));
             }
-            if(runStart>=0)runs.Add($"{runStart:0}-{last:0} {kinds}");
-            GD.Print($"ANTILA_SURVEY {route.Number} length {path.Length:0}: "+string.Join(", ",runs));
-            GD.Print($"ANTILA_SURVEY_TURNS {route.Number}: "+string.Join(", ",path.Turns.Select(t=>$"{t.Distance:0}{(t.Direction>0?"L":"R")} {t.Street}")));
+        }
+        finally
+        {
+            try { EnsureBuildingsAt(original);await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame); }
+            finally { _buildingStreamingCheck=priorStreamingCheck; }
         }
         QuitGame();
     }

@@ -20,7 +20,11 @@ Godot user args (all defined in `Main._Ready`):
 
 | Flag | Effect |
 | --- | --- |
-| `--self-test` | Everything: markings, buildings, footpaths, audio, regressions, signals, harbour drives, routes, then a physically driven 1.08 km route through all three stops |
+| `--surface-check` | Early terrain-image budget, world-space coverage and shared-box geometry checks, before constructing the world |
+| `--streaming-check` | Building residency, background approach, eviction, real collision and teleport/return checks |
+| `--streaming-loader-check` | Isolated failed-load token cleanup and repaired-asset retry regression |
+| `--map-buffer-check` | HUD map geometry, native render-buffer budget and 2× resize refresh; requires the native renderer, not headless |
+| `--self-test` | Everything: terrain and HUD map checks, building streaming, markings, footpaths, audio, regressions, signals, harbour drives, routes, then a physically driven 1.08 km route through all three stops |
 | `--route-check` | Route table, menu/briefing/results flow, missed and abandoned trips, then H1, H2 and H3 driven terminus to terminus; add `--route=H2` to drive one route |
 | `--stop-survey` | Prints fitted lanes and candidate stop sites (S shelter, P pole) for H2/H3, then quits |
 | `--road-check` / `--footpath-check` / `--building-check` / `--signal-check` | Early-exit subsets of the same `RunChecks` cascade — cheapest first |
@@ -48,12 +52,14 @@ Later stages read state accumulated by earlier ones (`_lots`, `_pavementPatches`
 `Main` is one `partial class` split by feature, all in `Scripts/`:
 
 - `Main.cs` — lifecycle, terrain/street/neighborhood construction, camera, service progression, captures, `RunChecks`
+- `Main.BuildingStreaming.cs` / `Main.BuildingStreamingChecks.cs` — building chunk residency and its loader/streaming regressions
+- `Main.MapChecks.cs` — HUD map geometry and native render-buffer/resize checks
 - `Main.Routes.cs` — `ServiceRoute`, `Data/routes.json` loading, kerbside lane fitting, stop construction (shelter or pole), route select/briefing/results flow, `CheckRoutes` and the scripted `DriveRoute` test driver
 - `Main.Signals.cs` — `TrafficSignal`, `SignalAspect`, 48 approaches across 14 junctions
 - `Main.RoadDetails.cs`, `Main.Footpaths.cs`, `Main.BuildingReview.cs`, `Main.AudioReview.cs`
 - `Main.OpenSpaces.cs` — government-bounded Mong Kok recreation surfaces, furniture and checks
 
-Standalone types: `RoadMap` (plain C# class, not a Node), `RoutePath` (a service line: points, lanes, streets, turns, projection), `BusController : CharacterBody3D`, `Hud : Control` (partial; `Hud.Routes.cs` draws route select, briefing, turn banner and results).
+Standalone types: `RoadMap` (plain C# class, not a Node), `RoutePath` (a service line: points, lanes, streets, turns, projection), `BusController : CharacterBody3D`, `Hud : Control` (partial; `Hud.Routes.cs` draws route select, briefing, turn banner and results; `Hud.MapGeometry.cs` simplifies and culls HUD map road backgrounds without changing road or physics authority).
 
 `LoadRoutes` runs after the harbour roads and buildings are ready, before decorative scenery. `ClearOfServiceStops` reserves shelter, queue and furniture space during decoration placement. `BuildStops` later fits and constructs the actual stops against the finished lots and scenery; do not load the route table a second time there. H1 reuses RoadMap's 5 m stations exactly; H2/H3 run on a smoothed reference line with lanes fitted to the carriageway widths (see `docs/ROUTES.md`). `Route` is the active service; HUD guidance, stop logic and the map read it rather than `Map`.
 

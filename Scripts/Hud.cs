@@ -17,6 +17,16 @@ public partial class Hud : Control
         MouseFilter=MouseFilterEnum.Ignore;SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         _miniMap=BuildMapRoads(false);_fullMap=BuildMapRoads(true);
         BuildRouteMap();
+        GetViewport().SizeChanged+=RefreshMapCanvases;
+    }
+
+    private void RefreshMapCanvases()
+    {
+        foreach(var map in new[]{_miniMap,_fullMap,_routeMap})
+        {
+            map.GetChild<Control>(0).QueueRedraw();
+            map.RenderTargetUpdateMode=SubViewport.UpdateMode.Once;
+        }
     }
 
     public bool OncomingLaneWarning
@@ -104,25 +114,8 @@ public partial class Hud : Control
 
     private SubViewport BuildMapRoads(bool expanded)
     {
-        // The offline map is immutable; virtual HUD coordinates also survive window resizing.
-        var (origin,scale)=MapTransform(expanded);
-        Vector2 Point(Vector3 p)=>origin+new Vector2(p.X,p.Z)*scale;
-        var lines=new[]{new List<Vector2>(),new List<Vector2>(),new List<Vector2>()};
-        foreach(var road in Game.Map.SideRoads)
-            for(int i=1;i<road.Points.Count;i++)
-            { lines[0].Add(Point(road.Points[i-1]));lines[0].Add(Point(road.Points[i])); }
-        foreach(var road in Game.HarbourRoads)
-            for(int i=0;i<road.Points.Count-1;i++)
-            {
-                if(road.Tunnel && i%5>2)continue;
-                var batch=lines[road.Tunnel?2:1];batch.Add(Point(road.Points[i]));batch.Add(Point(road.Points[i+1]));
-            }
-        var roads=new[]{lines[0].ToArray(),lines[1].ToArray(),lines[2].ToArray()};
-        var coast=new List<Vector2>();
-        foreach(var line in Game.KowloonCoastline.Concat(Game.IslandCoastline))for(int i=1;i<line.Length;i++)
-        { coast.Add(origin+line[i-1]*scale);coast.Add(origin+line[i]*scale); }
-        var coastPoints=coast.ToArray();
-        var area=MapArea(expanded);
+        var area=MapArea(expanded);var colors=new[]{new Color("72a9aa"),new Color("526e67"),new Color("d4b26e"),new Color("7ed8dc")};
+        var widths=new[]{expanded?1.8f:1.2f,expanded?1.6f:1.5f,expanded?1.35f:1.3f,expanded?3f:2f};
         var viewport=new SubViewport {Size=(Vector2I)area.Size,TransparentBg=true,Disable3D=true,
             RenderTargetUpdateMode=SubViewport.UpdateMode.Once};
         AddChild(viewport);
@@ -131,10 +124,9 @@ public partial class Hud : Control
         {
             var pixels=(Vector2)viewport.Size/area.Size;
             canvas.DrawSetTransform(-area.Position*pixels,0,pixels);
-            canvas.DrawMultiline(coastPoints,new Color("72a9aa"),expanded?1.8f:1.2f,true);
-            canvas.DrawMultiline(roads[0],new Color("526e67"),expanded?1.6f:1.5f,true);
-            canvas.DrawMultiline(roads[1],new Color("d4b26e"),expanded?1.35f:1.3f,true);
-            canvas.DrawMultiline(roads[2],new Color("7ed8dc"),expanded?3:2,true);
+            var batches=BuildMapViewGeometry(expanded,viewport.Size);
+            for(int i=0;i<batches.Length;i++)if(batches[i].Points.Length>1)
+                canvas.DrawMultiline(batches[i].Points,colors[i],widths[i],true);
         };
         return viewport;
     }

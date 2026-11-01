@@ -3,6 +3,8 @@
 
 The [24 October Wong Tai Sin extension](WONG_TAI_SIN_EXPANSION.md) brings the current total to **39,946 derived parts in 3,135 render/collision chunk pairs**, including 8,528 eastern parts. Its northern asset contains 1,666 parts in 202 chunk pairs. Earlier counts below apply to their recorded snapshots.
 
+The [30 October building-streaming change](BUILDING_STREAMING.md) packages those pairs independently and loads detailed geometry/collision near the bus. Collision-derived skyline proxies remain visible at a distance. Loaded chunks share three texture families, release hidden render meshes after collision construction and dispose owned resources on eviction. The original source GLBs, government data and detailed geometry are retained; roof and clearance checks load their probe regions before testing.
+
 The [21 October eastern Kowloon expansion](EAST_KOWLOON_EXPANSION.md) adds the eighth Kowloon source extract and three district GLBs. That snapshot: **38,259 derived parts in 2,932 render/collision chunk pairs**, including 6,840 new eastern parts. Earlier counts below apply to their recorded snapshots.
 The [15 October coastal expansion](WEST_COAST_EXPANSION.md) adds a seventh Kowloon source extract and a Ting Kau / Sham Tseng building GLB. The 18 October Mong Kok correction recorded 31,404 parts and 2,456 render/collision chunk pairs at that snapshot. Earlier counts below describe their recorded snapshots.
 

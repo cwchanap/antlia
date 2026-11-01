@@ -35,13 +35,19 @@ public partial class Main
         Check(_harbourDistrictTrees[10]>0 && _harbourDistrictLamps[10]>0 && _harbourDistrictPeople[10]>0,
             $"Wong Tai Sin clearance-safe street detail missing: {_harbourDistrictTrees[10]} trees, {_harbourDistrictLamps[10]} lamps, {_harbourDistrictPeople[10]} passengers");
         Check(_islandDetails.Count(d=>d.Position.X>550 && d.Position.X<3150 && d.Position.Z<=-4864)>0,"Wong Tai Sin roadside scenery missing");
-        Check(GD.Load<PackedScene>("res://Assets/Models/wong-tai-sin-buildings.glb")!=null,"Wong Tai Sin building model missing");
-        var model=_city.FindChildren("wong-tai-sin-buildings","Node3D",true,false).FirstOrDefault();
-        Check(model!=null,"Wong Tai Sin building model was not added to the city");
-        var chunks=model!.FindChildren("*","MeshInstance3D",true,false).Cast<MeshInstance3D>().ToArray();
-        Check(chunks.Count(m=>m.Name.ToString().StartsWith("District"))>0 &&
-            chunks.Count(m=>m.Name.ToString().StartsWith("District"))==chunks.Count(m=>m.Name.ToString().StartsWith("Collision")),
-            "Wong Tai Sin building visuals and collision chunks must match");
+        var buildingChunks=_buildingChunks.Where(c=>c.Source=="wong-tai-sin-buildings").ToArray();
+        Check(buildingChunks.Length==202 && buildingChunks.All(c=>GodotObject.IsInstanceValid(c.Proxy) && c.Proxy.Visible==(c.Instance==null)) &&
+            buildingChunks.Select(c=>c.Proxy.GetInstanceId()).Distinct().Count()==buildingChunks.Length,
+            "Wong Tai Sin building manifest chunks need matching visible proxies");
+        foreach(var chunk in _buildingChunks.Where(c=>c.Instance!=null))
+        {
+            var parts=chunk.Instance!.FindChildren("*","MeshInstance3D",true,false).Cast<MeshInstance3D>().ToArray();
+            var visual=parts.Count(m=>m.Name.ToString().StartsWith("District"));
+            var collision=parts.Where(m=>m.Name.ToString().StartsWith("Collision")).ToArray();
+            Check(visual>0 && visual==collision.Length && collision.All(m=>!m.Visible && m.Mesh==null &&
+                m.FindChildren("*","CollisionShape3D",true,false).Count==1),
+                $"Resident building visual and collision inventory differs for {chunk.Id}");
+        }
 
         var north=KowloonEastLand.Min(p=>p.Y);
         var edge=Enumerable.Range(0,KowloonEastLand.Length)

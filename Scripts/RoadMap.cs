@@ -242,9 +242,18 @@ public sealed class RoadMap
     {
         // RGB is map data: road, pavement, park. One surface avoids coplanar depth fighting.
         var bounds=region??Bounds;
-        // Cap large expansions at a 16K texture while retaining world-space placement below.
+        // Bound RGB pixels to 192 MiB (256 MiB with mipmaps), as well as the GPU's 16K axis limit.
         resolution=Mathf.Min(resolution,16384f/Mathf.Max(bounds.Size.X,bounds.Size.Y));
         int width=Math.Min(16384,Mathf.CeilToInt(bounds.Size.X*resolution)),height=Math.Min(16384,Mathf.CeilToInt(bounds.Size.Y*resolution));
+        float pavingPadding=0;
+        const long maxPixels=64L*1024*1024;
+        if((long)width*height>maxPixels)
+        {
+            float scale=Mathf.Sqrt(maxPixels/((float)width*height));
+            width=Math.Max(1,Mathf.FloorToInt(width*scale));height=Math.Max(1,Mathf.FloorToInt(height*scale));
+            // Keep narrow roadside paving covered when linear filtering spans the larger texels.
+            pavingPadding=new Vector2(bounds.Size.X/width,bounds.Size.Y/height).Length()*.5f;
+        }
         float sx=width/bounds.Size.X,sy=height/bounds.Size.Y;
         var pixels=new byte[width*height*3];
         Vector2 Pixel(Vector2 p)=>(p-bounds.Position)*new Vector2(sx,sy);
@@ -272,7 +281,7 @@ public sealed class RoadMap
         void Stroke(Vector2 a,Vector2 b,float roadRadius,float pavingRadius)
         {
             float pixelsPerMetre=Mathf.Min(sx,sy),feather=.5f/pixelsPerMetre;
-            var lo=Pixel(a.Min(b)-Vector2.One*(pavingRadius+feather));var hi=Pixel(a.Max(b)+Vector2.One*(pavingRadius+feather));
+            var lo=Pixel(a.Min(b)-Vector2.One*(pavingRadius+pavingPadding+feather));var hi=Pixel(a.Max(b)+Vector2.One*(pavingRadius+pavingPadding+feather));
             int xmin=Math.Max(0,Mathf.FloorToInt(lo.X)),xmax=Math.Min(width-1,Mathf.CeilToInt(hi.X));
             int ymin=Math.Max(0,Mathf.FloorToInt(lo.Y)),ymax=Math.Min(height-1,Mathf.CeilToInt(hi.Y));
             for(int y=ymin;y<=ymax;y++)
@@ -282,7 +291,7 @@ public sealed class RoadMap
                     float distance=p.DistanceTo(Closest(p,a,b));
                     int index=(y*width+x)*3;
                     byte Coverage(float radius)=>(byte)Mathf.RoundToInt(Mathf.Clamp((radius-distance)*pixelsPerMetre+.5f,0,1)*255);
-                    pixels[index+1]=Math.Max(pixels[index+1],Coverage(pavingRadius));
+                    pixels[index+1]=Math.Max(pixels[index+1],Coverage(pavingRadius+pavingPadding));
                     if(roadRadius>0)pixels[index]=Math.Max(pixels[index],Coverage(roadRadius));
                 }
         }

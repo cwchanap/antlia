@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 public partial class Main
@@ -7,7 +8,7 @@ public partial class Main
     private void BuildGovernmentBuildings()
     {
         _city=new Node3D {Name="GovernmentBuildings"};AddChild(_city);
-        foreach(var (layout,asset) in new[]{("building-layout","kowloon-buildings"),("island-building-layout","island-buildings"),("kowloon-north-layout","yau-ma-tei-buildings"),("west-kowloon-layout","west-kowloon-buildings"),("lai-chi-kok-layout","lai-chi-kok-buildings"),("kwai-chung-layout","kwai-chung-buildings"),("tsuen-wan-layout","tsuen-wan-buildings"),("west-coast-layout","west-coast-buildings"),("east-kowloon-layout","hung-hom-buildings")})
+        foreach(var layout in new[]{"building-layout","island-building-layout","kowloon-north-layout","west-kowloon-layout","lai-chi-kok-layout","kwai-chung-layout","tsuen-wan-layout","west-coast-layout","east-kowloon-layout"})
         {
         using var data=System.Text.Json.JsonDocument.Parse(FileAccess.GetFileAsString($"res://Data/{layout}.json"));
         foreach(var patch in data.RootElement.GetProperty("pavement_patches").EnumerateArray())
@@ -26,48 +27,41 @@ public partial class Main
             // Courtyards remain paved; street furniture conservatively avoids the outer ring.
             _lots.Add((new(center[0].GetSingle(),0,center[1].GetSingle()),b.GetProperty("height").GetSingle(),polygon,bounds));
         }
-        _city.AddChild(GD.Load<PackedScene>($"res://Assets/Models/{asset}.glb").Instantiate<Node3D>());
-        if(asset=="yau-ma-tei-buildings")_city.AddChild(GD.Load<PackedScene>("res://Assets/Models/mong-kok-buildings.glb").Instantiate<Node3D>());
-        if(asset=="island-buildings")_city.AddChild(GD.Load<PackedScene>("res://Assets/Models/central-buildings.glb").Instantiate<Node3D>());
-        if(asset=="west-kowloon-buildings")foreach(var name in new[]{"tai-kok-tsui-buildings","sham-shui-po-west-buildings","sham-shui-po-east-buildings"})_city.AddChild(GD.Load<PackedScene>($"res://Assets/Models/{name}.glb").Instantiate<Node3D>());
-        if(asset=="hung-hom-buildings")foreach(var name in new[]{"to-kwa-wan-buildings","kowloon-city-buildings","wong-tai-sin-buildings"})
-        {
-            var model=GD.Load<PackedScene>($"res://Assets/Models/{name}.glb").Instantiate<Node3D>();
-            if(name=="wong-tai-sin-buildings")model.Name=name;
-            _city.AddChild(model);
         }
-        if(asset=="tsuen-wan-buildings")foreach(var name in new[]{"tsuen-wan-west-buildings","kwai-chung-north-buildings"})_city.AddChild(GD.Load<PackedScene>($"res://Assets/Models/{name}.glb").Instantiate<Node3D>());
-        if(asset=="kwai-chung-buildings")foreach(var name in new[]{"kwai-chung-east-buildings","lai-king-buildings"})_city.AddChild(GD.Load<PackedScene>($"res://Assets/Models/{name}.glb").Instantiate<Node3D>());
-        if(asset=="lai-chi-kok-buildings")foreach(var name in new[]{"lai-chi-kok-west-buildings","cheung-sha-wan-buildings"})_city.AddChild(GD.Load<PackedScene>($"res://Assets/Models/{name}.glb").Instantiate<Node3D>());
-        }
-        foreach(MeshInstance3D mesh in _city.FindChildren("*","MeshInstance3D",true,false))
-        {
-            foreach(var material in Enumerable.Range(0,mesh.Mesh.GetSurfaceCount()).Select(mesh.Mesh.SurfaceGetMaterial).OfType<StandardMaterial3D>())
-                material.AlbedoColor=material.ResourceName switch {
-                    "CSDI_facade_1"=>new(.82f,.88f,.88f),"CSDI_facade_2"=>new(1,.91f,.79f),
-                    "CSDI_facade_3"=>new(.86f,.91f,.86f),_=>material.AlbedoColor};
-            if(mesh.Name.ToString().StartsWith("Collision"))
-            {
-                mesh.Visible=false;
-                var body=new StaticBody3D();mesh.AddChild(body);
-                body.AddChild(new CollisionShape3D {Shape=mesh.Mesh.CreateTrimeshShape()});
-            }
-        }
+        BuildBuildingStreaming();
         GD.Print($"ANTILA_SCENERY: {_lots.Count} CSDI building parts; surveyed footprints and roof heights; generated facade atlas");
     }
 
     private async System.Threading.Tasks.Task CheckBuildings()
     {
+        var original=Bus.Position;EnsureBuildingsAt(original);
         var meshes=_city.FindChildren("*","MeshInstance3D",true,false).Cast<MeshInstance3D>().ToArray();
         var visual=meshes.Where(m=>m.Name.ToString().StartsWith("District")).ToArray();
         var collision=meshes.Where(m=>m.Name.ToString().StartsWith("Collision")).ToArray();
+        var textureInstances=new Dictionary<string,HashSet<ulong>>();
+        foreach(var material in visual.SelectMany(m=>Enumerable.Range(0,m.Mesh.GetSurfaceCount()).Select(m.Mesh.SurfaceGetMaterial)).OfType<StandardMaterial3D>())
+        {
+            string family=material.ResourceName.StartsWith("CSDI_facade_")?"facade":material.ResourceName.StartsWith("CSDI_shopfront_variety")?"variety":material.ResourceName.StartsWith("CSDI_shopfront")?"shopfront":"";
+            if(family=="" || material.AlbedoTexture==null)continue;
+            if(!textureInstances.TryGetValue(family,out var ids))textureInstances[family]=ids=new HashSet<ulong>();
+            ids.Add(material.AlbedoTexture.GetInstanceId());
+        }
+        var duplicateTextures=textureInstances.Where(pair=>pair.Value.Count>1).Select(pair=>$"{pair.Key}={pair.Value.Count}").ToArray();
+        var invalidCollisionShapes=collision.Count(m=>m.FindChildren("*","CollisionShape3D",true,false).Cast<CollisionShape3D>().SingleOrDefault()?.Shape is not ConcavePolygonShape3D);
+        int retainedCollisionMeshes=collision.Count(m=>m.Mesh!=null);
         var materials=visual.SelectMany(m=>Enumerable.Range(0,m.Mesh.GetSurfaceCount()).Select(m.Mesh.SurfaceGetMaterial))
             .OfType<StandardMaterial3D>().Where(m=>m.ResourceName.StartsWith("CSDI_facade")).DistinctBy(m=>m.ResourceName).ToArray();
         if(visual.Length<50 || visual.Length!=collision.Length || materials.Length!=4 || materials.Any(m=>m.AlbedoTexture==null)
-            || collision.Any(m=>m.Visible || m.FindChildren("*","CollisionShape3D",true,false).Count!=1))
-            throw new Exception("Government building chunks need textured facades and matching collision meshes");
+            || collision.Any(m=>m.Visible || m.FindChildren("*","CollisionShape3D",true,false).Count!=1)
+            || retainedCollisionMeshes!=0 || invalidCollisionShapes!=0 || textureInstances.Count!=3 || duplicateTextures.Length>0)
+            throw new Exception($"Government building resource ownership invalid: {retainedCollisionMeshes} hidden meshes retained, {invalidCollisionShapes} invalid trimesh shapes, textures [{string.Join(", ",duplicateTextures)}]");
         if(_lots.Count<1500 || _lots.Count(l=>l.Height>75)<70 || _lots.Max(l=>l.Height)<240)
             throw new Exception("Government building density or height variation lost");
+        foreach(var texture in _buildingTextures.Values)
+        {
+            using var image=texture.GetImage();
+            if(!image.HasMipmaps())throw new Exception("Shared building atlas lost mipmaps: "+texture.ResourcePath);
+        }
         int facadeEdges=0;
         foreach(var mesh in visual)
             for(int surface=0;surface<mesh.Mesh.GetSurfaceCount();surface++)
@@ -100,16 +94,27 @@ public partial class Main
                     throw new Exception("Unpaved gap between building pads at " + patch.Center);
             }
         GD.Print($"ANTILA_PAVING_OK: {_pavementPatches.Count} small enclosed pavement gaps filled");
-        await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+        bool priorStreamingCheck=_buildingStreamingCheck;_buildingStreamingCheck=true;
         int checkedRoofs=0;
-        foreach(var lot in _lots.Where((_,i)=>i%41==0).Concat(_lots.OrderByDescending(l=>l.Height).Take(10)))
+        try
         {
-            var ray=PhysicsRayQueryParameters3D.Create(lot.Center+Vector3.Up*(lot.Height+2),lot.Center+Vector3.Up*(lot.Height-1),1);
-            var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
-            ray.Dispose();
-            if(hit.Count==0 || Mathf.Abs(hit["position"].AsVector3().Y-lot.Height)>.05f)
-                throw new Exception($"Surveyed roof collision mismatch at {lot.Center}, height={lot.Height}");
-            checkedRoofs++;
+            await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+            foreach(var lot in _lots.Where((_,i)=>i%41==0).Concat(_lots.OrderByDescending(l=>l.Height).Take(10))
+                .OrderBy(l=>Mathf.FloorToInt(l.Center.X/1000f)).ThenBy(l=>Mathf.FloorToInt(l.Center.Z/1000f))
+                .ThenBy(l=>l.Center.X).ThenBy(l=>l.Center.Z))
+            {
+                if(PrepareBuildingProbe(lot.Center))await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+                using var ray=PhysicsRayQueryParameters3D.Create(lot.Center+Vector3.Up*(lot.Height+2),lot.Center+Vector3.Up*(lot.Height-1),1);
+                var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
+                if(hit.Count==0 || Mathf.Abs(hit["position"].AsVector3().Y-lot.Height)>.05f)
+                    throw new Exception($"Surveyed roof collision mismatch at {lot.Center}, height={lot.Height}");
+                checkedRoofs++;
+            }
+        }
+        finally
+        {
+            try { EnsureBuildingsAt(original);await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame); }
+            finally { _buildingStreamingCheck=priorStreamingCheck; }
         }
         GD.Print($"ANTILA_BUILDINGS_OK: {_lots.Count} derived CSDI parts, {visual.Length} spatial chunks, 4 textured materials, heights {_lots.Min(l=>l.Height):0.0}–{_lots.Max(l=>l.Height):0.0} m, {checkedRoofs} roof collision probes, {facadeEdges} facade edges at consistent window scale");
     }
@@ -149,7 +154,7 @@ public partial class Main
             foreach(float edge in new[]{-.5f,.5f})Check(!Intersects(new(-1.6f,.9f,z+edge),new(-.6f,.9f,z+edge)),"Wheel/body intrudes into the boarding opening");
             Check(Intersects(new(-1.12f,.8f,z),new(-1.12f,.3f,z)),"Door opening needs a modeled boarding step");
         }
-        var glass=FindChildren("*","MeshInstance3D",true,false).Cast<MeshInstance3D>()
+        var glass=FindChildren("*","MeshInstance3D",true,false).Cast<MeshInstance3D>().Where(m=>m.Mesh!=null)
             .SelectMany(m=>Enumerable.Range(0,m.Mesh.GetSurfaceCount()).Select(m.Mesh.SurfaceGetMaterial))
             .OfType<StandardMaterial3D>().Where(m=>m.ResourceName.Contains("shelter tinted glass")).ToArray();
         Check(glass.Length>=3 && glass.All(m=>m.Transparency==BaseMaterial3D.TransparencyEnum.Alpha && m.AlbedoColor.A<.3f),"Shelter panes must import with blended transparency");
@@ -197,6 +202,8 @@ public partial class Main
             ("district-skyline",new Vector3(600,330,110),new Vector3(0,0,-600)) };
         foreach(var (name,position,target) in views)
         {
+            EnsureBuildingsAt(position.Y<20?position:target);
+            await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
             Camera.Near=.7f;Camera.Position=position;Camera.LookAt(target);
             await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
             RenderingServer.ForceDraw(false); // Review captures must also render when the desktop window is occluded.

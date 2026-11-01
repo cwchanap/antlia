@@ -14,6 +14,8 @@ public partial class BusController : CharacterBody3D
     public Node3D Model = null!;
     public Action<string>? Notify;
     public Action<Transform3D, Transform3D>? Moved;
+    public Action<Vector3>? BeforeReset;
+    public Action? BeforePhysics;
     public bool AutomaticTest;
     public float TestThrottle, TestBrake, TestSteer;
     private float _collisionCooldown;
@@ -66,6 +68,7 @@ public partial class BusController : CharacterBody3D
 
     public override void _PhysicsProcess(double delta)
     {
+        BeforePhysics?.Invoke();
         var beforeMove = GlobalTransform;
         float dt = (float)delta;
         _collisionCooldown -= dt;
@@ -167,6 +170,7 @@ public partial class BusController : CharacterBody3D
 
     public void ResetAt(Vector3 position, float heading)
     {
+        BeforeReset?.Invoke(position);
         GlobalPosition = position + Vector3.Up * .1f;
         Rotation = new(0, heading, 0);
         Speed = 0;

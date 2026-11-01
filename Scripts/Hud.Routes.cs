@@ -19,16 +19,7 @@ public partial class Hud
 
     private void BuildRouteMap()
     {
-        // World-space lines, re-rendered once whenever route select previews another route.
-        Vector2 Flat(Vector3 p)=>new(p.X,p.Z);
-        var lines=new[]{new List<Vector2>(),new List<Vector2>(),new List<Vector2>(),new List<Vector2>()};
-        foreach(var line in Game.KowloonCoastline.Concat(Game.IslandCoastline))
-            for(int i=1;i<line.Length;i++){lines[0].Add(line[i-1]);lines[0].Add(line[i]);}
-        foreach(var road in Game.Map.SideRoads)
-            for(int i=1;i<road.Points.Count;i++){lines[1].Add(Flat(road.Points[i-1]));lines[1].Add(Flat(road.Points[i]));}
-        foreach(var road in Game.HarbourRoads)
-            for(int i=1;i<road.Points.Count;i++){var batch=lines[road.Tunnel?3:2];batch.Add(Flat(road.Points[i-1]));batch.Add(Flat(road.Points[i]));}
-        var arrays=lines.Select(l=>l.ToArray()).ToArray();
+        EnsureRawMapLines();
         var colors=new[]{new Color("72a9aa"),new Color("526e67"),new Color("d4b26e"),new Color("7ed8dc")};
         var widths=new[]{1.8f,2.2f,1.6f,2.6f};
         _routeMap=new SubViewport {Size=(Vector2I)RouteMapArea.Size,TransparentBg=true,Disable3D=true,RenderTargetUpdateMode=SubViewport.UpdateMode.Once};
@@ -39,19 +30,35 @@ public partial class Hud
             var pixels=(Vector2)_routeMap.Size/RouteMapArea.Size;
             float scale=RouteScale*pixels.X;
             canvas.DrawSetTransform(-_routeBounds.Position*scale,0,Vector2.One*scale);
-            for(int i=0;i<arrays.Length;i++)
-                if(arrays[i].Length>1)canvas.DrawMultiline(arrays[i],colors[i],widths[i]*pixels.X/scale,true);
+            var batches=BuildRouteMapGeometry(_routeBounds,_routeMap.Size);
+            for(int i=0;i<batches.Length;i++)if(batches[i].Points.Length>1)
+                canvas.DrawMultiline(batches[i].Points,colors[i],widths[i]*pixels.X/scale,true);
         };
     }
 
-    public void ShowRouteMap(ServiceRoute route)
+    private static Rect2 RouteMapBounds(ServiceRoute route)
     {
         var points=route.Path.Points;
         var low=new Vector2(points.Min(p=>p.X),points.Min(p=>p.Z));var high=new Vector2(points.Max(p=>p.X),points.Max(p=>p.Z));
         float aspect=RouteMapArea.Size.X/RouteMapArea.Size.Y;
         float width=Mathf.Max(1600,Mathf.Max(high.X-low.X,(high.Y-low.Y)*aspect)*1.3f);
         var size=new Vector2(width,width/aspect);
-        _routeBounds=new((low+high)/2-size/2,size);
+        return new((low+high)/2-size/2,size);
+    }
+
+    private MapGeometryBatch[] BuildRouteMapGeometry(Rect2 bounds,Vector2I size)
+    {
+        EnsureRawMapLines();
+        var pixels=(Vector2)size/RouteMapArea.Size;
+        float scale=RouteMapArea.Size.X/bounds.Size.X*pixels.X;
+        var presentation=MapPresentationScale;
+        var widths=new[]{1.8f,2.2f,1.6f,2.6f};
+        return _rawMapLines.Select((lines,i)=>BuildMapGeometry(lines,Vector2.One*scale,bounds.Position*scale,(Vector2)size,widths[i]*pixels.X,presentation)).ToArray();
+    }
+
+    public void ShowRouteMap(ServiceRoute route)
+    {
+        _routeBounds=RouteMapBounds(route);
         _routeMap.GetChild<Control>(0).QueueRedraw();
         _routeMap.RenderTargetUpdateMode=SubViewport.UpdateMode.Once;
     }

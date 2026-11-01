@@ -224,11 +224,26 @@ public partial class Main
             }
         }
         using var poleQuery=new PhysicsShapeQueryParameters3D {Shape=new BoxShape3D {Size=new(.3f,3.8f,.3f)},CollisionMask=1};
-        foreach(var pole in _signals.SelectMany(s=>s.Lamps.Where((_,i)=>i%3==0)).Select(l=>l.GetParent<Node3D>()))
+        var original=Bus.Position;bool priorStreamingCheck=_buildingStreamingCheck;_buildingStreamingCheck=true;
+        Vector3? lastProbe=null;
+        try
         {
-            Check(Map.ClearOfRoads(pole.GlobalPosition,.3f), "signal pole must stay off the road");
-            poleQuery.Transform=new(Basis.Identity,pole.GlobalPosition+Vector3.Up*2);
-            Check(GetWorld3D().DirectSpaceState.IntersectShape(poleQuery,1).Count==0,"signal pole intersects a building at " + pole.GlobalPosition);
+            foreach(var pole in _signals.SelectMany(s=>s.Lamps.Where((_,i)=>i%3==0)).Select(l=>l.GetParent<Node3D>()))
+            {
+                Check(Map.ClearOfRoads(pole.GlobalPosition,.3f), "signal pole must stay off the road");
+                if(lastProbe==null || lastProbe.Value.DistanceSquaredTo(pole.GlobalPosition)>400)
+                {
+                    if(PrepareBuildingProbe(pole.GlobalPosition))await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+                    lastProbe=pole.GlobalPosition;
+                }
+                poleQuery.Transform=new(Basis.Identity,pole.GlobalPosition+Vector3.Up*2);
+                Check(GetWorld3D().DirectSpaceState.IntersectShape(poleQuery,1).Count==0,"signal pole intersects a building at " + pole.GlobalPosition);
+            }
+        }
+        finally
+        {
+            try { EnsureBuildingsAt(original);await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame); }
+            finally { _buildingStreamingCheck=priorStreamingCheck; }
         }
         for (float t = 0; t < 108; t += .25f)
         {

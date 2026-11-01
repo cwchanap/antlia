@@ -15,6 +15,7 @@ public partial class Main
     public readonly List<Vector2[]> IslandCoastline = new();
     private readonly List<(Vector3 Position,float Radius)> _islandDetails = new();
     private readonly int[] _harbourDistrictTrees=new int[11],_harbourDistrictLamps=new int[11],_harbourDistrictPeople=new int[11];
+    private (int Trees,int Lamps,int People,int Kiosks) _harbourSceneryCounts;
     public bool HarbourDrive;
     public readonly List<(string Name,bool Tunnel,bool Elevated,float Width,List<Vector3> Points)> HarbourRoads = new();
     private readonly List<(string Name,List<Vector3> Points)> _harbourRoutes = new();
@@ -24,6 +25,21 @@ public partial class Main
     private readonly List<Vector2[]> _harbourPaving = new();
     private Vector3 _streetLookupPosition;
     private string? _streetName;
+
+    private const float HarbourSceneryCellSize=128f;
+    private static long HarbourSceneryCellKey(int x,int z)=>((long)x<<32)|(uint)z;
+    private static long HarbourSceneryCellKey(Vector2 p)=>HarbourSceneryCellKey(Mathf.FloorToInt(p.X/HarbourSceneryCellSize),Mathf.FloorToInt(p.Y/HarbourSceneryCellSize));
+    private static void AddHarbourSceneryBounds(Dictionary<long,List<int>> index,Rect2 bounds,int id)
+    {
+        int x0=Mathf.FloorToInt(bounds.Position.X/HarbourSceneryCellSize),z0=Mathf.FloorToInt(bounds.Position.Y/HarbourSceneryCellSize);
+        int x1=Mathf.FloorToInt(bounds.End.X/HarbourSceneryCellSize),z1=Mathf.FloorToInt(bounds.End.Y/HarbourSceneryCellSize);
+        for(int z=z0;z<=z1;z++)for(int x=x0;x<=x1;x++)
+        {
+            long key=HarbourSceneryCellKey(x,z);
+            if(!index.TryGetValue(key,out var ids))index[key]=ids=new List<int>();
+            ids.Add(id);
+        }
+    }
 
     private const float BusEnvelopeWidth=2.48f,BusLaneEdgeMargin=.25f;
     private static float MaxBusLaneOffset(float width)
@@ -114,22 +130,93 @@ public partial class Main
 
     private void BuildHarbourScenery()
     {
+        // shortcut: scenery margins stay at or below 3 m; widen these broad-phase pads if a larger clearance is added.
+        var lotsByCell=new Dictionary<long,List<int>>();
+        for(int i=0;i<_lots.Count;i++)AddHarbourSceneryBounds(lotsByCell,_lots[i].Bounds.Grow(3),i);
+        var detailsByCell=new Dictionary<long,List<int>>();
+        void RegisterDetail(Vector3 p,float radius)
+        {
+            int id=_islandDetails.Count;_islandDetails.Add((p,radius));
+            AddHarbourSceneryBounds(detailsByCell,new Rect2(new Vector2(p.X,p.Z),Vector2.Zero).Grow(radius+4),id);
+        }
+        for(int i=0;i<_islandDetails.Count;i++)
+        {
+            var detail=_islandDetails[i];
+            AddHarbourSceneryBounds(detailsByCell,new Rect2(new Vector2(detail.Position.X,detail.Position.Z),Vector2.Zero).Grow(detail.Radius+4),i);
+        }
+        var roadSegments=new List<(Vector2 A,Vector2 B)>();var roadsByCell=new Dictionary<long,List<int>>();
+        foreach(var road in HarbourRoads)
+            for(int i=1;i<road.Points.Count;i++)
+            {
+                var a=new Vector2(road.Points[i-1].X,road.Points[i-1].Z);var b=new Vector2(road.Points[i].X,road.Points[i].Z);
+                int id=roadSegments.Count;roadSegments.Add((a,b));
+                AddHarbourSceneryBounds(roadsByCell,new Rect2(a,Vector2.Zero).Expand(b).Grow(9),id);
+            }
+        var kowloonCoastSegments=new List<(Vector2 A,Vector2 B)>();var kowloonCoastByCell=new Dictionary<long,List<int>>();
+        var islandCoastSegments=new List<(Vector2 A,Vector2 B)>();var islandCoastByCell=new Dictionary<long,List<int>>();
+        void IndexCoastline(IEnumerable<Vector2[]> lines,List<(Vector2 A,Vector2 B)> segments,Dictionary<long,List<int>> index)
+        {
+            foreach(var line in lines)for(int i=1;i<line.Length;i++)
+            {
+                var a=line[i-1];var b=line[i];int id=segments.Count;segments.Add((a,b));
+                AddHarbourSceneryBounds(index,new Rect2(a,Vector2.Zero).Expand(b).Grow(5),id);
+            }
+        }
+        IndexCoastline(KowloonCoastline,kowloonCoastSegments,kowloonCoastByCell);
+        IndexCoastline(IslandCoastline,islandCoastSegments,islandCoastByCell);
+        bool CoastClear(Vector2 p,float clearance,List<(Vector2 A,Vector2 B)> segments,Dictionary<long,List<int>> index)
+        {
+            if(!index.TryGetValue(HarbourSceneryCellKey(p),out var candidates))return true;
+            foreach(int id in candidates)
+            {var segment=segments[id];if(p.DistanceTo(Geometry2D.GetClosestPointToSegment(p,segment.A,segment.B))<clearance)return false;}
+            return true;
+        }
+        bool ClearLots(Vector2 p,float margin)
+        {
+            if(!lotsByCell.TryGetValue(HarbourSceneryCellKey(p),out var candidates))return true;
+            foreach(int id in candidates)if(_lots[id].Bounds.Grow(margin).HasPoint(p))return false;
+            return true;
+        }
+        bool ClearDetails(Vector3 p,float margin)
+        {
+            if(!detailsByCell.TryGetValue(HarbourSceneryCellKey(new(p.X,p.Z)),out var candidates))return true;
+            foreach(int id in candidates)
+            {var detail=_islandDetails[id];if(p.DistanceTo(detail.Position)<detail.Radius+margin+1)return false;}
+            return true;
+        }
+        bool ClearRoads(Vector2 p,float margin)
+        {
+            if(!roadsByCell.TryGetValue(HarbourSceneryCellKey(p),out var candidates))return true;
+            foreach(int id in candidates)
+            {var segment=roadSegments[id];if(p.DistanceTo(Geometry2D.GetClosestPointToSegment(p,segment.A,segment.B))<6+margin)return false;}
+            return true;
+        }
+        bool ClearEasternReservations(Vector2 p,float margin)
+        {
+            foreach(var reservation in _eastParkReservations)
+            {
+                if(!reservation.Bounds.Grow(margin).HasPoint(p))continue;
+                if(Geometry2D.IsPointInPolygon(p,reservation.Polygon))return false;
+                for(int i=0;i<reservation.Polygon.Length;i++)
+                    if(p.DistanceTo(Geometry2D.GetClosestPointToSegment(p,reservation.Polygon[i],reservation.Polygon[(i+1)%reservation.Polygon.Length]))<margin)return false;
+            }
+            return true;
+        }
         bool West(Vector3 p,float margin)=>!Map.Bounds.Grow(margin+2).HasPoint(new(p.X,p.Z)) && Geometry2D.IsPointInPolygon(new(p.X,p.Z),KowloonWestLand) &&
-            !KowloonCoastline.Any(line=>Enumerable.Range(1,line.Length-1).Any(i=>Geometry2D.GetClosestPointToSegment(new(p.X,p.Z),line[i-1],line[i]).DistanceTo(new(p.X,p.Z))<margin+2));
+            CoastClear(new(p.X,p.Z),margin+2,kowloonCoastSegments,kowloonCoastByCell);
         bool East(Vector3 p,float margin)=>Geometry2D.IsPointInPolygon(new(p.X,p.Z),KowloonEastLand) &&
-            !KowloonCoastline.Any(line=>Enumerable.Range(1,line.Length-1).Any(i=>Geometry2D.GetClosestPointToSegment(new(p.X,p.Z),line[i-1],line[i]).DistanceTo(new(p.X,p.Z))<margin+2));
+            CoastClear(new(p.X,p.Z),margin+2,kowloonCoastSegments,kowloonCoastByCell);
         bool Island(Vector3 p,float margin)=>Geometry2D.IsPointInPolygon(new(p.X,p.Z),IslandLand) &&
-            !IslandCoastline.Any(line=>Enumerable.Range(1,line.Length-1).Any(i=>Geometry2D.GetClosestPointToSegment(new(p.X,p.Z),line[i-1],line[i]).DistanceTo(new(p.X,p.Z))<margin+2));
+            CoastClear(new(p.X,p.Z),margin+2,islandCoastSegments,islandCoastByCell);
         bool Clear(Vector3 p,float margin)=>((p.Z<0?KowloonNorthBounds.Grow(-margin-1).HasPoint(new(p.X,p.Z)):Island(p,margin)) || West(p,margin) || East(p,margin)) &&
             ClearOfServiceStops(p,margin) &&
-            ClearOfEasternParks(p,margin) &&
-            !_lots.Any(l=>l.Bounds.Grow(margin).HasPoint(new(p.X,p.Z))) &&
-            !_islandDetails.Any(d=>p.DistanceTo(d.Position)<d.Radius+margin+1) &&
-            !HarbourRoads.Any(r=>Enumerable.Range(1,r.Points.Count-1).Any(j=>
-                new Vector2(p.X,p.Z).DistanceTo(Geometry2D.GetClosestPointToSegment(new(p.X,p.Z),new(r.Points[j-1].X,r.Points[j-1].Z),new(r.Points[j].X,r.Points[j].Z)))<6+margin));
+            ClearEasternReservations(new(p.X,p.Z),margin) &&
+            ClearLots(new(p.X,p.Z),margin) &&
+            ClearDetails(p,margin) &&
+            ClearRoads(new(p.X,p.Z),margin);
         void Detail(string name,Vector3 p,float yaw,float radius,float scale=1)
         {
-            var asset=Asset(name,p,yaw,new(scale,scale,scale));_islandDetails.Add((p,radius));
+            var asset=Asset(name,p,yaw,new(scale,scale,scale));RegisterDetail(p,radius);
             foreach(var mesh in asset.FindChildren("*","MeshInstance3D",true,false).Cast<MeshInstance3D>())
                 mesh.VisibilityRangeEnd=name.StartsWith("passenger")?100:350;
             if(name=="news-kiosk")
@@ -140,13 +227,18 @@ public partial class Main
         }
         var rng=new Random(1972);int trees=0,lamps=0,people=0,kiosks=0;
         var kioskSites=new List<Vector3>();var districtKiosks=new int[11];
-        foreach(var road in HarbourRoads.Where(r=>!r.Tunnel && !r.Elevated && (r.Points[0].Z>0 || r.Points[0].Z < KowloonNorthBounds.End.Y || West(r.Points[0],0) || East(r.Points[0],0)) && r.Name!="-99"))
+        bool KioskSpacingClear(Vector3 p)
+        {foreach(var site in kioskSites)if(site.DistanceTo(p)<160)return false;return true;}
+        foreach(var road in HarbourRoads)
+        {
+            if(road.Tunnel || road.Elevated || !(road.Points[0].Z>0 || road.Points[0].Z<KowloonNorthBounds.End.Y || West(road.Points[0],0) || East(road.Points[0],0)) || road.Name=="-99")continue;
             for(int i=8;i<road.Points.Count-8;i+=22)
             {
                 var p=road.Points[i];var f=(road.Points[i+1]-p).Normalized();var right=f.Cross(Vector3.Up);
                 float yaw=Mathf.Atan2(-f.X,-f.Z);
-                foreach(int side in new[]{-1,1})
+                for(int sideIndex=0;sideIndex<2;sideIndex++)
                 {
+                    int side=sideIndex==0?-1:1;
                     var at=p+right*side*8;
                     if(!Clear(at,.6f))continue;
                     int district=at.X>=550 && at.X<3150 && at.Z<=-4864?10:at.X>650 && at.Z<0?9:at.X < -8500 || at.Z < -11000?8:at.X < -6500 || at.Z < -8500?7:at.X < -4600 || at.Z < -6000?6:at.X < -2700 || at.Z < -4800?5:at.Z<0?(KowloonNorthBounds.HasPoint(new(at.X,at.Z))?2:at.Z < -3350?4:3):at.X < -300?1:0;
@@ -154,7 +246,7 @@ public partial class Main
                     Box(lamp,new(0,4.2f,0),new(.12f,8.4f,.12f),"89918a");
                     Box(lamp,new(-.9f*side,8.3f,0),new(1.9f,.10f,.10f),"89918a");
                     Box(lamp,new(-1.75f*side,8.25f,0),new(.55f,.12f,.35f),"e7d6ad");
-                    _islandDetails.Add((at,.3f));lamps++;_harbourDistrictLamps[district]++;
+                    RegisterDetail(at,.3f);lamps++;_harbourDistrictLamps[district]++;
                     if(lamps%3==0 && !road.Name.StartsWith("&"))
                     {
                         Box(lamp,new(0,5.4f,0),new(3.4f,.5f,.06f),"e2e3d1");
@@ -166,15 +258,16 @@ public partial class Main
                     else if(Clear(at+f*4,1))Detail("planter",at+f*4,yaw,1);
                     var pedestrian=at-f*5;
                     if(_harbourDistrictPeople[district]<(district==0?64:48) && lamps%2==0 && Clear(pedestrian,.45f))
-                    {Detail(new[]{"passenger_mei","passenger_dennis","passenger_headphones"}[people%3],pedestrian,yaw+.4f,.45f);people++;_harbourDistrictPeople[district]++;}
+                    {Detail(people%3==0?"passenger_mei":people%3==1?"passenger_dennis":"passenger_headphones",pedestrian,yaw+.4f,.45f);people++;_harbourDistrictPeople[district]++;}
                     var kiosk=at+right*side*3+f*12;
-                    if(districtKiosks[district]<(district==0?18:12) && Clear(kiosk,2.2f) && !kioskSites.Any(k=>k.DistanceTo(kiosk)<160))
+                    if(districtKiosks[district]<(district==0?18:12) && Clear(kiosk,2.2f) && KioskSpacingClear(kiosk))
                     {
                         Detail("news-kiosk",kiosk,yaw-side*Mathf.Pi/2,2.2f);kiosks++;districtKiosks[district]++;kioskSites.Add(kiosk);
                         var c=new Vector2(kiosk.X,kiosk.Z);_harbourPaving.Add(new[]{c+new Vector2(-3,-3),c+new Vector2(3,-3),c+new Vector2(3,3),c+new Vector2(-3,3)});
                     }
                 }
             }
+        }
         // Authored waterside groves occupy clear spaces between the promenade and street network.
         for(float x=IslandBounds.Position.X+24;x<IslandBounds.End.X-24;x+=48)
             foreach(float z in new[]{1148f,1200f})
@@ -201,6 +294,7 @@ public partial class Main
                 }
                 nextBench=(nextBench-length)%48;if(nextBench<0)nextBench+=48;
             }
+        _harbourSceneryCounts=(trees,lamps,people,kiosks);
         // Outer north/east barriers and the sourced coastline are batched in the harbour GLB.
         GD.Print($"ANTILA_WEST_KOWLOON_SCENERY: {_harbourDistrictPeople[3]+_harbourDistrictPeople[4]} pedestrians; {districtKiosks[3]+districtKiosks[4]} kiosks; government western shore");
         GD.Print($"ANTILA_EAST_KOWLOON_SCENERY: {_harbourDistrictPeople[9]} pedestrians; {districtKiosks[9]} kiosks; Hung Hom / Whampoa / To Kwa Wan / Kowloon City");
@@ -262,7 +356,7 @@ public partial class Main
         ShowNotice((route==13?"Kowloon City / Wong Tai Sin • M map • R returns to H1":route==12?"Hung Hom / Whampoa / To Kwa Wan / Kowloon City • M map • R returns to H1":route==11?"Ting Kau / Sham Tseng • M map • R returns to H1":route==10?"Kwai Chung / Tsuen Wan • M map • R returns to H1":route==9?"Mei Foo / Lai King / Kwai Chung • M map • R returns to H1":route==8?"Sham Shui Po / Cheung Sha Wan / Lai Chi Kok • M map • R returns to H1":route==6?"West Kowloon / Tai Kok Tsui / Sham Shui Po • M map • R returns to H1":route==5?"Jordan / Yau Ma Tei / Mong Kok • M map • R returns to H1":route==4?"Admiralty / Central • M map • R returns to H1":route==0?"Follow the tunnel signs. M opens the map; R returns to H1.":"Wan Chai / Causeway Bay • M map • R returns to H1").Replace("H1",Route.Number));
     }
 
-    private void CheckGovernmentMap()
+    private async Task CheckGovernmentMap()
     {
         var failures=new List<string>();
         foreach(var p in new[]{new Vector3(549.97f,0,1662.43f),new Vector3(555.78f,0,1663.72f),
@@ -276,11 +370,33 @@ public partial class Main
             if(upper.Count==0 || Mathf.Abs(upper["position"].AsVector3().Y-7)>.1f || lower.Count==0 || Mathf.Abs(lower["position"].AsVector3().Y)>.1f)
                 failures.Add($"Missing separate elevated deck and ground road at {p}");
         }
-        using(var ray=PhysicsRayQueryParameters3D.Create(new(-1343.35f,410,1079.88f),new(-1343.35f,390,1079.88f),1))
+        var original=Bus.Position;bool priorStreamingCheck=_buildingStreamingCheck;_buildingStreamingCheck=true;
+        try
         {
-            var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
-            if(hit.Count==0 || Mathf.Abs(hit["position"].AsVector3().Y-402.5f)>.1f)
-                failures.Add("Two IFC tower roof is clipped by the island land boundary");
+            if(PrepareBuildingProbe(new(-1343.35f,390,1079.88f)))await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+            using(var ray=PhysicsRayQueryParameters3D.Create(new(-1343.35f,410,1079.88f),new(-1343.35f,390,1079.88f),1))
+            {
+                var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
+                if(hit.Count==0 || Mathf.Abs(hit["position"].AsVector3().Y-402.5f)>.1f)
+                    failures.Add("Two IFC tower roof is clipped by the island land boundary");
+            }
+            foreach(var (name,a,b) in new[]{("Ping An Tower",new Vector3(-761.5552f,160,-1164.2289f),new Vector3(-756.2598f,160,-1201.3289f)),
+                ("One IGC",new Vector3(-811.1124f,130,-1181.1583f),new Vector3(-805.3707f,130,-1217.0359f))})
+            {
+                if(PrepareBuildingProbe(a))await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+                if(PrepareBuildingProbe(b))await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+                using var rayA=PhysicsRayQueryParameters3D.Create(a,a-Vector3.Up*30,1);
+                using var rayB=PhysicsRayQueryParameters3D.Create(b,b-Vector3.Up*30,1);
+                var roofA=GetWorld3D().DirectSpaceState.IntersectRay(rayA);
+                var roofB=GetWorld3D().DirectSpaceState.IntersectRay(rayB);
+                if(roofA.Count==0 || roofB.Count==0 || Mathf.Abs(roofA["position"].AsVector3().Y-roofB["position"].AsVector3().Y)>.05f)
+                    failures.Add($"{name} roof height differs across the regional boundary");
+            }
+        }
+        finally
+        {
+            try { EnsureBuildingsAt(original);await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame); }
+            finally { _buildingStreamingCheck=priorStreamingCheck; }
         }
         foreach(var z in new[]{-1310.2907f,-1313.7907f,-1316.2907f})
         {
@@ -289,16 +405,6 @@ public partial class Main
             var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
             if(hit.Count==0 || Mathf.Abs(hit["position"].AsVector3().Y)>.1f)
                 failures.Add($"Hong Chong Road carriageway lacks ground at {p}");
-        }
-        foreach(var (name,a,b) in new[]{("Ping An Tower",new Vector3(-761.5552f,160,-1164.2289f),new Vector3(-756.2598f,160,-1201.3289f)),
-            ("One IGC",new Vector3(-811.1124f,130,-1181.1583f),new Vector3(-805.3707f,130,-1217.0359f))})
-        {
-            using var rayA=PhysicsRayQueryParameters3D.Create(a,a-Vector3.Up*30,1);
-            using var rayB=PhysicsRayQueryParameters3D.Create(b,b-Vector3.Up*30,1);
-            var roofA=GetWorld3D().DirectSpaceState.IntersectRay(rayA);
-            var roofB=GetWorld3D().DirectSpaceState.IntersectRay(rayB);
-            if(roofA.Count==0 || roofB.Count==0 || Mathf.Abs(roofA["position"].AsVector3().Y-roofB["position"].AsVector3().Y)>.05f)
-                failures.Add($"{name} roof height differs across the regional boundary");
         }
         foreach(var p in new[]{new Vector3(1082.488f,0,1260.517f),new Vector3(1096.1724f,0,1260.3794f),
             new Vector3(840.4762f,0,-778.3663f),new Vector3(816.3204f,0,-699.4204f)})
@@ -497,7 +603,7 @@ public partial class Main
         await CheckWestCoast();
         await CheckTsuenWan();
         await CheckKwaiChung();
-        CheckGovernmentMap();
+        await CheckGovernmentMap();
         void Check(bool ok,string message){if(!ok)throw new Exception(message);}
         Check(_harbourRoutes.Count==14,"harbour route count");
         await CheckWongTaiSin();
@@ -604,17 +710,32 @@ public partial class Main
         GD.Print($"ANTILA_HARBOUR_WALLS_OK: {walls} interior wall rays clear of exterior cladding");
         var query=new PhysicsShapeQueryParameters3D {Shape=new BoxShape3D {Size=new(BusEnvelopeWidth,4.2f,10.55f)},CollisionMask=1};
         int samples=0;var obstructions=new List<string>();
-        foreach(var road in HarbourRoads)
-            for(int i=2;i<road.Points.Count-2;i+=3)
-            foreach(float lane in BusEnvelopeOffsets(road.Width,road.Elevated))
-            {
-                var p=road.Points[i];var f=(road.Points[i+1]-p).Normalized();
-                // Match the bus's floor-following pitch when probing a raised approach.
-                var basis=new Basis(Vector3.Up,Mathf.Atan2(-f.X,-f.Z))*new Basis(Vector3.Right,Mathf.Asin(f.Y));
-                query.Transform=new(basis,p+f.Cross(Vector3.Up).Normalized()*lane+basis.Y*2.55f);
-                var hit=GetWorld3D().DirectSpaceState.IntersectShape(query,1);
-                if(hit.Count>0)obstructions.Add($"{road.Name} at {p}; {(hit[0]["collider"].AsGodotObject() as Node)?.GetPath()}");samples++;
-            }
+        var original=Bus.Position;bool priorStreamingCheck=_buildingStreamingCheck;_buildingStreamingCheck=true;Vector3? lastProbe=null;
+        try
+        {
+            foreach(var road in HarbourRoads)
+                for(int i=2;i<road.Points.Count-2;i+=3)
+                foreach(float lane in BusEnvelopeOffsets(road.Width,road.Elevated))
+                {
+                    var p=road.Points[i];var f=(road.Points[i+1]-p).Normalized();
+                    var center=p+f.Cross(Vector3.Up).Normalized()*lane;
+                    if(lastProbe==null || lastProbe.Value.DistanceSquaredTo(center)>400)
+                    {
+                        if(PrepareBuildingProbe(center))await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+                        lastProbe=center;
+                    }
+                    // Match the bus's floor-following pitch when probing a raised approach.
+                    var basis=new Basis(Vector3.Up,Mathf.Atan2(-f.X,-f.Z))*new Basis(Vector3.Right,Mathf.Asin(f.Y));
+                    query.Transform=new(basis,center+basis.Y*2.55f);
+                    var hit=GetWorld3D().DirectSpaceState.IntersectShape(query,1);
+                    if(hit.Count>0)obstructions.Add($"{road.Name} at {p}; {(hit[0]["collider"].AsGodotObject() as Node)?.GetPath()}");samples++;
+                }
+        }
+        finally
+        {
+            try { EnsureBuildingsAt(original);await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame); }
+            finally { _buildingStreamingCheck=priorStreamingCheck; }
+        }
         GD.Print(obstructions.Count==0?$"ANTILA_HARBOUR_CLEARANCE_OK: {samples} full bus envelope queries":$"ANTILA_HARBOUR_OBSTRUCTIONS ({obstructions.Count}): "+string.Join("; ",obstructions.Distinct()));
         Check(obstructions.Count==0,$"Harbour obstructions ({obstructions.Count}): "+string.Join("; ",obstructions.Distinct()));
         var cameraProbe=new PhysicsShapeQueryParameters3D {Shape=new SphereShape3D {Radius=.4f},CollisionMask=1};
@@ -731,6 +852,8 @@ public partial class Main
             ("island-exit",new Vector3(1150,22,1320),new Vector3(1070,0,1220)),
             ("harbour-overview",new Vector3(1800,1350,1100),new Vector3(500,0,260))})
         {
+            EnsureBuildingsAt(p.Y<20?p:target);
+            await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
             Camera.Position=p;Camera.LookAt(target);
             await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);RenderingServer.ForceDraw(false);
             GetViewport().GetTexture().GetImage().SavePng(ProjectSettings.GlobalizePath($"res://evidence/harbour/{name}.png"));

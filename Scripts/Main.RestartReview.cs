@@ -21,8 +21,18 @@ public partial class Main
 
     private async Task CheckRestart()
     {
-        int meshes=_city.FindChildren("*","MeshInstance3D",true,false).Count;
-        int shapes=_city.FindChildren("*","CollisionShape3D",true,false).Count;
+        int meshes,shapes,detailed;var original=Bus.Position;bool priorStreamingCheck=_buildingStreamingCheck;_buildingStreamingCheck=true;
+        try
+        {
+            EnsureBuildingsAt(original);
+            meshes=_city.FindChildren("*","MeshInstance3D",true,false).Count;
+            shapes=_city.FindChildren("*","CollisionShape3D",true,false).Count;
+            detailed=_buildingChunks.Count(c=>c.Instance!=null);
+            if(_buildingChunks.Count!=3135 || _buildingChunks.Any(c=>!GodotObject.IsInstanceValid(c.Proxy) || c.Proxy.Visible!=(c.Instance==null)) ||
+                _buildingChunks.Select(c=>c.Proxy.GetInstanceId()).Distinct().Count()!=3135 || detailed>=1000)
+                throw new Exception($"Restart building residency invalid: {_buildingChunks.Count} manifest chunks, {detailed} detailed chunks");
+        }
+        finally { _buildingStreamingCheck=priorStreamingCheck; }
         if(_restartLog==null)
         {
             _restartLog=new RestartLog();OS.AddLogger(_restartLog);
@@ -44,7 +54,7 @@ public partial class Main
             if(image.SavePng($"{folder}/restart-{_restartCycle}.png")!=Error.Ok)throw new Exception("Restart capture failed");
         }
         if(Volatile.Read(ref _restartLog.Errors)>0)throw new Exception("Restart world validation emitted engine errors");
-        GD.Print($"ANTILA_RESTART_STATE_OK: cycle {_restartCycle}; {meshes} meshes / {shapes} collision shapes; H1 ready");
+        GD.Print($"ANTILA_RESTART_STATE_OK: cycle {_restartCycle}; {meshes} meshes / {shapes} collision shapes; {detailed}/3135 building chunks detailed; H1 ready");
         if(_restartCycle==9)
         {
             OS.RemoveLogger(_restartLog);_restartLog.Dispose();_restartLog=null;
