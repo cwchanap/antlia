@@ -123,7 +123,8 @@ public partial class Main
             var mesh=template as MeshInstance3D ?? template.FindChildren("*","MeshInstance3D",true,false).Cast<MeshInstance3D>().Single();
             var multi=new MultiMesh {TransformFormat=MultiMesh.TransformFormatEnum.Transform3D,Mesh=mesh.Mesh,InstanceCount=group.Count()};
             int index=0;foreach(var detail in group)multi.SetInstanceTransform(index++,detail.Pose);
-            AddChild(new MultiMeshInstance3D {Multimesh=multi});template.Free();
+            // Defer deletion until scene transforms settle, avoiding a global renderer flush during construction.
+            AddChild(new MultiMeshInstance3D {Multimesh=multi});template.QueueFree();
         }
         GD.Print($"ANTILA_FOOTPATHS: {_crossingLandings.Count} crossing landings; "+
             string.Join(", ",_footpathDetails.GroupBy(d=>d.Model).Select(g=>$"{g.Count()} {g.Key}"))+"; two park entrances");

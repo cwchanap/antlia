@@ -68,7 +68,13 @@ public partial class Main : Node3D
         if(FinishTerrainMasks())return;
         Bus = new BusController { Notify = ShowNotice, Moved = CheckSignalCrossing, BeforeReset = EnsureBuildingsAt, BeforePhysics = UpdateBuildingStreaming };
         AddChild(Bus);
-        Bus.ResetAt(Map.At(22, -7.3f), Map.Heading(22));
+        // Load the replayed service directly; an H1 detour would evict chunks during construction.
+        if(_pendingRoute>=0)
+        {
+            var start=Routes[_pendingRoute];
+            Bus.ResetAt(start.Path.At(start.Start,start.LaneAt(start.Start)),start.Path.Heading(start.Start));
+        }
+        else Bus.ResetAt(Map.At(22, -7.3f), Map.Heading(22));
         Camera = new Camera3D { Fov = 62, Far = 3200, Near = .7f, Current = true };
         AddChild(Camera);
         BuildCab();

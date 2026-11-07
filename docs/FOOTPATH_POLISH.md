@@ -45,3 +45,8 @@ The full test exited with code 0 but printed an ObjectDB leak warning and one re
 ## Exact imagegen prompt
 
 Use case: photorealistic-natural. Asset type: seamless albedo texture for Hong Kong pavement kerbstones, pedestrian paving borders and concrete slabs in a Godot driving game. Generate a square 1024 by 1024 photographic material scan of one continuous flat expanse of weathered light neutral-grey fine-grained granite concrete. Exactly overhead orthographic, evenly lit diffuse overcast light, no cast shadows, no perspective. Tiny black and off-white mineral grains, fine pores, subtle dust and mild urban wear, a few tiny darker pits, realistic restrained colour variation. Medium-light grey, not white or beige, matt surface. Tile seamlessly on all four edges. No paving joints, no borders, no large cracks or stains, no objects, no text, no watermark. The image fills every pixel with the material and will repeat at a 0.6 metre physical scale.
+
+
+## Template lifecycle — 7 November 2026
+
+The three temporary, off-tree model nodes used to extract the footpath meshes are queued for deletion after their meshes are assigned to the existing MultiMesh batches. This avoids an immediate global renderer flush during world construction; SceneTree deletes the templates after pending transforms settle. Placement and source assets retain their existing contracts. See the [startup-memory follow-up](STARTUP_PERFORMANCE.md#renderer-allocations-during-construction--7-november-2026) for allocation measurements, the small tunnel brightness differences associated with renderer pairing history, and the recorded checks.

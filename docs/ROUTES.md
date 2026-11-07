@@ -114,3 +114,8 @@ Runs used Godot 4.6.2 .NET on Linux in a cloud container. Captures used Xvfb wit
 ## Eastern map integration — 21 October 2026
 
 The sourced Hong Chong Road branch `TD_105213` passes through H3's earlier 435 m waiting area. The in-engine stop survey confirms that location cannot hold either a shelter or a pole. The fictional Hong Chong Road stop moves 90 m along the same route to 525 m, within the surveyed 510–540 m stretch of straight, steady, supported kerb with shelter clearance. Route alignments, all other stops and the 33-passenger total stay the same. The full service check is retained as the regression; evidence is in `evidence/east-kowloon-expansion-2026-10-21/`.
+
+
+## Replay startup residency — 7 November 2026
+
+A replay loads detailed buildings around the remembered service's start from the first bus reset. Previously H2/H3 replay briefly loaded the H1 area before resetting to the selected service; evicting those intermediate chunks could flush renderer work during scene construction. The later `BeginRoute` still owns the fresh trip, passengers, audio, blinds and camera mode. See the [startup-memory follow-up](STARTUP_PERFORMANCE.md#renderer-allocations-during-construction--7-november-2026) for the native driving/reload evidence.
