@@ -19,6 +19,7 @@ from shapely import constrained_delaunay_triangles
 from shapely.geometry import LineString, Point, box, shape, mapping
 from shapely.ops import unary_union
 from import_map import ROOT, NS, SOURCE, ORIGIN, local
+from export_runtime_harbour import encode as encode_runtime_harbour
 
 # Explicit source routes make the chosen connections reviewable, including the return loop.
 SOUTH = ['ID_012620','ID_04550','ID_021392','ID_034845','ID_034844',
@@ -379,7 +380,8 @@ def build(source):
               'west_coast_bounds':WEST_COAST_BOUNDS,'west_coast_metadata':west_coast['metadata'],'roads':roads,
               'routes':routes,'tubes':tubes,'ground_triangles':ground_triangles,'water_triangles':water_triangles,'surface_triangles':surface_triangles}
     payloads=[(ROOT/'Data/cross-harbour-source.geojson',json.dumps({'type':'FeatureCollection','metadata':metadata,'features':list(records.values())},ensure_ascii=False,separators=(',',':'),allow_nan=False)),
-              (ROOT/'Data/cross-harbour.json',json.dumps(output,ensure_ascii=False,separators=(',',':'),allow_nan=False))]
+              (ROOT/'Data/cross-harbour.json',json.dumps(output,ensure_ascii=False,separators=(',',':'),allow_nan=False)),
+              (ROOT/'Data/cross-harbour-runtime.json',encode_runtime_harbour(output))]
     staged=[]
     try:
         for target,payload in payloads:

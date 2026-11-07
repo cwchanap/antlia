@@ -63,9 +63,29 @@ public partial class Main
         return result;
     }
 
+    private const string RuntimeHarbourPath="res://Data/cross-harbour-runtime.json";
+
+    private void CheckHarbourRuntimeData()
+    {
+        if(!FileAccess.FileExists(RuntimeHarbourPath))throw new Exception("Missing harbour runtime export; run Tools/export_runtime_harbour.py");
+        using var source=JsonDocument.Parse(FileAccess.GetFileAsString("res://Data/cross-harbour.json"));
+        using var runtime=JsonDocument.Parse(FileAccess.GetFileAsString(RuntimeHarbourPath));
+        int fields=0;
+        foreach(var property in source.RootElement.EnumerateObject())
+        {
+            if(property.Name is "surface_triangles" or "ground_triangles" or "water_triangles")continue;
+            if(!runtime.RootElement.TryGetProperty(property.Name,out var actual) || actual.GetRawText()!=property.Value.GetRawText())
+                throw new Exception("Harbour runtime export differs from canonical field: "+property.Name);
+            fields++;
+        }
+        if(runtime.RootElement.EnumerateObject().Count()!=fields)throw new Exception("Harbour runtime export contains extra fields or authoring triangles");
+        GD.Print($"ANTILA_HARBOUR_RUNTIME_DATA_OK: {fields} fields match canonical data; authoring triangles omitted");
+    }
+
     private MeshInstance3D BuildHarbour()
     {
-        using var doc=JsonDocument.Parse(FileAccess.GetFileAsString("res://Data/cross-harbour.json"));
+        if(!FileAccess.FileExists(RuntimeHarbourPath))throw new Exception("Missing harbour runtime export: "+RuntimeHarbourPath+"; run Tools/export_runtime_harbour.py");
+        using var doc=JsonDocument.Parse(FileAccess.GetFileAsString(RuntimeHarbourPath));
         var root=doc.RootElement;var b=root.GetProperty("bounds");
         var island=root.GetProperty("island_bounds");IslandBounds=new(island[0].GetSingle(),island[1].GetSingle(),island[2].GetSingle()-island[0].GetSingle(),island[3].GetSingle()-island[1].GetSingle());
         var north=root.GetProperty("kowloon_north_bounds");KowloonNorthBounds=new(north[0].GetSingle(),north[1].GetSingle(),north[2].GetSingle()-north[0].GetSingle(),north[3].GetSingle()-north[1].GetSingle());

@@ -90,3 +90,20 @@ Cladding is omitted where its footprint could intersect the adjacent tube at the
 The island apron is now 2.35 km wide. There are 429 additional government-derived road sections and a fourth, 9.208 km scenic trip. The original 49 road sections, three trips and both tubes keep their existing coordinates. Press I while stopped for island free drive. [Source, regeneration, approximations and verification](ISLAND_EXPANSION.md).
 
 The [13 October Mei Foo / Kwai Chung expansion](KWAI_CHUNG_EXPANSION.md) adds 1,191 connected government road sections and a tenth exploration itinerary, retaining all earlier routes and both tunnel profiles. The loaded bounds are now 8.71 × 10.73 km. **B while stopped** enters the 5.358 km route from the prior Lai Chi Kok endpoint.
+
+
+## Runtime data export — 7 November 2026
+
+Normal play reads `Data/cross-harbour-runtime.json`. It retains every field and provenance value from canonical `Data/cross-harbour.json` except `surface_triangles`, `ground_triangles` and `water_triangles`. Those arrays are used by offline modelling and geodata checks; the game constructs collision from the existing GLB and reads baked terrain masks. The canonical file and the original source attribution remain intact. No additional Python or network dependency is introduced at runtime.
+
+The runtime JSON is generated from the canonical object, with no coordinate rounding, simplification or changes to road/route ordering. The current file is **5,685,005 bytes**, compared with **41,118,951 bytes** in the full file. Input size is not a measure of process RAM savings.
+
+```sh
+python3 Tools/export_runtime_harbour.py          # regenerate the derivative only
+python3 Tools/export_runtime_harbour.py --check  # verify all retained values and exact output
+./run.command --headless -- --harbour-data-check
+```
+
+`Tools/import_tunnel.py` stages both JSON files alongside its source GeoJSON during normal geodata regeneration. Modelling and existing source checks keep using the canonical file. `--harbour-data-check` compares every retained root value in the engine and rejects missing, changed or extra fields before constructing the world. The full `--self-test` includes this comparison. Ordinary play loads the derivative directly and has no fallback to the full authoring file. After changing canonical harbour data, regenerate the derivative and run these checks alongside the existing geometry/model/terrain regeneration gates.
+
+Native loading measurements and final verification are recorded in the [startup-performance follow-up](STARTUP_PERFORMANCE.md#runtime-harbour-data--7-november-2026).

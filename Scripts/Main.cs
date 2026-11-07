@@ -43,6 +43,7 @@ public partial class Main : Node3D
 
     private void BuildScene()
     {
+        if(OS.GetCmdlineUserArgs().Contains("--harbour-data-check")){SelfTest=true;CheckHarbourRuntimeData();QuitGame();return;}
         if(OS.GetCmdlineUserArgs().Contains("--streaming-loader-check")){CallDeferred(nameof(RunBuildingLoaderCheck));return;}
         SelfTest = OS.GetCmdlineUserArgs().Contains("--map-check") || OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--east-kowloon-check") || OS.GetCmdlineUserArgs().Contains("--wong-tai-sin-check") || OS.GetCmdlineUserArgs().Contains("--west-coast-check") || OS.GetCmdlineUserArgs().Contains("--tsuen-wan-check") || OS.GetCmdlineUserArgs().Contains("--hud-check") || OS.GetCmdlineUserArgs().Contains("--restart-check") || OS.GetCmdlineUserArgs().Contains("--route-check") || OS.GetCmdlineUserArgs().Contains("--stop-survey");
         RegisterInput();
@@ -798,6 +799,7 @@ public partial class Main : Node3D
             void Check(bool ok,string message) { if(!ok)throw new Exception(message); }
             if(OS.GetCmdlineUserArgs().Contains("--map-buffer-check")){Hud.CheckMapGeometry();await CheckMapBufferBudget();QuitGame();return;}
             await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+            if(OS.GetCmdlineUserArgs().Contains("--self-test"))CheckHarbourRuntimeData();
             CheckSurfaceMasks();
             CheckSharedBoxMeshes();
             if(OS.GetCmdlineUserArgs().Contains("--surface-check")){QuitGame();return;}
