@@ -17,17 +17,8 @@ public partial class Main
         var root=data.RootElement;var bounds=root.GetProperty("bounds");
         _recreationBounds=_recreationBounds.Merge(new Rect2(bounds[0].GetSingle(),bounds[1].GetSingle(),bounds[2].GetSingle(),bounds[3].GetSingle()));
         Vector2[] Points(JsonElement row)=>row.EnumerateArray().Select(p=>new Vector2(p[0].GetSingle(),p[1].GetSingle())).ToArray();
-        _terrain.SetShaderParameter("recreation_mask",TerrainMask("recreation_mask",_recreationBounds,()=>
-        {
-            var surfaces=new List<(Vector2[] Polygon,int Channel)>();
-            foreach(var region in new[]{mongKok.RootElement,root})
-                foreach(var surface in region.GetProperty("surfaces").EnumerateArray())
-                    foreach(var triangle in surface.GetProperty("triangles").EnumerateArray())
-                        surfaces.Add((Points(triangle),surface.GetProperty("kind").GetString() switch {"field"=>0,"court"=>1,_=>2}));
-            float resolution=Mathf.Min(2,8192f/Mathf.Max(_recreationBounds.Size.X,_recreationBounds.Size.Y));
-            return Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),Array.Empty<Vector2[]>(),
-                _recreationBounds,Array.Empty<(Vector2,Vector2,float)>(),resolution,surfaces);
-        }));
+        _terrain.SetShaderParameter("recreation_mask",TerrainMask("recreation_mask",_recreationBounds,
+            ()=>CreateRecreationMask(_recreationBounds,mongKok.RootElement,root)));
         _terrain.SetShaderParameter("recreation_origin",_recreationBounds.Position);
         _terrain.SetShaderParameter("recreation_size",_recreationBounds.Size);
         foreach(var triangle in root.GetProperty("paving").EnumerateArray())_harbourPaving.Add(Points(triangle));
@@ -55,6 +46,31 @@ public partial class Main
             _islandDetails.Add((at,radius));_eastRecreationProps.Add((fixture.GetProperty("site").GetString()!,at,radius));
         }
         GD.Print($"ANTILA_EAST_OPEN_SPACES: {root.GetProperty("sites").GetArrayLength()} sourced parks/waterfront sites; {_eastRecreationProps.Count} fixtures; {root.GetProperty("sports").GetArrayLength()} fitted courts");
+    }
+
+    // Shared by bake/check paths so exports regenerate the exact source mask from bundled JSON.
+    private Image CreateRecreationMask(Rect2 bounds)
+    {
+        using var eastern=JsonDocument.Parse(FileAccess.GetFileAsString("res://Data/east-kowloon-open-spaces.json"));
+        using var mongKok=JsonDocument.Parse(FileAccess.GetFileAsString("res://Data/mong-kok-open-spaces.json"));
+        return CreateRecreationMask(bounds,mongKok.RootElement,eastern.RootElement);
+    }
+
+    private Image CreateRecreationMask(Rect2 bounds,JsonElement mongKok,JsonElement eastern)
+    {
+        var eb=eastern.GetProperty("bounds");var mb=mongKok.GetProperty("bounds");
+        var currentBounds=new Rect2(eb[0].GetSingle(),eb[1].GetSingle(),eb[2].GetSingle(),eb[3].GetSingle())
+            .Merge(new Rect2(mb[0].GetSingle(),mb[1].GetSingle(),mb[2].GetSingle(),mb[3].GetSingle()));
+        if(!currentBounds.IsEqualApprox(bounds))throw new Exception("Recreation mask bounds differ from the bundled open-space sources");
+        Vector2[] Points(JsonElement row)=>row.EnumerateArray().Select(p=>new Vector2(p[0].GetSingle(),p[1].GetSingle())).ToArray();
+        var surfaces=new List<(Vector2[] Polygon,int Channel)>();
+        foreach(var region in new[]{mongKok,eastern})
+            foreach(var surface in region.GetProperty("surfaces").EnumerateArray())
+                foreach(var triangle in surface.GetProperty("triangles").EnumerateArray())
+                    surfaces.Add((Points(triangle),surface.GetProperty("kind").GetString() switch {"field"=>0,"court"=>1,_=>2}));
+        float resolution=Mathf.Min(2,8192f/Mathf.Max(bounds.Size.X,bounds.Size.Y));
+        return Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),Array.Empty<Vector2[]>(),
+            bounds,Array.Empty<(Vector2,Vector2,float)>(),resolution,surfaces);
     }
 
     // The parks have their own fitted planting; later roadside decoration must leave their interiors and entrances clear.
@@ -89,7 +105,7 @@ public partial class Main
             return points.Select((a,i)=>p.DistanceTo(Geometry2D.GetClosestPointToSegment(p,a,points[(i+1)%points.Length])));
         }).Min();
         using var paving=((Texture2D)_terrain.GetShaderParameter("harbour_mask").AsGodotObject()).GetImage();
-        using var recreation=((Texture2D)_terrain.GetShaderParameter("recreation_mask").AsGodotObject()).GetImage();
+        using var recreation=RecreationMaskForChecks();
         long recreationBytes=(long)recreation.GetWidth()*recreation.GetHeight()*3;
         Check(recreation.GetFormat()==Image.Format.Rgb8 && recreation.GetWidth()<=8192 && recreation.GetHeight()<=8192 && recreationBytes<=192L*1024*1024,
             $"Recreation RGB8 mask exceeds its 8192-pixel / 192 MiB cap: {recreation.GetWidth()}x{recreation.GetHeight()} ({recreationBytes} bytes)");

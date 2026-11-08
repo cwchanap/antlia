@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "sourceBounds": [
+    -6529,
+    -9276,
+    9648,
+    9026
+  ],
+  "width": 8192,
+  "height": 7664,
+  "mipLevels": 14,
+  "sourceSha256": "2AD326E2C613485C8FAAF2C4AC68AED94E68C5211E61E3DE336142F00694B4C5",
+  "sourceDataSha256": "92BC93F969538545B915D300863DB5CB246375543C9FE2B4E3684E91ABDD45F2",
+  "authoredMipSha256": "2AD326E2C613485C8FAAF2C4AC68AED94E68C5211E61E3DE336142F00694B4C5",
+  "atlasWidth": 2048,
+  "atlasHeight": 2048,
+  "atlasColumns": 15,
+  "atlasRows": 14,
+  "lookupWidth": 64,
+  "lookupHeight": 127,
+  "activePages": 196,
+  "texturePayloadBytes": 12672828,
+  "atlasSha256": "30B619ED17ED8553440718453F132C2FB4FC6D56875868E927B3B1CDA496EAAA",
+  "lookupSha256": "B5E8F94BDF75341BA90BBDA90EDB853A39DF0CC6CD970C57E46F0FC60F70E536",
+  "lodRampSha256": "DD5E3D994AE6651773737D7E4E608C614AD849B5151A16921BD31B8CDBA425F8",
+  "mips": [
+    {
+      "width": 8192,
+      "height": 7664,
+      "lookupOffset": 0,
+      "pageColumns": 64,
+      "pageRows": 60,
+      "activePages": 74
+    },
+    {
+      "width": 4096,
+      "height": 3832,
+      "lookupOffset": 60,
+      "pageColumns": 32,
+      "pageRows": 30,
+      "activePages": 47
+    },
+    {
+      "width": 2048,
+      "height": 1916,
+      "lookupOffset": 90,
+      "pageColumns": 16,
+      "pageRows": 15,
+      "activePages": 31
+    },
+    {
+      "width": 1024,
+      "height": 958,
+      "lookupOffset": 105,
+      "pageColumns": 8,
+      "pageRows": 8,
+      "activePages": 21
+    },
+    {
+      "width": 512,
+      "height": 479,
+      "lookupOffset": 113,
+      "pageColumns": 4,
+      "pageRows": 4,
+      "activePages": 11
+    },
+    {
+      "width": 256,
+      "height": 239,
+      "lookupOffset": 117,
+      "pageColumns": 2,
+      "pageRows": 2,
+      "activePages": 4
+    },
+    {
+      "width": 128,
+      "height": 119,
+      "lookupOffset": 119,
+      "pageColumns": 1,
+      "pageRows": 1,
+      "activePages": 1
+    },
+    {
+      "width": 64,
+      "height": 59,
+      "lookupOffset": 120,
+      "pageColumns": 1,
+      "pageRows": 1,
+      "activePages": 1
+    },
+    {
+      "width": 32,
+      "height": 29,
+      "lookupOffset": 121,
+      "pageColumns": 1,
+      "pageRows": 1,
+      "activePages": 1
+    },
+    {
+      "width": 16,
+      "height": 14,
+      "lookupOffset": 122,
+      "pageColumns": 1,
+      "pageRows": 1,
+      "activePages": 1
+    },
+    {
+      "width": 8,
+      "height": 7,
+      "lookupOffset": 123,
+      "pageColumns": 1,
+      "pageRows": 1,
+      "activePages": 1
+    },
+    {
+      "width": 4,
+      "height": 3,
+      "lookupOffset": 124,
+      "pageColumns": 1,
+      "pageRows": 1,
+      "activePages": 1
+    },
+    {
+      "width": 2,
+      "height": 1,
+      "lookupOffset": 125,
+      "pageColumns": 1,
+      "pageRows": 1,
+      "activePages": 1
+    },
+    {
+      "width": 1,
+      "height": 1,
+      "lookupOffset": 126,
+      "pageColumns": 1,
+      "pageRows": 1,
+      "activePages": 1
+    }
+  ]
+}

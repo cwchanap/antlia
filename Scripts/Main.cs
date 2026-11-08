@@ -43,6 +43,9 @@ public partial class Main : Node3D
 
     private void BuildScene()
     {
+        var args=OS.GetCmdlineUserArgs();
+        if(args.Contains("--sparse-recreation-bake")){Map=new RoadMap();BakeSparseRecreation();QuitGame();return;}
+        if(args.Contains("--sparse-recreation-check")){Map=new RoadMap();SelfTest=true;SetProcessUnhandledInput(false);CallDeferred(MethodName.RunSparseRecreationCheck);return;}
         if(OS.GetCmdlineUserArgs().Contains("--harbour-data-check")){SelfTest=true;CheckHarbourRuntimeData();QuitGame();return;}
         if(OS.GetCmdlineUserArgs().Contains("--streaming-loader-check")){CallDeferred(nameof(RunBuildingLoaderCheck));return;}
         SelfTest = OS.GetCmdlineUserArgs().Contains("--map-check") || OS.GetCmdlineUserArgs().Contains("--self-test") || OS.GetCmdlineUserArgs().Contains("--signal-check") || OS.GetCmdlineUserArgs().Contains("--building-check") || OS.GetCmdlineUserArgs().Contains("--footpath-check") || OS.GetCmdlineUserArgs().Contains("--road-check") || OS.GetCmdlineUserArgs().Contains("--harbour-check") || OS.GetCmdlineUserArgs().Contains("--island-check") || OS.GetCmdlineUserArgs().Contains("--central-check") || OS.GetCmdlineUserArgs().Contains("--kowloon-check") || OS.GetCmdlineUserArgs().Contains("--west-check") || OS.GetCmdlineUserArgs().Contains("--northwest-check") || OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || OS.GetCmdlineUserArgs().Contains("--east-kowloon-check") || OS.GetCmdlineUserArgs().Contains("--wong-tai-sin-check") || OS.GetCmdlineUserArgs().Contains("--west-coast-check") || OS.GetCmdlineUserArgs().Contains("--tsuen-wan-check") || OS.GetCmdlineUserArgs().Contains("--hud-check") || OS.GetCmdlineUserArgs().Contains("--restart-check") || OS.GetCmdlineUserArgs().Contains("--route-check") || OS.GetCmdlineUserArgs().Contains("--stop-survey");

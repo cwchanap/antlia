@@ -48,7 +48,7 @@ public partial class Main
         var root=data.RootElement;
         if(root.GetProperty("sites").GetArrayLength()!=9 || _recreationProps.Count!=root.GetProperty("fixtures").GetArrayLength())
             throw new Exception("Mong Kok recreation sites or furniture lost");
-        using var mask=((Texture2D)_terrain.GetShaderParameter("recreation_mask").AsGodotObject()).GetImage();
+        using var mask=RecreationMaskForChecks();
         int samples=0;
         foreach(var surface in root.GetProperty("surfaces").EnumerateArray())
         {

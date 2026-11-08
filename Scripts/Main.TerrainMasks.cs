@@ -27,7 +27,7 @@ public partial class Main
         if(!TerrainMaskNames.Contains(name,StringComparer.Ordinal))throw new Exception($"Unknown terrain mask '{name}'");
         if(!_terrainMasksUsed.Add(name))throw new Exception($"Terrain mask '{name}' was requested more than once");
         var path=TerrainMaskAssetPath+name+".png";
-        if(_terrainMaskMode==TerrainMaskMode.Runtime)return LoadTerrainMask(name,bounds);
+        if(_terrainMaskMode==TerrainMaskMode.Runtime)return name=="recreation_mask"?LoadSparseRecreation(bounds):LoadTerrainMask(name,bounds);
 
         using var image=generate();
         var generated=DescribeTerrainMask(bounds,image);
@@ -48,7 +48,16 @@ public partial class Main
         using var reference=referenceTexture.GetImage();
         RequireSameTerrainMask(DescribeTerrainMask(bounds,reference),DescribeTerrainMask(bounds,imported),name,"imported texture");
         GD.Print($"ANTILA_TERRAIN_MASK_OK: {name} {generated.Width}x{generated.Height} RGB8, {generated.MipLevels} mip levels, SHA-256 {generated.Sha256}");
-        return texture;
+        if(name!="recreation_mask")return texture;
+        var sparse=ReadSparseRecreation();
+        var (atlas,lookup,lodRamp)=LoadSparseTextures(sparse,recorded,bounds);
+        using var atlasImage=atlas.GetImage();using var lookupImage=lookup.GetImage();
+        long checkedPixels=CheckSparseRoundTrip(image,atlasImage,lookupImage,sparse);
+        GD.Print($"ANTILA_SPARSE_ROUNDTRIP_OK: {checkedPixels} generated source mip pixels");
+        ConfigureSparseRecreation(_terrain,sparse,atlas,lookup,lodRamp);
+        if(!_terrain.GetShaderParameter("sparse_recreation_enabled").AsBool())
+            throw new Exception("Recreation terrain mask check did not bind the sparse resources");
+        return atlas;
     }
 
     private bool FinishTerrainMasks()
@@ -59,6 +68,7 @@ public partial class Main
         if(_terrainMaskMode==TerrainMaskMode.Bake)
         {
             SaveTerrainMaskManifest();
+            BakeSparseRecreation();
             GD.Print("ANTILA_TERRAIN_MASKS_BAKED: 3 masks with bounds, dimensions, RGB8 mip levels and SHA-256 in Data/terrain-masks.json");
             QuitGame();
             return true;
@@ -108,6 +118,8 @@ public partial class Main
             throw new Exception($"Terrain mask '{name}' dimensions are {texture.GetWidth()}x{texture.GetHeight()}, expected {metadata.Width}x{metadata.Height}; reimport after baking");
         return texture;
     }
+
+    private Image RecreationMaskForChecks()=>CreateRecreationMask(_recreationBounds);
 
     private TerrainMaskMetadata GetTerrainMaskMetadata(string name,Rect2 bounds)
     {

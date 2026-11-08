@@ -76,7 +76,7 @@ Managed-collection and macOS allocator-relief experiments were discarded: collec
 
 ## Baked terrain masks
 
-Normal play loads three lossless RGB data textures from `Assets/Textures/TerrainMasks/`, avoiding the large managed raster buffers and repeated polygon/stroke work on every launch. `RoadMap.CreateSurfaceMask` remains the sole generator; the existing builders supply the same ordered lots, pavement, park paths, roads and recreation triangles. Shader origins, sizes, channels, filtering and image budgets remain unchanged. The terrain still resides globally; this change does not tile or stream it.
+Normal play uses lossless baked terrain data from `Assets/Textures/TerrainMasks/`, avoiding large managed raster buffers and repeated polygon/stroke work on every launch. Surface and harbour masks remain RGB PNG imports; the [7 November recreation follow-up](#sparse-recreation-mask--7-november-2026) stores occupied mask pages in a compact atlas. `RoadMap.CreateSurfaceMask` remains the sole generator; the existing builders supply the same ordered lots, pavement, park paths, roads and recreation triangles. World bounds, channels and source-image budgets are preserved. All terrain data remains resident; pages are not streamed.
 
 The PNG import settings retain mipmaps, disable lossy compression and disable automatic 3D compression detection. `Data/terrain-masks.json` records each image's bounds, dimensions, format, mip count and full pixel/mip SHA-256. Ordinary startup checks bounds and dimensions without reading the large images back from the renderer. There is no runtime generation fallback.
 
@@ -88,7 +88,7 @@ When changing road/building/open-space data, mask inputs or rasterizer behavior,
 ./run.command -- --building-check
 ```
 
-The first command assembles the usual source geometry and writes all three PNGs and metadata, then exits before bus/HUD construction. The next invocation imports the saved PNGs before the check runs. `--terrain-mask-check` regenerates the current expected images and checks exact RGB pixels, every mip level and world bounds against the imported assets, then exits. The full `--self-test` includes this asset comparison. `--surface-check` continues to test the synthetic rasterizer cases independently. Regeneration and checking need only the existing C# build and Godot; no Python or network dependency is added to play.
+The first command assembles the usual source geometry and writes all three canonical PNGs, metadata and the compact recreation derivative, then exits before bus/HUD construction. The next invocation imports the saved PNGs before the check runs. `--terrain-mask-check` regenerates the current expected images and checks exact RGB pixels, every mip level and world bounds against the imported assets, then exits. The full `--self-test` includes this asset comparison and the sparse recreation CPU round-trip/binding checks. The native filtering gate is a separate `--sparse-recreation-check` invocation. `--surface-check` continues to test the synthetic rasterizer cases independently. Regeneration and checking need only the existing C# build and Godot; no Python or network dependency is added to play.
 
 
 ### Local measurements — 31 October 2026
@@ -185,3 +185,39 @@ These functional runs do not establish a new memory result. Full human route dri
 ### Ordinary foreground window check
 
 Two subsequent source-game probes ran without always-on-top or forced redraw. Drawn frames advanced **24 → 76** and **59 → 225**, with rendering enabled throughout. Hidden/unfocused samples generally reported `can_draw=false`; a focused/drawable state was observed in each run. Native keyboard input selected H3 in the ordinary foreground route menu. No game window/focus policy was changed: normal drawing is demonstrated, while the exact historical exported background-window cause remains unproven. See [window-state evidence](../evidence/window-startup-2026-11-07/REPORT.md).
+
+
+## Sparse recreation mask — 7 November 2026
+
+The canonical 8,192 × 7,664 RGB8 recreation mask retains all 14 authored mip levels and its original world bounds. Normal play replaces its 239.499 MiB dense pixel/mip payload with 196 occupied 128-pixel pages. Every stored page has a one-texel gutter copied from its original global mip; absent pages are exactly zero. A 2,048 × 2,048 mipless atlas and nearest-filtered lookup preserve the original NPOT mip dimensions. The power-of-two backing avoids additional coordinate rounding at page seams. The three compact textures total **12,672,828 decoded bytes (12.09 MiB)**, including the LOD helper, and remain globally resident.
+
+Native filtering on this Mac does not use the continuous blend weights of the initial manual sampler. A 65,532-byte RGBA8 helper encodes each mip number as a four-bit Gray code. Its per-mip colors are constant, so implicit sampling with the original texel footprint exposes the native integer levels and blend weight without a device-specific rounding rule. Zero-weight upper mips are not sampled. The native gate compares against the original imported texture at a channel-error threshold of 1/255, including integer/fractional transitions, occupied seams, borders, Y-dominant and rotated views, and tilted perspective. The authored CPU chain is used as the byte authority because native readback of mip 1 differs from shader sampling on this Mac.
+
+`Data/sparse-recreation.json` records schema/source bounds, image and source-JSON SHA-256 digests, per-mip page layout, decoded payload and hashes of the three binary resources. Startup validates the source linkage, layout, resource hashes and the 32 MiB payload cap before binding the material. Missing, stale or corrupt resources fail clearly; normal play does not generate a dense reference. The canonical source PNG remains available for authoring, while bake/check paths reuse the same C# generator and bundled JSON so checks also work in an exported PCK.
+
+```sh
+./run.command --headless -- --sparse-recreation-bake
+./run.command -- --sparse-recreation-check
+./run.command --headless -- --terrain-mask-check
+```
+
+The first command refreshes only the sparse derivative. The full `--bake-terrain` workflow also refreshes it. The native checker saves its paired captures under `user://sparse-recreation-check/` and prints the resolved directory, allowing export checks without writing into the signed app. CPU image/page checks run in `--terrain-mask-check` and `--self-test`; native filtering is checked separately.
+
+Measurements and validation are recorded in `evidence/sparse-filtering-2026-11-07/`. Functional image checks allocate dense references and are separate from normal-play memory measurements. The visible, unfocused window uses the ordinary render loop at 1,280 × 800, temporary always-on-top placement, and the same automated H3/reload sequence. All measured frames reported drawable windows and nonzero draw calls. The H3 driver uses 4× simulation time; frame intervals are observations between engine-drawn frames, not hardware GPU timings.
+
+| Physical-footprint checkpoint | Dense baseline, MiB | Sparse integration, MiB |
+| --- | ---: | ---: |
+| Menu | 3,592.13 | 3,472.78 |
+| Completed H3 | 3,740.21 | 3,431.60 |
+| After reload | 4,971.60 | 4,550.83 |
+| Sampled lifecycle peak | 5,482.79 | 4,570.91 |
+
+In this local pair, the integration was 119 MiB lower at the menu, 309 MiB lower after H3 and 421 MiB lower after reload. The sampled peak was 912 MiB lower; **the below-4 GiB peak goal remains unmet**. H3 median frame interval changed from 13.484 to 14.122 ms, and p95 from 28.740 to 30.696 ms. Menu/reload medians changed from 12.874/21.051 to 13.601/21.389 ms. These observations show a small rendering cost, not a frame-rate improvement or a formal cross-device benchmark; see `production-comparison.json` and raw phase samples.
+
+Allocator retention makes exact RAM savings variable. An earlier sparse run held more memory at its first menu checkpoint, then released about 1.1 GiB while texture/buffer counts stayed stable. Matched menu holds identified the changing charge as `MALLOC_LARGE (empty)` mappings, not growing graphics residency. In the repeated hold the sparse game settled near 3.21 GiB, but baseline retained-empty regions differed substantially between runs. Do not generalize an individual checkpoint or add renderer counters to physical footprint. See `menu-retention-comparison.json` and the timed `vmmap` snapshots.
+
+The final source and standalone native checks each passed **83,710,983 exact authored mip pixels** and **214,433,792 GPU comparisons**. Standalone captures are byte-identical to the source check, and the packed harbour-data check passes. The local universal macOS .NET export ran from `/private/tmp` without a source-project path and completed the filtered H3 route: **3,385 m, four stops, 33 passengers**, no contacts, red-light violations, engine warnings or errors. Its supported `--print-fps` output reported 38–97 project-loop FPS (median 69 across 108 one-second observations); this is not a paired frame-time or hardware GPU benchmark. The sampled standalone peak was **4,172.71 MiB**, still above 4 GiB. The exported player does not support the external `--script` timing probe, so that interrupted attempt is excluded.
+
+The full terrain bake regenerated the derivative while preserving all seven canonical PNG/import/manifest files byte-for-byte. The terrain-mask check passes, and invalid schema, source linkage and atlas hashes each fail with exit 1. All 3,328 import metadata files and temporary export settings were restored. The local app uses the same four .NET entitlements as the previous export, with Apple's ad-hoc signature and final deep/strict verification. Cross-GPU filtering, manual driving and distribution/notarization were not checked for this change.
+
+The final build has **0 warnings / 0 errors**. The complete fixed-60 headless `--self-test` exited 0 in **1,052.17 seconds**, including 25 regional/approach drives, 133,749 bus-envelope queries, H1/H2/H3 (15 stops / 119 passengers), both side-street turns and the original 1.08 km service. Headless terrain-edge render skips remain recorded separately from the native comparison and normal-window lifecycle checks above. The suite has no engine warnings or errors. Final validation confirms all 11 recorded runtime input hashes, seven canonical mask files and 3,328 import metadata files are unchanged, with temporary diagnostics/settings removed. Code and evidence reviews found no outstanding issues. See `evidence/sparse-filtering-2026-11-07/validation.json` and `REPORT.md`.
