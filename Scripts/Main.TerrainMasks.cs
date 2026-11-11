@@ -27,7 +27,12 @@ public partial class Main
         if(!TerrainMaskNames.Contains(name,StringComparer.Ordinal))throw new Exception($"Unknown terrain mask '{name}'");
         if(!_terrainMasksUsed.Add(name))throw new Exception($"Terrain mask '{name}' was requested more than once");
         var path=TerrainMaskAssetPath+name+".png";
-        if(_terrainMaskMode==TerrainMaskMode.Runtime)return name=="recreation_mask"?LoadSparseRecreation(bounds):LoadTerrainMask(name,bounds);
+        if(_terrainMaskMode==TerrainMaskMode.Runtime)return name switch
+        {
+            "recreation_mask"=>LoadSparseRecreation(bounds),
+            "harbour_mask"=>LoadHarbourRg8(bounds),
+            _=>LoadTerrainMask(name,bounds)
+        };
 
         using var image=generate();
         var generated=DescribeTerrainMask(bounds,image);
@@ -48,6 +53,22 @@ public partial class Main
         using var reference=referenceTexture.GetImage();
         RequireSameTerrainMask(DescribeTerrainMask(bounds,reference),DescribeTerrainMask(bounds,imported),name,"imported texture");
         GD.Print($"ANTILA_TERRAIN_MASK_OK: {name} {generated.Width}x{generated.Height} RGB8, {generated.MipLevels} mip levels, SHA-256 {generated.Sha256}");
+        if(name=="harbour_mask")
+        {
+            var compact=ConvertHarbourRg8(image);
+            if(compact.SourceRgbSha256!=recorded.Sha256)throw new Exception("Harbour RG8 source does not match the canonical RGB8 manifest");
+            var rg8=ReadHarbourRg8Metadata();
+            if(compact.CompactMipSha256!=rg8.CompactMipSha256)throw new Exception("Harbour RG8 mip bytes differ from Data/harbour-rg8.json; rebake the harbour RG8 resource");
+            var loaded=LoadHarbourRg8(bounds);
+            using var expectedRg8=compact.Texture.GetImage();using var loadedRg8=loaded.GetImage();
+            if(expectedRg8.GetFormat()!=Image.Format.Rg8 || loadedRg8.GetFormat()!=Image.Format.Rg8 ||
+               expectedRg8.GetWidth()!=recorded.Width || expectedRg8.GetHeight()!=recorded.Height ||
+               expectedRg8.GetMipmapCount()+1!=recorded.MipLevels || loadedRg8.GetWidth()!=recorded.Width || loadedRg8.GetHeight()!=recorded.Height ||
+               loadedRg8.GetMipmapCount()+1!=recorded.MipLevels || !expectedRg8.GetData().SequenceEqual(loadedRg8.GetData()))
+                throw new Exception("Harbour RG8 resource readback differs from the fresh canonical conversion");
+            GD.Print($"ANTILA_HARBOUR_RG8_CHECK_OK: {recorded.Width}x{recorded.Height}, {recorded.MipLevels} mips; canonical RGB8 manifest unchanged");
+            return loaded;
+        }
         if(name!="recreation_mask")return texture;
         var sparse=ReadSparseRecreation();
         var (atlas,lookup,lodRamp)=LoadSparseTextures(sparse,recorded,bounds);
@@ -68,6 +89,7 @@ public partial class Main
         if(_terrainMaskMode==TerrainMaskMode.Bake)
         {
             SaveTerrainMaskManifest();
+            BakeHarbourRg8();
             BakeSparseRecreation();
             GD.Print("ANTILA_TERRAIN_MASKS_BAKED: 3 masks with bounds, dimensions, RGB8 mip levels and SHA-256 in Data/terrain-masks.json");
             QuitGame();

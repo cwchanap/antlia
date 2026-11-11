@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "bounds": [
+    -13880,
+    -11280,
+    17110,
+    13430
+  ],
+  "width": 9246,
+  "height": 7258,
+  "sourcePath": "res://Assets/Textures/TerrainMasks/harbour_mask.png",
+  "sourceFormat": "Rgb8",
+  "sourceRgbSha256": "F9CCFEE698F85C1EDFA580E44A6DB42490C0E29689B42FBEA9D7969C6AF16DC8",
+  "format": "Rg8",
+  "mipLevels": 14,
+  "payloadBytes": 178944370,
+  "compactMipSha256": "41A12142D7B85D72EE448809250E370D2AA3CFBDCD2881B0DA2F50A9E6ED9A5A",
+  "resourcePath": "res://Assets/Textures/TerrainMasks/harbour-rg8.res",
+  "resourceBytes": 6493188,
+  "resourceSha256": "A9B2C2E0AEEF38B3FC801BD61708F6F432651222D7E162EC74C97FCA92935FF6"
+}

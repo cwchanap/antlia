@@ -23,6 +23,8 @@ Godot user args (all defined in `Main._Ready`):
 | `--surface-check` | Early terrain-image budget, world-space coverage and shared-box geometry checks, before constructing the world |
 | `--sparse-recreation-bake` | Regenerate the compact recreation atlas, lookup, native-LOD helper and hashed metadata from bundled source data |
 | `--sparse-recreation-check` | Exact source/page round-trip and native filtering checks, including seams, mip transitions and oblique views; requires the native renderer |
+| `--harbour-rg8-bake` | Derive the lossless two-channel harbour texture and hashed metadata from the canonical RGB8 PNG; rejects nonzero blue data |
+| `--harbour-rg8-check` | Compare the production RG8 resource with the imported RGB texture across mip transitions and oblique views; requires the native renderer |
 | `--streaming-check` | Building residency, background approach, eviction, real collision and teleport/return checks |
 | `--streaming-loader-check` | Isolated failed-load token cleanup and repaired-asset retry regression |
 | `--map-buffer-check` | HUD map geometry, native render-buffer budget and 2× resize refresh; requires the native renderer, not headless |

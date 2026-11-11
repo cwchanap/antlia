@@ -221,3 +221,42 @@ The final source and standalone native checks each passed **83,710,983 exact aut
 The full terrain bake regenerated the derivative while preserving all seven canonical PNG/import/manifest files byte-for-byte. The terrain-mask check passes, and invalid schema, source linkage and atlas hashes each fail with exit 1. All 3,328 import metadata files and temporary export settings were restored. The local app uses the same four .NET entitlements as the previous export, with Apple's ad-hoc signature and final deep/strict verification. Cross-GPU filtering, manual driving and distribution/notarization were not checked for this change.
 
 The final build has **0 warnings / 0 errors**. The complete fixed-60 headless `--self-test` exited 0 in **1,052.17 seconds**, including 25 regional/approach drives, 133,749 bus-envelope queries, H1/H2/H3 (15 stops / 119 passengers), both side-street turns and the original 1.08 km service. Headless terrain-edge render skips remain recorded separately from the native comparison and normal-window lifecycle checks above. The suite has no engine warnings or errors. Final validation confirms all 11 recorded runtime input hashes, seven canonical mask files and 3,328 import metadata files are unchanged, with temporary diagnostics/settings removed. Code and evidence reviews found no outstanding issues. See `evidence/sparse-filtering-2026-11-07/validation.json` and `REPORT.md`.
+
+## Two-channel harbour mask — 10 November 2026
+
+The harbour mask writes asphalt to red and paving to green; its blue channel is zero throughout all 14 authored mips. The canonical **9,246 × 7,258 RGB8** PNG and `Data/terrain-masks.json` remain unchanged. Normal startup loads `harbour-rg8.res`, preserving dimensions, mip pixels and the ordinary terrain sampler while omitting the empty channel. The decoded payload falls from **268,416,555 to 178,944,370 bytes (255.98 → 170.65 MiB)**. This is an **85.33 MiB texture-payload reduction**, distinct from an OS physical-footprint result.
+
+The baker checks the canonical RGB mip digest, every retained R/G byte, the zero-blue contract and the full mip count before saving. Future blue data fails clearly rather than being discarded. Separate metadata records the canonical linkage, RG8 mip digest, bounds, format, payload, compressed resource size and SHA-256. Runtime validates these fields, file integrity and texture format/dimensions without reading back or regenerating the image. The decoded resource has a 192 MiB cap. Existing R/G readback consumers and the terrain shader keep their existing sampling behavior.
+
+```sh
+./run.command --headless -- --harbour-rg8-bake
+./run.command -- --harbour-rg8-check
+./run.command --headless -- --terrain-mask-check
+```
+
+The full `--bake-terrain` workflow also refreshes this derivative. Its recorded run preserved all seven canonical PNG/import/manifest files and all four sparse-recreation artifacts byte-for-byte. The terrain check retains the original RGB generator/import comparison and separately compares the converted reference with the loaded RG8 texture through the same renderer. Invalid schema, source linkage and resource hashes each fail with exit 1; the test restores the valid metadata byte-for-byte.
+
+The native in-game checker compares the production RG8 resource with the actual imported RGB `CompressedTexture2D`, including integer/fractional mip transitions, occupied/empty areas, borders and oblique views. **186,122,240 GPU pixel comparisons across 710 windows passed** at the unchanged channel-difference threshold of 1/255. Captures and a structured result are saved under `user://harbour-rg8-check/`, allowing the same check in a packed app. A blue background sentinel independently rejects incomplete viewport coverage; fixed oversized geometry prevents tiny UV probes from leaving a one-pixel background border.
+
+An earlier sparse-atlas experiment used 96.09 MiB but failed 231 native comparisons, so it was not retained. RG8 keeps the native texture-coordinate and mip-filtering path. Initial menu frame comparisons were excluded because the menu camera moves and changed the draw workload. A controlled same-process comparison fixed the camera and paused the `Main` controller while leaving the render loop active: warmed RG8/reference medians were **8.930/8.926 ms**, with p95 **10.373/10.272 ms**. Both textures were deliberately resident, so that diagnostic is neither a RAM comparison nor a normal-gameplay or hardware GPU benchmark.
+
+The normal-rendering lifecycle probe used the same static camera at menu/reload and drove H3 with the existing 4× scripted physics driver. Each measured phase advanced at least 300 drawn frames with nonzero draw calls. All three runs completed H3, reloaded the scene and passed the native boundary/functional checks. Menu texture residency fell by exactly **89,472,185 bytes**, matching the decoded payload reduction; node and buffer counts matched the baseline.
+
+| Physical-footprint checkpoint | RGB baseline, MiB | RG8 first run, MiB | RG8 repeat, MiB |
+| --- | ---: | ---: | ---: |
+| Menu | 3,283.74 | 3,318.44 | 3,324.28 |
+| Completed H3 | 3,446.69 | 3,348.80 | 3,445.25 |
+| After reload | 3,547.19 | 3,747.11 | 3,566.24 |
+| Sampled lifecycle peak | 4,555.50 | 4,191.58 | 4,060.24 |
+
+The lower sampled peaks did not translate into a consistent checkpoint reduction. This sample establishes the smaller texture, not a reliable process-wide RAM saving or a repeatable below-4 GiB lifecycle peak. Only the repeat fell below 4,096 MiB, by 35.76 MiB; the first RG8 peak remained above it. H3 median/p95 frame intervals were **14.455/31.254 ms** in the baseline, **18.301/38.536 ms** in the first RG8 run and **14.735/31.341 ms** in the repeat. The first-run slowdown was not reproduced; these local unfocused-window observations are not a cross-device performance guarantee. Initial readiness took 36.04/34.29/34.31 seconds respectively.
+
+Evidence, excluded trials and lifecycle measurements are recorded in `evidence/harbour-sparse-2026-11-10/`. Renderer counters, managed allocations and physical footprint must be interpreted separately; allocator retention still limits attribution from individual samples.
+
+The final source build has **0 warnings / 0 errors**. The complete fixed-60 headless `--self-test` exited 0 in **1,283.92 seconds**, passing all 25 regional/approach drives, H1/H2/H3 (15 stops / 119 passengers), both side-street turns and the original 1.08 km service. Its log contains no engine warnings or errors. Headless terrain-edge render skips remain separate from the native comparisons and normal-window lifecycle checks above.
+
+The local universal macOS .NET debug export ran from `/private/tmp` without a source-project path. Its packed harbour-data check and native RG8 comparison passed; the structured comparison result and all six captures are byte-identical to the source run. With the ordinary render loop active, the filtered H3 route completed **3,385 m, four stops and 33 passengers**, with no contacts, red-light violations, engine warnings or errors. This is a standalone functional check, not an additional paired memory or frame-time benchmark.
+
+The app uses the existing four .NET entitlements and an Apple ad-hoc signature, with deep/strict verification after the runtime checks. Cross-GPU filtering, manual driving and distribution/notarization were not checked.
+
+Final validation verified all 13 recorded runtime-input hashes, seven unchanged canonical mask files, four unchanged recreation artifacts and 3,328 unchanged import metadata files. Project settings match the committed version, temporary profiling callbacks/export files are absent, and the final build remains at 0 warnings / 0 errors. See `evidence/harbour-sparse-2026-11-10/validation.json` and `REPORT.md` for the checks and excluded trials.
