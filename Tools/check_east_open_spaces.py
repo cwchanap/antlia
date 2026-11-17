@@ -14,7 +14,7 @@ import import_open_spaces as shared
 
 WESTERN_SITE_IDS={
     '1503000390','1503000414','1503000381','1503005413','1503000199',
-    '1503005076','1810011761','1910064509','1910069198'
+    '1503005076','1810011761','1910064509','1910069198','1910053970','1910053968'
 }
 NEW_SPORT_IDS={
     '1910088626','1910088625','1910088624','1500001823','1500004939','1500004938',
@@ -30,6 +30,7 @@ NEW_SPORT_IDS={
 
 
 def check(cache,manifest_path,preservation_baseline=None):
+    check_touching_paving()
     for path in (importer.SOURCE,importer.TARGET):
         assert path.is_file(),'Missing eastern recreation data: '+str(path)
     source=importer.SOURCE.read_bytes();target=importer.TARGET.read_bytes()
@@ -39,14 +40,14 @@ def check(cache,manifest_path,preservation_baseline=None):
         for feature in raw['features'] if feature.get('properties',{}).get('layer')=='Site'}
     sport_ids={str(feature.get('properties',{}).get('BUILTSTRUCTUREPOLYGONID'))
         for feature in raw['features'] if feature.get('properties',{}).get('layer')=='BuiltStructurePolygon'}
-    assert len(WESTERN_SITE_IDS)==9 and WESTERN_SITE_IDS<=source_site_ids and WESTERN_SITE_IDS<=site_ids,'Western source sites missing from the integrated source/layout: '+repr(sorted(WESTERN_SITE_IDS-(source_site_ids&site_ids)))
+    assert len(WESTERN_SITE_IDS)==11 and WESTERN_SITE_IDS<=source_site_ids and WESTERN_SITE_IDS<=site_ids,'Western source sites missing from the integrated source/layout: '+repr(sorted(WESTERN_SITE_IDS-(source_site_ids&site_ids)))
     assert len(NEW_SPORT_IDS)==49 and NEW_SPORT_IDS<=sport_ids,'Western source sports missing from the integrated source: '+repr(sorted(NEW_SPORT_IDS-sport_ids))
-    assert len(site_ids)==25 and len(sport_ids)==120,'Combined inventory must contain 25 sites and 120 unique sports IDs'
+    assert len(site_ids)==27 and len(sport_ids)==120,'Combined inventory must contain 27 sites and 120 unique sports IDs'
     importer.validate_layout(source,target)
     check_western_path_connectivity(data)
     assert {s['source_id'] for s in data['surfaces']}==importer.EXPECTED_SPORTS,'Mapped sport outline lost'
-    assert len(raw['features'])==189 and data['metadata']['source_feature_count']==189,'Expected 189 exact Site and sport source fragments'
-    assert data['metadata']['source_site_fragment_count']==54 and data['metadata']['source_sport_fragment_count']==135,'Source fragment counts changed'
+    assert len(raw['features'])==194 and data['metadata']['source_feature_count']==194,'Expected 194 exact Site and sport source fragments'
+    assert data['metadata']['source_site_fragment_count']==59 and data['metadata']['source_sport_fragment_count']==135,'Source fragment counts changed'
     if preservation_baseline is not None:
         check_preservation(Path(preservation_baseline),raw,data)
     for uid,point in [('1503005881',(1989.2677387146189,-2149.3834432934027)),
@@ -154,6 +155,7 @@ def check(cache,manifest_path,preservation_baseline=None):
         for label,layer,id_field,source_id,tile_name in (
                 ('missing_sport_fragment','BuiltStructurePolygon','BUILTSTRUCTUREPOLYGONID','1500001706','11-NE-21A'),
                 ('missing_site_fragment','Site','SITEID','1503000199','6-SE-25B'),
+                ('missing_art_park_source_fragment_1910053970_11-NW-23D','Site','SITEID','1910053970','11-NW-23D'),
                 ('missing_western_sport_fragment','BuiltStructurePolygon','BUILTSTRUCTUREPOLYGONID','1500004928','7-SW-12C')):
             for mutation in ('missing','duplicate','wrong_tile'):
                 case_label=label if mutation=='missing' else label+'_'+mutation
@@ -162,7 +164,13 @@ def check(cache,manifest_path,preservation_baseline=None):
                     if feature['properties'].get('layer')==layer and
                        feature['properties'].get(id_field)==source_id and
                        feature['properties'].get('tile')==tile_name)
-                if mutation=='missing':invalid_source['features'].remove(fragment)
+                if mutation=='missing':
+                    invalid_source['features'].remove(fragment)
+                    if source_id=='1910053970':
+                        assert any(feature['properties'].get('SITEID')==source_id and
+                                   feature['properties'].get('tile')==tile_name
+                                   for feature in invalid_source['features']),\
+                            'Art Park source fragment check must leave another same-ID fragment on the same tile'
                 elif mutation=='duplicate':invalid_source['features'].append(fragment.copy())
                 else:fragment['properties']['tile']='review-wrong-sheet'
                 saved_source.write_bytes(importer.encoded(invalid_source))
@@ -199,7 +207,15 @@ def check(cache,manifest_path,preservation_baseline=None):
             reject('missing_derived_sport_id_1500001703',manifest,'Derived surfaces differ from reviewed source IDs')
         run(manifest)
         assert saved_source.read_bytes()==source and saved_target.read_bytes()==target,'Complete rebuild is not deterministic'
-    print(f'ANTILA_EAST_OPEN_SPACE_REFRESH_OK: 25 sites across 54 Site fragments; 120 source sports across 135 sheet fragments; complete deterministic rebuild; {len(rejected)+saved_source_rejections} rejected cases ({len(rejected)} ZIP refreshes, {saved_source_rejections} direct saved-source rebuilds); outputs preserved')
+    print(f'ANTILA_EAST_OPEN_SPACE_REFRESH_OK: 27 sites across 59 Site fragments; 120 source sports across 135 sheet fragments; complete deterministic rebuild; {len(rejected)+saved_source_rejections} rejected cases ({len(rejected)} ZIP refreshes, {saved_source_rejections} direct saved-source rebuilds); outputs preserved')
+
+
+def check_touching_paving():
+    site=importer.Polygon([(0,0),(41,2),(39,30),(-1,28)]);target=importer.box(2,5,4,25)
+    paths,access,_,_,_=importer.path_network('touching-paving',site,site,importer.Polygon(),target,
+        importer.Polygon(),importer.box(-100,-100,100,100),importer.Polygon(),importer.Polygon(),importer.Polygon(),0)
+    assert not access.is_empty and access.intersects(paths) and access.intersects(target) and site.covers(access),\
+        'A path joining paving that touches its boundary must retain an in-site pedestrian access corridor'
 
 
 def check_western_path_connectivity(data):
@@ -210,6 +226,17 @@ def check_western_path_connectivity(data):
         paths=importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in garden['paths']])
         access=importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in garden['access']])
         street_targets=west_regions[importer.WESTERN_SITE_COAST[site_id]][3]
+        if site_id=='1910053968':
+            assert paths.covers(importer.Point(-1600,-415.5)),\
+                'West Kowloon Waterfront Promenade lost its narrow source-strip path'
+            art_park=gardens['1910053970']
+            art_park_paths=importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in art_park['paths']])
+            art_park_access=importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in art_park['access']])
+            assert not art_park_access.is_empty,'West Kowloon Art Park must retain pedestrian access'
+            art_park_paving=importer.union_all([art_park_paths,art_park_access])
+            assert access.intersects(art_park_paving),\
+                'West Kowloon Waterfront Promenade access must overlap Art Park paths/access'
+            street_targets=importer.union_all([street_targets,art_park_paving])
         connected=importer.publicly_connected_path_components(
             paths,access,street_targets,lots,pavement_patches,paving_margin)
         components=importer.geometry_polygons(paths)
@@ -230,7 +257,7 @@ def check_western_path_connectivity(data):
     assert not any(row.get('site')=='1910069198' and row.get('component')=='1910069198:02'
                    for row in rejected),\
         'Kwai Chung disconnected source component was rejected rather than connected'
-    print('ANTILA_EAST_OPEN_SPACE_CONNECTIVITY_OK: 9 western sites; retained path components connect to public paving; Kwai Chung failed probe preserved')
+    print('ANTILA_EAST_OPEN_SPACE_CONNECTIVITY_OK: 11 western sites; retained path components connect to public paving; Kwai Chung failed probe preserved')
 
 
 def check_preservation(baseline_dir,raw,data):
@@ -258,15 +285,17 @@ def check_preservation(baseline_dir,raw,data):
     assert [fixture for fixture in data['fixtures'] if fixture['site'] in old_site_ids]==old_layout['fixtures'],\
         'Existing authored fixture records changed'
     assert data['paving'][:len(old_layout['paving'])]==old_layout['paving'],'Existing paving triangles changed'
-    assert len(old_layout['sites'])==16 and len(old_layout['surfaces'])==71 and \
-           len(old_layout['sports'])==50 and len(old_layout['fixtures'])==1505 and \
-           len(old_layout['paving'])==44518,'Unexpected Task 2 preservation baseline counts'
+    baseline_counts=(len(old_layout['sites']),len(old_layout['surfaces']),len(old_layout['sports']),
+                     len(old_layout['fixtures']),len(old_layout['paving']))
+    assert baseline_counts in ((16,71,50,1505,44518),(25,120,88,3068,81836)),\
+        'Unexpected preservation baseline counts: '+repr(baseline_counts)
     for key,ids in [('source_revisions',old_site_ids),('sports_revisions',old_sport_ids)]:
         assert {uid:value for uid,value in data['metadata'][key].items() if uid in ids}==\
                {uid:value for uid,value in old_layout['metadata'][key].items() if uid in ids},\
             'Existing source revision records changed: '+key
-    print('ANTILA_EAST_OPEN_SPACE_PRESERVATION_OK: 16 prior sites; 71 source outlines; 50 fittings; '
-          '1,505 fixtures; 44,518 paving triangles; source geometry and arrays exact')
+    print(f'ANTILA_EAST_OPEN_SPACE_PRESERVATION_OK: {baseline_counts[0]} prior sites; '
+          f'{baseline_counts[1]} source outlines; {baseline_counts[2]} fittings; '
+          f'{baseline_counts[3]:,} fixtures; {baseline_counts[4]:,} paving triangles; source geometry and arrays exact')
 
 
 if __name__=='__main__':

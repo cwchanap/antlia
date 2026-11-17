@@ -37,7 +37,8 @@ SITES = {
     '1503005413': 'Shek Kip Mei Park', '1503000390': 'Lai Chi Kok Park',
     '1503005076': 'Nam Cheong Park', '1503000414': 'Shing Mun Valley Park',
     '1910069198': 'Kwai Chung Park', '1503000199': 'Tsuen Wan Park',
-    '1810011761': 'Tsuen Wan Riviera Park'
+    '1810011761': 'Tsuen Wan Riviera Park',
+    '1910053970': 'West Kowloon Art Park', '1910053968': 'West Kowloon Waterfront Promenade'
 }
 SITE_BOUNDS = {
     '1503005871': [1826.7959910512027, -1521.0092856069375, 1997.8916879763524, -1306.9636430950327],
@@ -64,7 +65,9 @@ SITE_BOUNDS = {
     '1503000414': [-4962.622008269732, -9275.338028197904, -4251.971198185875, -8693.337462672245],
     '1910069198': [-5738.491640333387, -6589.061843381081, -5436.021150340948, -6399.916456318958],
     '1503000199': [-6528.625296719309, -8184.949144270538, -5964.900747322041, -7708.218422287199],
-    '1810011761': [-6275.605829581109, -7799.665424696743, -6056.081895757306, -7284.462980134114]
+    '1810011761': [-6275.605829581109, -7799.665424696743, -6056.081895757306, -7284.462980134114],
+    '1910053970': [-1831.0353809512374, -709.5238493750487, -1309.2104412691604, -418.2179236684354],
+    '1910053968': [-1844.9970041881563, -779.2609975340628, -1385.0293145235157, -412.86686047887343]
 }
 SITE_AREAS = {
     '1503005870': 24129.94, '1503005866': 57783.76, '1503005714': 151727.3,
@@ -78,15 +81,17 @@ SITE_AREAS = {
     '1503005413': 79801.42638753576, '1503000390': 221549.941513457,
     '1503005076': 47091.25146438434, '1503000414': 150237.2351947325,
     '1910069198': 15853.528033861303, '1503000199': 69395.69676229537,
-    '1810011761': 43016.26394057317
+    '1810011761': 43016.26394057317,
+    '1910053970': 99677.2820046619,
+    '1910053968': 6432.290492387278
 }
 SHORELINE = json.loads((ROOT / 'Data/east-kowloon-shoreline.geojson').read_text())['metadata']
 INDEX_URL = SHORELINE['source']
 # The official iB1000 query extends north beyond the current terrain coast bounds.
 BBOX = (114.1, 22.295, 114.204, 22.38)
-CACHE = Path('/tmp/antila-western-map-fixes-2026-10-28')
-INDEX_RESPONSE = ROOT / 'evidence/western-map-fixes-2026-10-28/official-index-response.json'
-INDEX_SHA256 = 'cb6b0f3a75b5f6fa4f32c09f89539ca552f95f29804520abb5245ab062d92adf'
+CACHE = Path('/tmp/antila-west-kowloon-2026-11-17/tiles')
+INDEX_RESPONSE = ROOT / 'Data/kowloon-open-spaces-index.json'
+INDEX_SHA256 = 'de172d2216a2c0d9a7d67979a03e133019348096b3c8b159a0f13f55e4332667'
 COAST_FILES = (
     ROOT / 'Data/east-kowloon-coast.json', ROOT / 'Data/west-kowloon-coast.json',
     ROOT / 'Data/lai-chi-kok-coast.json', ROOT / 'Data/kwai-chung-coast.json',
@@ -191,6 +196,8 @@ EXPECTED_SITE_FRAGMENTS = {
     '1503000414': ('7-SW-11D', '7-SW-12C', '7-SW-16B'),
     '1910069198': ('11-NW-1A',),
     '1503000199': ('6-SE-20D', '6-SE-25B', '6-SE-25B'),
+    '1910053970': ('11-NW-23D', '11-NW-23D', '11-SW-3B'),
+    '1910053968': ('11-NW-23D', '11-SW-3B'),
 }
 EXPECTED_SITE_IDS = frozenset(SITES)
 WESTERN_SITE_COAST = {
@@ -198,7 +205,8 @@ WESTERN_SITE_COAST = {
     '1503000390': 'lai-chi-kok', '1503005076': 'west-kowloon',
     '1503000414': 'tsuen-wan', '1503000381': 'kwai-chung',
     '1910069198': 'kwai-chung', '1503000199': 'tsuen-wan',
-    '1810011761': 'tsuen-wan'
+    '1810011761': 'tsuen-wan',
+    '1910053970': 'west-kowloon', '1910053968': 'west-kowloon'
 }
 EASTERN_SITE_IDS = EXPECTED_SITE_IDS - WESTERN_SITE_COAST.keys()
 SHEET_CACHE_EXPECTED = 230
@@ -274,12 +282,12 @@ def validate_manifest(manifest):
         raise ValueError('Unexpected iB1000 index source or extent')
     expected_bounds = {uid: list(bounds) for uid, bounds in SITE_BOUNDS.items()}
     if manifest.get('site_bounds') != expected_bounds:
-        raise ValueError('Tile manifest does not use the reviewed 25 site bounds')
+        raise ValueError('Tile manifest does not use the reviewed 27 site bounds')
     if manifest.get('index_sha256') != INDEX_SHA256:
         raise ValueError('Tile manifest is not backed by the reviewed complete official index')
     index_sources = manifest.get('index_sources', [])
     response_path = str(INDEX_RESPONSE.relative_to(ROOT))
-    matching_sources = [row for row in index_sources if row.get('kind') == 'expanded_25_site_official_index']
+    matching_sources = [row for row in index_sources if row.get('kind') == 'expanded_27_site_official_index']
     if len(matching_sources) != 1 or matching_sources[0].get('path') != response_path or \
             matching_sources[0].get('sha256') != INDEX_SHA256 or matching_sources[0].get('bbox_wgs84') != list(BBOX):
         raise ValueError('Tile manifest is missing the reviewed expanded official-index response')
@@ -380,8 +388,8 @@ def validate_source_fragments(source):
         raise AssertionError('Raw source sports differ from reviewed fragments; missing=' +
                              repr(sorted((expected_sports-actual_sports).elements())) +
                              '; unexpected=' + repr(sorted((actual_sports-expected_sports).elements())))
-    if len(features) != 189:
-        raise AssertionError('The reviewed source must contain exactly 189 Site and sport fragments')
+    if len(features) != 194:
+        raise AssertionError('The reviewed source must contain exactly 194 Site and sport fragments')
     metadata = raw.get('metadata', {})
     if set(metadata.get('site_revisions', {})) != EXPECTED_SITE_IDS or \
             set(metadata.get('sports_revisions', {})) != EXPECTED_SPORTS:
@@ -679,7 +687,7 @@ def path_network(site_id, site, safe, sports, street_targets, carriageways, land
     for part in geometry_polygons(free):
         if part.area < 80:
             continue
-        inset = part.buffer(-4, join_style='mitre')
+        inset = part.buffer(-1.5 if site_id == '1910053968' else -4, join_style='mitre')
         if inset.is_empty:
             inset = part.buffer(-1.5, join_style='mitre')
         if inset.is_empty:
@@ -770,6 +778,8 @@ def path_network(site_id, site, safe, sports, street_targets, carriageways, land
         distance = math.hypot(*toward_street)
         start_inside = Point(start.x - toward_street[0] / max(distance, .01) * 2.5,
                              start.y - toward_street[1] / max(distance, .01) * 2.5)
+        if distance < .01:
+            start_inside = nearest_points(paths.buffer(-1).boundary, start)[0]
         approach = LineString([start_inside, start])
         centerline = LineString([start_inside, end])
         # Do not draw an entrance across a carriageway, seawall or building footprint.
@@ -806,6 +816,8 @@ def path_network(site_id, site, safe, sports, street_targets, carriageways, land
                 distance = math.hypot(*toward_street)
                 start_inside = Point(start.x - toward_street[0] / max(distance, .01) * 2.5,
                                      start.y - toward_street[1] / max(distance, .01) * 2.5)
+                if distance < .01:
+                    start_inside = nearest_points(component.buffer(-1).boundary, start)[0]
                 approach = LineString([start_inside, start])
                 centerline = LineString([start_inside, end])
                 corridor = centerline.buffer(1.8, cap_style='flat')
@@ -926,6 +938,11 @@ def build(source):
         # A running track's inner ring encloses its athletics infield, not garden space.
         source_union = union_all([(union_all([Polygon(p.exterior) for p in geometry_polygons(poly)])
             if props['USAGETYPE']=='RAT' else poly).intersection(site) for _,poly,props in site_sports]) if site_sports else Polygon()
+        if uid == '1910053968':
+            # The promenade enters through Art Park; its direct road approach crosses a building.
+            park = next(garden for garden in gardens if garden['site'] == '1910053970')
+            site_street_targets = union_all([site_street_targets, *[Polygon(rings[0], rings[1:])
+                for rings in park['paths']]])
         paths, access, linework, path_samples, rejected = path_network(
             uid, site, safe, source_union, site_street_targets, site_carriageways, ground,
             building_clearance, lots, pavement_patches, paving_margin)
@@ -1074,7 +1091,7 @@ def build(source):
                     known_wip_annotations=raw['metadata']['known_wip_annotations'],
                     western_path_component_rejections=path_component_rejections,
                     source_classification=classification,
-                    note='Twenty-five source-bounded Kowloon and western New Territories open spaces. Source sports are clipped clear of current building layouts and roads. Paths, access, paving, planting, benches, planters and surface finish are authored approximations; source dates do not establish current access or venue status.')
+                    note='Twenty-seven source-bounded Kowloon and western New Territories open spaces. Source sports are clipped clear of current building layouts and roads. Paths, access, paving, planting, benches, planters and surface finish are authored approximations; source dates do not establish current access or venue status.')
     return encoded({'metadata': metadata, 'bounds': [min_x, min_z, max_x - min_x, max_z - min_z],
                          'sites': sites_out, 'surfaces': surfaces, 'paving': paving, 'fixtures': fixtures,
                          'sports': sports, 'gardens': gardens, 'play_areas': []})
@@ -1087,7 +1104,7 @@ def validate_layout(source, target):
     if layout_sports != EXPECTED_SPORTS:
         raise AssertionError(f'Derived surfaces differ from reviewed source IDs; missing={sorted(EXPECTED_SPORTS-layout_sports)}; unexpected={sorted(layout_sports-EXPECTED_SPORTS)}')
     if set(s['id'] for s in data.get('sites', [])) != EXPECTED_SITE_IDS or len(data.get('gardens', [])) != len(SITES):
-        raise AssertionError('Expected all 25 reviewed Kowloon and western New Territories open spaces')
+        raise AssertionError('Expected all 27 reviewed Kowloon and western New Territories open spaces')
     if data.get('play_areas') != [] or len({g['site'] for g in data['gardens']}) != len(SITES):
         raise AssertionError('Unexpected authored play areas or duplicate garden IDs')
     if len(data.get('surfaces', [])) < len(EXPECTED_SPORTS) or len(data.get('fixtures', [])) < len(SITES) * 3:

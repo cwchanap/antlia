@@ -87,12 +87,12 @@ public partial class Main
         var model=_eastRecreation??throw new Exception("Eastern parks must load their sourced recreation surfaces and fittings");
         using var data=JsonDocument.Parse(FileAccess.GetFileAsString("res://Data/east-kowloon-open-spaces.json"));
         var root=data.RootElement;
-        var expected=new[]{"1503005871","1503005901","1503005881","1503005751","1503005870","1503005863","1503005866","1503005714","1910071209","1503005853","1503005716","1503005939","1503005718","1910059822","1503005810","1503005961","1910064509","1503000381","1503005413","1503000390","1503005076","1503000414","1910069198","1503000199","1810011761"};
-        Check(root.GetProperty("sites").EnumerateArray().Select(s=>s.GetProperty("id").GetString()).Order().SequenceEqual(expected.Order()),"All 25 reviewed eastern and western open spaces must be filled");
+        var expected=new[]{"1503005871","1503005901","1503005881","1503005751","1503005870","1503005863","1503005866","1503005714","1910071209","1503005853","1503005716","1503005939","1503005718","1910059822","1503005810","1503005961","1910064509","1503000381","1503005413","1503000390","1503005076","1503000414","1910069198","1503000199","1810011761","1910053970","1910053968"};
+        Check(root.GetProperty("sites").EnumerateArray().Select(s=>s.GetProperty("id").GetString()).Order().SequenceEqual(expected.Order()),"All 27 reviewed eastern and western open spaces must be filled");
         var sourceOutlines=root.GetProperty("surfaces").EnumerateArray().Select(s=>s.GetProperty("source_id").GetString()).Distinct().Count();
         Check(sourceOutlines==120,"All 120 reviewed source sports outlines must have a rendered recreation surface");
         var metadata=root.GetProperty("metadata");
-        Check(metadata.GetProperty("source_feature_count").GetInt32()==189 && metadata.GetProperty("source_site_fragment_count").GetInt32()==54 && metadata.GetProperty("source_sport_fragment_count").GetInt32()==135,"The complete 25-site source fragment inventory must be loaded");
+        Check(metadata.GetProperty("source_feature_count").GetInt32()==194 && metadata.GetProperty("source_site_fragment_count").GetInt32()==59 && metadata.GetProperty("source_sport_fragment_count").GetInt32()==135,"The complete 27-site source fragment inventory must be loaded");
         Check(_eastRecreationProps.Count==root.GetProperty("fixtures").GetArrayLength(),"Eastern park furniture must remain clear of every service stop");
         int reservationCount=root.GetProperty("gardens").EnumerateArray().Sum(g=>g.GetProperty("rings").GetArrayLength()+g.GetProperty("access").GetArrayLength());
         Check(_eastParkReservations.Count==reservationCount,"Every sourced park interior and access corridor must reserve roadside scenery");
@@ -135,7 +135,7 @@ public partial class Main
                 Check(GetWorld3D().DirectSpaceState.IntersectRay(ray).Count>0,"Eastern park path lacks ground support: "+id);support++;
             }
         }
-        Check(root.GetProperty("gardens").GetArrayLength()==25,"All 25 source boundaries must remain available");
+        Check(root.GetProperty("gardens").GetArrayLength()==27,"All 27 source boundaries must remain available");
         foreach(var surface in root.GetProperty("surfaces").EnumerateArray())
         {
             var p=surface.GetProperty("sample");var uv=(new Vector2(p[0].GetSingle(),p[1].GetSingle())-_recreationBounds.Position)/_recreationBounds.Size;

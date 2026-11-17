@@ -5,7 +5,7 @@ using System.Linq;
 
 public partial class Hud : Control
 {
-    private const string DataCredit="Maps / buildings / parks © HKSAR Govt · TD / LandsD iB1000 · 28 Oct 2026";
+    private const string DataCredit="Maps / buildings / parks © HKSAR Govt · TD / LandsD iB1000 · 17 Nov 2026";
     public Main Game = null!;
     private readonly SystemFont _font = new() { FontNames = new[] { "Avenir Next", "Noto Sans", "sans-serif" } };
     private readonly Color _paper = new("f4edda"), _muted = new("afc0b8"), _mint = new("95dbc0");
