@@ -26,6 +26,8 @@ All exports contain one mesh. The new models are decorative; the park wall openi
 
 The built-in imagegen tool generated `Assets/Textures/pavement-stone.png` (1254 × 1254). The terrain uses it for the stone border; Godot's shared-texture import hook redirects the tactile-paver material to the same image while retaining its ochre tint. Mipmaps and anisotropic sampling are enabled for the ground texture. Existing herringbone paving is reused.
 
+Pavement stone and herringbone paving now use desktop BC1 imports. Source PNGs, logical dimensions, full mip chains, UVs and material tints remain unchanged. See the [17 November terrain-artwork comparison](STARTUP_PERFORMANCE.md#terrain-artwork-compression--17-november-2026) for the four-texture budget and offscreen visual review.
+
 ## Verification and views
 
 ```sh

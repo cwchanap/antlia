@@ -30,6 +30,8 @@ The canopy uses alpha cutouts rather than blended transparency. It is static; th
 
 All three saved PNGs are 1254 × 1254. The leaf alpha channel was checked for both transparent and opaque pixels. Exported tree and planter materials were checked for `alphaMode: MASK` and double-sided rendering. The tree has 1,924 triangles. Model exports assert valid, finite UVs. The final in-game views were visually inspected; `evidence/park-before-decoration.png` retains the earlier park for comparison.
 
+The park-ground import now uses desktop BC1, retaining its logical dimensions, full mip chain and 2 m terrain repeat. The source PNG and tree textures remain unchanged. See the [17 November terrain-artwork comparison](STARTUP_PERFORMANCE.md#terrain-artwork-compression--17-november-2026) for close, bus-height and distant offscreen views and the shared texture budget.
+
 ## Generation prompts
 
 ### banyan-leaves

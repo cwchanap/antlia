@@ -21,6 +21,8 @@ The Cross-Harbour GLB's asphalt material uses the same `Assets/Textures/asphalt.
 
 The Blender file packs the wall and shopfront images, and the GLBs embed them. The road images are loaded from the project by Godot. Mipmaps and anisotropic filtering keep the road textures readable at shallow viewing angles. The original scene view is retained in `evidence/chase-before-textures.png`; updated views use the normal capture filenames.
 
+Asphalt and paving now use desktop BC1 imports with their original logical dimensions, full mip chains and 2 m repeat. This changes colour precision slightly; the source PNGs remain unchanged. See the [17 November terrain-artwork comparison](STARTUP_PERFORMANCE.md#terrain-artwork-compression--17-november-2026) for the shared four-texture budget and offscreen visual checks.
+
 The saved image sizes above are the actual tool outputs; the prompts below retain their originally requested sizes. Building height variation also scales wall tiles vertically. These are albedo-only materials; surface relief remains in the mesh geometry.
 
 Texture import files explicitly enable mipmaps because these images are assigned by C# at runtime. See Godot's [texture importer documentation](https://docs.godotengine.org/en/stable/classes/class_resourceimportertexture.html#class-resourceimportertexture-property-mipmaps-generate). The texture pass also reduces sun and ambient intensity to preserve facade detail. The final chase, cab, park-stop and bus/shelter captures were visually inspected in Godot on 12 September 2026.
