@@ -3,19 +3,20 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://jfo3585pexql"
-path="res://.godot/imported/building-facades-cd640f653113e0f6178688d1f3a28cdb89782404bdbe86dec9fb01321b032289.png-3c4ea339e7d2948345a1c0201bb8c9ac.ctex"
+path.s3tc="res://.godot/imported/building-facades-cd640f653113e0f6178688d1f3a28cdb89782404bdbe86dec9fb01321b032289.png-3c4ea339e7d2948345a1c0201bb8c9ac.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://Assets/Models/BuildingChunks/textures/building-facades-cd640f653113e0f6178688d1f3a28cdb89782404bdbe86dec9fb01321b032289.png"
-dest_files=["res://.godot/imported/building-facades-cd640f653113e0f6178688d1f3a28cdb89782404bdbe86dec9fb01321b032289.png-3c4ea339e7d2948345a1c0201bb8c9ac.ctex"]
+dest_files=["res://.godot/imported/building-facades-cd640f653113e0f6178688d1f3a28cdb89782404bdbe86dec9fb01321b032289.png-3c4ea339e7d2948345a1c0201bb8c9ac.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

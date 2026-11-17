@@ -3,19 +3,20 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bmxtu6w81v010"
-path="res://.godot/imported/shopfront-variety-989c104cfb9aa05e46d940e4a84f289e7b620ffff30fe4bd9516c6756bc4e110.png-ec9117e3555c56db1d1d7243990f64a9.ctex"
+path.s3tc="res://.godot/imported/shopfront-variety-989c104cfb9aa05e46d940e4a84f289e7b620ffff30fe4bd9516c6756bc4e110.png-ec9117e3555c56db1d1d7243990f64a9.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://Assets/Models/BuildingChunks/textures/shopfront-variety-989c104cfb9aa05e46d940e4a84f289e7b620ffff30fe4bd9516c6756bc4e110.png"
-dest_files=["res://.godot/imported/shopfront-variety-989c104cfb9aa05e46d940e4a84f289e7b620ffff30fe4bd9516c6756bc4e110.png-ec9117e3555c56db1d1d7243990f64a9.ctex"]
+dest_files=["res://.godot/imported/shopfront-variety-989c104cfb9aa05e46d940e4a84f289e7b620ffff30fe4bd9516c6756bc4e110.png-ec9117e3555c56db1d1d7243990f64a9.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

@@ -28,7 +28,7 @@ UNIQUE_IMAGE_COUNT = 3
 GLB_JSON = 0x4E4F534A
 GLB_BIN = 0x004E4942
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
-TEXTURE_IMPORT_CONFIG = '[remap]\nimporter="texture"\ntype="CompressedTexture2D"\n\n[params]\ncompress/mode=0\nmipmaps/generate=true\n'
+TEXTURE_IMPORT_CONFIG = '[remap]\nimporter="texture"\ntype="CompressedTexture2D"\n\n[params]\ncompress/mode=2\ncompress/high_quality=false\nmipmaps/generate=true\n'
 PROXY_MATERIAL = {
     "name": "Proxy neutral concrete",
     "pbrMetallicRoughness": {
@@ -473,8 +473,11 @@ def check_texture_import(import_path: Path) -> None:
     require(importer == "texture" and resource_type == "CompressedTexture2D",
             f"{import_path.name}: expected a texture import for CompressedTexture2D")
     compression = godot_config_value(contents, "params", "compress/mode")
-    require(compression is not None and compression.strip() == "0",
-            f"{import_path.name}: [params] compress/mode must be 0 (found {compression!r})")
+    require(compression is not None and compression.strip() == "2",
+            f"{import_path.name}: [params] compress/mode must be 2 (found {compression!r})")
+    high_quality = godot_config_value(contents, "params", "compress/high_quality")
+    require(high_quality is not None and high_quality.strip().lower() == "false",
+            f"{import_path.name}: [params] compress/high_quality must be false (found {high_quality!r})")
     mipmaps = godot_config_value(contents, "params", "mipmaps/generate")
     require(mipmaps is not None and mipmaps.strip().lower() == "true",
             f"{import_path.name}: [params] mipmaps/generate must be true (found {mipmaps!r})")
@@ -778,19 +781,21 @@ def self_test() -> None:
         write_texture_import(texture_path, existing_uid)
         require(godot_config_value(import_path.read_text(encoding="utf-8"), "remap", "uid") == existing_uid,
                 "texture import writer did not preserve a UID after generated-directory cleanup")
-        for mipmaps in ("false", None):
-            import_path.write_text(TEXTURE_IMPORT_CONFIG.replace("mipmaps/generate=true\n", "")
-                                   if mipmaps is None else
-                                   TEXTURE_IMPORT_CONFIG.replace("mipmaps/generate=true", "mipmaps/generate=false"),
-                                   encoding="utf-8")
-            try:
-                check_texture_import(import_path)
-            except AssertionError as error:
-                require("[params] mipmaps/generate must be true" in str(error),
-                        "invalid PNG import config did not report its mipmap setting")
-            else:
-                raise AssertionError(f"PNG import check accepted mipmaps/generate={mipmaps!r}")
-    print("ANTILA_BUILDING_CHUNKS_SELF_TEST_OK: pair pruning, exact accessor payloads, external PNG, collision proxy and mipmap import contract")
+        for key, expected, invalid in (("compress/mode", "2", "0"),
+                                       ("compress/high_quality", "false", "true"),
+                                       ("mipmaps/generate", "true", "false")):
+            for value in (invalid, None):
+                config = TEXTURE_IMPORT_CONFIG.replace(
+                    f"{key}={expected}\n", "" if value is None else f"{key}={value}\n")
+                import_path.write_text(config, encoding="utf-8")
+                try:
+                    check_texture_import(import_path)
+                except AssertionError as error:
+                    require(f"[params] {key} must be {expected}" in str(error),
+                            f"invalid PNG import config did not report {key}")
+                else:
+                    raise AssertionError(f"PNG import check accepted {key}={value!r}")
+    print("ANTILA_BUILDING_CHUNKS_SELF_TEST_OK: pair pruning, exact accessor payloads, external PNG, collision proxy and compressed mipmap import contract")
 
 
 def main() -> int:
