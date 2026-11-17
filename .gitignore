@@ -9,6 +9,11 @@ __pycache__/
 Art/Passengers/
 Art/passengers.blend
 Assets/Models/passenger_*
+# Import settings contain no licensed model or image data.
+!Assets/Models/passenger_dennis_rp_dennis_posed_004_dif_2k.jpg.import
+!Assets/Models/passenger_family_rp_fabienne_percy_posed_001_dif_2k.jpg.import
+!Assets/Models/passenger_headphones_rp_posed_00178_29_basecolor.jpg.import
+!Assets/Models/passenger_mei_rp_mei_posed_001_dif_2k.jpg.import
 # Run evidence and prior asset states are kept locally, not committed.
 evidence/
 Art/before-*/

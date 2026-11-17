@@ -33,3 +33,24 @@ The import converts centimetres to metres for the OBJ files and corrects the sup
 The four exports were checked for one mesh, one embedded texture, finite source UVs, and grounded feet. Heights are 1.697 m (Mei), 1.871 m (Dennis), 1.714 m (family) and 1.725 m (headphones). They contain 30,004 / 30,039 / 59,961 / 50,033 triangles respectively. The final C# build completed with zero warnings and errors, and the rendered queue was visually inspected in Godot.
 
 The full 1.08 km driving regression passed all three stops, loaded four passenger groups per stop, removed all boarded queues, and finished with 26 passengers and no route contacts. The final test and six-view capture exited without warnings or errors.
+
+## Runtime texture storage
+
+The four extracted JPEG `.import` sidecars are versioned separately from the licensed model/image files. Dennis, the family and the headphones passenger use desktop VRAM compression (BC1/DXT1 on the tested GL Compatibility renderer). Mei stays lossless: the actual Godot importer produced visible blue/purple skin artefacts at both normal stop distance and close range. This exception is pinned in her sidecar with automatic 3D compression detection disabled, so an editor preview cannot switch her back to BC1.
+
+| Passenger | Resolution | Mip levels | Tested resident texture payload |
+| --- | --- | ---: | ---: |
+| Mei | 2048 × 2048 | 12 | 16.00 MiB, RGB8 |
+| Dennis | 2048 × 2048 | 12 | 2.67 MiB, BC1 |
+| Family | 2048 × 2048 | 12 | 2.67 MiB, BC1 |
+| Headphones | 4096 × 4096 | 13 | 10.67 MiB, BC1 |
+
+The actual bound textures total **33,554,471 bytes (32.00 MiB)**, down from **117,440,508 bytes (112.00 MiB)**: **83,886,037 bytes (80.00 MiB) less texture data**. The source JPEGs, embedded GLB textures, UVs, geometry, resolutions and complete mip chains retain their prior bytes/contracts. Only import settings are committed; the license exclusions for model/image/Blender files remain in place.
+
+After rebuilding the licensed GLBs through Blender MCP, run the usual Godot import step. The extracted texture names retain their checked-in settings. Verification rebuilt all four passenger scene caches and checked that the four sidecar hashes survived unchanged. Other platforms can select different GPU formats; the table above is the tested macOS GL result.
+
+Evidence is local under `evidence/passenger-compression-2026-11-16/`. Sixteen native comparison views cover front/back bodies at 2.3 m and faces/clothing at 1.05 m. The final comparisons use the actual imported textures, not just an in-memory compression prototype. Minor fine-detail differences remain on the compressed artwork; Mei’s restored RGB bodies are pixel-identical in all four views. Source checks verify one allocation per texture, unchanged dimensions/full mip payloads, physically driven H3, scene reload, footpath/collision details and 72 rendered terrain-boundary probes.
+
+These are offscreen rendering and functional checks. The user selected offscreen checks after the live-window attempt became non-drawable; that attempted timing/physical-footprint run is excluded. No new live RAM/FPS, cross-GPU or manual-driving result is claimed. See the companion [performance notes](STARTUP_PERFORMANCE.md#passenger-texture-compression).
+
+The standalone macOS debug export also passed the exact four-allocation budget and the filtered H3 offscreen route (four stops / 33 passengers). Its deep/strict local signature check passed after runtime verification. Temporary export settings and profiling callbacks are removed; the JPEG/GLB source hashes and unrelated import settings are preserved.
