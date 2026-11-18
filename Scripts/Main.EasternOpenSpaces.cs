@@ -6,6 +6,8 @@ using System.Text.Json;
 
 public partial class Main
 {
+    private const string WonderlandSite="1910058892";
+
     private Node3D _eastRecreation = null!;
     private readonly List<(string Site,Vector3 Position,float Radius)> _eastRecreationProps = new();
     private readonly List<(Rect2 Bounds,Vector2[] Polygon)> _eastParkReservations = new();
@@ -87,12 +89,24 @@ public partial class Main
         var model=_eastRecreation??throw new Exception("Eastern parks must load their sourced recreation surfaces and fittings");
         using var data=JsonDocument.Parse(FileAccess.GetFileAsString("res://Data/east-kowloon-open-spaces.json"));
         var root=data.RootElement;
-        var expected=new[]{"1503005871","1503005901","1503005881","1503005751","1503005870","1503005863","1503005866","1503005714","1910071209","1503005853","1503005716","1503005939","1503005718","1910059822","1503005810","1503005961","1910064509","1503000381","1503005413","1503000390","1503005076","1503000414","1910069198","1503000199","1810011761","1910053970","1910053968"};
-        Check(root.GetProperty("sites").EnumerateArray().Select(s=>s.GetProperty("id").GetString()).Order().SequenceEqual(expected.Order()),"All 27 reviewed eastern and western open spaces must be filled");
+        var sittingOutAreas=new[]{"1503005180","1503005170","1503005157","1503005144","1503005135","1503005123","1503005605"};
+        var expected=new[]{
+            "1503005871","1503005901","1503005881","1503005751","1503005870","1503005863","1503005866","1503005714","1910071209",
+            "1503005853","1503005716","1503005939","1503005718","1910059822","1503005810","1503005961","1910064509","1503000381",
+            "1503005413","1503000390","1503005076","1503000414","1910069198","1503000199","1810011761","1910053970","1910053968",
+            "1503005535","1503005281","1810014504","1810044652","1503005514","1910056230","1810032161","1910062401","1503005115",
+            "1503005152","1810015202","1503005628","1503005422",WonderlandSite,
+            "1503005112","1503005184","1503005071","1503005077","1503005450","1503005508",
+            "1503005539","1503005553","1503005688","1503005627","1502005648"
+        }.Concat(sittingOutAreas).ToArray();
+        Check(root.GetProperty("sites").EnumerateArray().Select(s=>s.GetProperty("id").GetString()).Order().SequenceEqual(expected.Order()),"All 59 reviewed open spaces must be present");
         var sourceOutlines=root.GetProperty("surfaces").EnumerateArray().Select(s=>s.GetProperty("source_id").GetString()).Distinct().Count();
-        Check(sourceOutlines==120,"All 120 reviewed source sports outlines must have a rendered recreation surface");
+        Check(sourceOutlines==152,"All 152 reviewed source sports outlines must have a rendered recreation surface");
         var metadata=root.GetProperty("metadata");
-        Check(metadata.GetProperty("source_feature_count").GetInt32()==194 && metadata.GetProperty("source_site_fragment_count").GetInt32()==59 && metadata.GetProperty("source_sport_fragment_count").GetInt32()==135,"The complete 27-site source fragment inventory must be loaded");
+        Check(metadata.GetProperty("source_feature_count").GetInt32()==284 && metadata.GetProperty("source_site_fragment_count").GetInt32()==115 && metadata.GetProperty("source_sport_fragment_count").GetInt32()==169,"The complete 57-site base source fragment inventory must be loaded");
+        var southwest=metadata.GetProperty("supplemental_site_source");
+        Check(southwest.GetProperty("feature_count").GetInt32()==193 && southwest.GetProperty("site_fragment_count").GetInt32()==2,
+            "Both source-backed southwest waterfront spaces must be loaded");
         Check(_eastRecreationProps.Count==root.GetProperty("fixtures").GetArrayLength(),"Eastern park furniture must remain clear of every service stop");
         int reservationCount=root.GetProperty("gardens").EnumerateArray().Sum(g=>g.GetProperty("rings").GetArrayLength()+g.GetProperty("access").GetArrayLength());
         Check(_eastParkReservations.Count==reservationCount,"Every sourced park interior and access corridor must reserve roadside scenery");
@@ -109,21 +123,38 @@ public partial class Main
         long recreationBytes=(long)recreation.GetWidth()*recreation.GetHeight()*3;
         Check(recreation.GetFormat()==Image.Format.Rgb8 && recreation.GetWidth()<=8192 && recreation.GetHeight()<=8192 && recreationBytes<=192L*1024*1024,
             $"Recreation RGB8 mask exceeds its 8192-pixel / 192 MiB cap: {recreation.GetWidth()}x{recreation.GetHeight()} ({recreationBytes} bytes)");
-        CheckEasternPathConnections(root,paving);
+        CheckEasternPathConnections(root,paving,sittingOutAreas);
         int paths=0,surfaces=0,support=0,infields=0;
         foreach(var garden in root.GetProperty("gardens").EnumerateArray())
         {
             string id=garden.GetProperty("site").GetString()!;
+            bool pavedSittingOut=sittingOutAreas.Contains(id);
             var fixtures=_eastRecreationProps.Where(p=>p.Site==id).ToArray();
-            Check(fixtures.Length>=3,"Eastern open space needs usable furniture and planting: "+id);
+            if(id==WonderlandSite)
+            {
+                Check(fixtures.Length==0 && garden.GetProperty("paths").GetArrayLength()==0
+                    && garden.GetProperty("access").GetArrayLength()==0,"Wonderland must retain its open event ground");
+                var center=new Vector2(-1698,-824);var uv=(center-HarbourBounds.Position)/HarbourBounds.Size;
+                Check(garden.GetProperty("rings").EnumerateArray().Any(poly=>Inside(center,poly))
+                    && paving.GetPixel((int)(uv.X*paving.GetWidth()),(int)(uv.Y*paving.GetHeight())).G<.1f,
+                    "Wonderland's surveyed event centre must stay clear of paving");
+                using var ray=PhysicsRayQueryParameters3D.Create(new(center.X,.2f,center.Y),new(center.X,-.2f,center.Y),1);
+                Check(GetWorld3D().DirectSpaceState.IntersectRay(ray).Count>0,"Wonderland event ground must have solid support");support++;
+                continue;
+            }
+            if(id=="1503005422")Check(fixtures.Length==0,"Cultural Centre piazzas must stay clear for events");
+            else if(pavedSittingOut)Check(fixtures.Length>=1,"A compact sitting-out area needs seating: "+id);
+            else if(id=="1502005648")Check(fixtures.Length>=1,"Dorset Crescent Rest Garden needs a clear fixture");
+            else if(id!="1503005184" && id!="1503005688")Check(id=="1910062401" || fixtures.Length>=3,"Open space needs usable furniture and planting: "+id);
             Check(garden.GetProperty("access").GetArrayLength()>0,"Eastern park must retain pedestrian entrances: "+id);
             foreach(var prop in fixtures)
             {
                 var p=new Vector2(prop.Position.X,prop.Position.Z);
                 Check(garden.GetProperty("rings").EnumerateArray().Any(poly=>Inside(p,poly)) && LotClear(p,prop.Radius) && ClearOfServiceStops(prop.Position,prop.Radius),"Eastern park fixture leaves its source site or obstructs a building/stop: "+id);
-                foreach(string zone in new[]{"paths","access"})
+                // A compact plaza can seat people on its paving; its path check routes around the benches.
+                foreach(string zone in pavedSittingOut?new[]{"access"}:new[]{"paths","access"})
                     Check(!garden.GetProperty(zone).EnumerateArray().Any(poly=>Inside(p,poly) || EdgeDistance(p,poly)<prop.Radius-.01f),"Eastern park furniture obstructs a path or entrance: "+id);
-                Check(!HarbourRoads.Any(r=>Enumerable.Range(1,r.Points.Count-1).Any(j=>r.Points[j].Y>-6 && p.DistanceTo(Geometry2D.GetClosestPointToSegment(p,new(r.Points[j-1].X,r.Points[j-1].Z),new(r.Points[j].X,r.Points[j].Z)))<Mathf.Max(12,r.Width)/2+prop.Radius)),"Eastern park fixture enters a carriageway: "+id);
+                Check(Map.ClearOfRoads(prop.Position,prop.Radius) && !HarbourRoads.Any(r=>Enumerable.Range(1,r.Points.Count-1).Any(j=>r.Points[j].Y>-6 && p.DistanceTo(Geometry2D.GetClosestPointToSegment(p,new(r.Points[j-1].X,r.Points[j-1].Z),new(r.Points[j].X,r.Points[j].Z)))<Mathf.Max(12,r.Width)/2+prop.Radius)),"Eastern park fixture enters a carriageway: "+id);
                 Check(!root.GetProperty("surfaces").EnumerateArray().Any(s=>(s.GetProperty("kind").GetString()=="track"?Geometry2D.IsPointInPolygon(p,Points(s.GetProperty("rings")[0])):Inside(p,s.GetProperty("rings"))) || EdgeDistance(p,s.GetProperty("rings"))<prop.Radius-.01f),"Eastern park fixture enters a playing surface or athletics infield: "+id);
             }
             Check(garden.GetProperty("samples").GetArrayLength()>0,"Eastern open space has no usable pedestrian path: "+id);
@@ -135,7 +166,7 @@ public partial class Main
                 Check(GetWorld3D().DirectSpaceState.IntersectRay(ray).Count>0,"Eastern park path lacks ground support: "+id);support++;
             }
         }
-        Check(root.GetProperty("gardens").GetArrayLength()==27,"All 27 source boundaries must remain available");
+        Check(root.GetProperty("gardens").GetArrayLength()==expected.Length,"All reviewed source boundaries must remain available");
         foreach(var surface in root.GetProperty("surfaces").EnumerateArray())
         {
             var p=surface.GetProperty("sample");var uv=(new Vector2(p[0].GetSingle(),p[1].GetSingle())-_recreationBounds.Position)/_recreationBounds.Size;
@@ -162,12 +193,20 @@ public partial class Main
         GD.Print($"ANTILA_EAST_OPEN_SPACES_OK: {root.GetProperty("sites").GetArrayLength()} sourced sites; {sourceOutlines} source sports outlines; {paths} paving, {surfaces} sport, {support} support and {infields} clear infield probes; {_eastRecreationProps.Count} clear fixtures; {_eastParkReservations.Count} reservations; {collision.Length} court colliders; recreation mask {recreation.GetWidth()}x{recreation.GetHeight()} / {recreationBytes} bytes");
     }
 
-    private void CheckEasternPathConnections(JsonElement root,Image paving)
+    private void CheckEasternPathConnections(JsonElement root,Image paving,IReadOnlyCollection<string> sittingOutAreas)
     {
         var pixel=HarbourBounds.Size/new Vector2(paving.GetWidth(),paving.GetHeight());int checkedSamples=0;
         var disconnected=new List<string>();
-        foreach(var garden in root.GetProperty("gardens").EnumerateArray())
+        var gardens=root.GetProperty("gardens").EnumerateArray().Where(g=>g.GetProperty("site").GetString()!=WonderlandSite).ToArray();
+        var groundRoads=HarbourRoads.Where(r=>!r.Tunnel).Select(r=>(Points:r.Points,Width:r.Width))
+            .Concat(Map.SideRoads.Select(r=>(Points:r.Points,Width:RoadMap.Width(r.Name))))
+            .Append((Points:Map.RoadPoints,Width:RoadMap.Width("NATHAN ROAD")));
+        foreach(var garden in gardens)
         {
+            string site=garden.GetProperty("site").GetString()!;
+            var seating=sittingOutAreas.Contains(site)
+                ?_eastRecreationProps.Where(prop=>prop.Site==site).ToArray()
+                :Array.Empty<(string Site,Vector3 Position,float Radius)>();
             var bounds=new Rect2(new Vector2(garden.GetProperty("samples")[0][0].GetSingle(),garden.GetProperty("samples")[0][1].GetSingle()),Vector2.Zero);
             foreach(string zone in new[]{"rings","access"})foreach(var polygon in garden.GetProperty(zone).EnumerateArray())
                 foreach(var point in polygon[0].EnumerateArray())bounds=bounds.Expand(new(point[0].GetSingle(),point[1].GetSingle()));
@@ -176,7 +215,7 @@ public partial class Main
             int x1=Math.Min(paving.GetWidth(),(int)MathF.Ceiling((bounds.End.X-HarbourBounds.Position.X)/pixel.X)),y1=Math.Min(paving.GetHeight(),(int)MathF.Ceiling((bounds.End.Y-HarbourBounds.Position.Y)/pixel.Y));
             int width=x1-x0,height=y1-y0;var cells=new byte[width*height];var queue=new Queue<int>();
             var lots=_lots.Where(l=>l.Bounds.Intersects(bounds)).ToArray();
-            var roads=HarbourRoads.Where(r=>!r.Tunnel).SelectMany(r=>Enumerable.Range(1,r.Points.Count-1)
+            var roads=groundRoads.SelectMany(r=>Enumerable.Range(1,r.Points.Count-1)
                 .Where(i=>MathF.Max(r.Points[i-1].Y,r.Points[i].Y)<.05f && MathF.Min(r.Points[i-1].Y,r.Points[i].Y)>-.5f)
                 .Select(i=>(A:new Vector2(r.Points[i-1].X,r.Points[i-1].Z),B:new Vector2(r.Points[i].X,r.Points[i].Z),Width:MathF.Max(12,r.Width)/2+4)))
                 .Where(r=>new Rect2(r.A,Vector2.Zero).Expand(r.B).Grow(r.Width).Intersects(bounds)).ToArray();
@@ -191,7 +230,9 @@ public partial class Main
             {
                 int index=y*width+x;if(cells[index]==0)continue;
                 var at=HarbourBounds.Position+new Vector2(x+x0+.5f,y+y0+.5f)*pixel;
-                if(lots.Any(l=>l.Bounds.HasPoint(at) && Geometry2D.IsPointInPolygon(at,l.Polygon))){cells[index]=0;continue;}
+                if(lots.Any(l=>l.Bounds.HasPoint(at) && Geometry2D.IsPointInPolygon(at,l.Polygon)) ||
+                    seating.Any(prop=>at.DistanceTo(new(prop.Position.X,prop.Position.Z))<prop.Radius+.55f))
+                {cells[index]=0;continue;}
                 if(roads.Any(r=>at.DistanceTo(Geometry2D.GetClosestPointToSegment(at,r.A,r.B))<=r.Width))
                 {cells[index]=2;queue.Enqueue(index);}
             }
@@ -213,6 +254,6 @@ public partial class Main
             }
         }
         if(disconnected.Count>0)throw new Exception("Eastern paths disconnected from public pavement: "+string.Join("; ",disconnected));
-        GD.Print($"ANTILA_EAST_PATH_CONNECTIONS_OK: {checkedSamples} path/access samples across {root.GetProperty("gardens").GetArrayLength()} sites reach public pavement");
+        GD.Print($"ANTILA_EAST_PATH_CONNECTIONS_OK: {checkedSamples} path/access samples across {gardens.Length} sites reach public pavement");
     }
 }

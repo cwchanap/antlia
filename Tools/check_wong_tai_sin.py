@@ -180,8 +180,8 @@ def check():
         'Existing source records changed or were reordered'
     old_roads = {road['id']: road for road in baseline['roads']}
     roads = {road['id']: road for road in data['roads']}
-    assert len(roads) == len(data['roads']) == len(source['features']) == 7227, \
-        'Expected the complete current road/source set, including four reviewed additions'
+    assert len(roads) == len(data['roads']) == len(source['features']) == 7275, \
+        'Expected the complete road/source set, including the reviewed Kowloon Tong links'
     assert old_roads.keys() <= roads.keys(), 'An existing road record was removed'
     assert all(roads[ident] == road for ident, road in old_roads.items()), \
         'An existing road geometry or property changed'

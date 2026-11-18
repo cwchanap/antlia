@@ -4,102 +4,102 @@
     -6529,
     -9276,
     9648,
-    9026
+    9511
   ],
   "width": 8192,
-  "height": 7664,
+  "height": 8076,
   "mipLevels": 14,
-  "sourceSha256": "2AD326E2C613485C8FAAF2C4AC68AED94E68C5211E61E3DE336142F00694B4C5",
-  "sourceDataSha256": "12BBA4F546717BE373A9063E89E9182349EEBCEB0D9B98025AC7632DE5F7A665",
-  "authoredMipSha256": "2AD326E2C613485C8FAAF2C4AC68AED94E68C5211E61E3DE336142F00694B4C5",
-  "atlasWidth": 2048,
+  "sourceSha256": "BECA875BF49F2CAC88A1C47833ABD1FCF33A3A1AEF97C6E7DA01F808BAF19AF0",
+  "sourceDataSha256": "9BBB06DFFDE85415624953C75209DDA992BF9B80B89B02C4BE71E4E5451A893B",
+  "authoredMipSha256": "BECA875BF49F2CAC88A1C47833ABD1FCF33A3A1AEF97C6E7DA01F808BAF19AF0",
+  "atlasWidth": 4096,
   "atlasHeight": 2048,
-  "atlasColumns": 15,
-  "atlasRows": 14,
+  "atlasColumns": 17,
+  "atlasRows": 15,
   "lookupWidth": 64,
-  "lookupHeight": 127,
-  "activePages": 196,
-  "texturePayloadBytes": 12672828,
-  "atlasSha256": "30B619ED17ED8553440718453F132C2FB4FC6D56875868E927B3B1CDA496EAAA",
-  "lookupSha256": "B5E8F94BDF75341BA90BBDA90EDB853A39DF0CC6CD970C57E46F0FC60F70E536",
+  "lookupHeight": 134,
+  "activePages": 247,
+  "texturePayloadBytes": 25257084,
+  "atlasSha256": "D4880E49F4210C649A162A781B0F6A36488E76E4B5E88CDF60CA972B07FCC7E2",
+  "lookupSha256": "AA7A53370346E8694799B4F52017DFD943B3741D40D778A8FB4A3E2F0A1FEF68",
   "lodRampSha256": "DD5E3D994AE6651773737D7E4E608C614AD849B5151A16921BD31B8CDBA425F8",
   "mips": [
     {
       "width": 8192,
-      "height": 7664,
+      "height": 8076,
       "lookupOffset": 0,
       "pageColumns": 64,
-      "pageRows": 60,
-      "activePages": 74
+      "pageRows": 64,
+      "activePages": 99
     },
     {
       "width": 4096,
-      "height": 3832,
-      "lookupOffset": 60,
+      "height": 4038,
+      "lookupOffset": 64,
       "pageColumns": 32,
-      "pageRows": 30,
-      "activePages": 47
+      "pageRows": 32,
+      "activePages": 65
     },
     {
       "width": 2048,
-      "height": 1916,
-      "lookupOffset": 90,
+      "height": 2019,
+      "lookupOffset": 96,
       "pageColumns": 16,
-      "pageRows": 15,
-      "activePages": 31
+      "pageRows": 16,
+      "activePages": 39
     },
     {
       "width": 1024,
-      "height": 958,
-      "lookupOffset": 105,
+      "height": 1009,
+      "lookupOffset": 112,
       "pageColumns": 8,
       "pageRows": 8,
-      "activePages": 21
+      "activePages": 23
     },
     {
       "width": 512,
-      "height": 479,
-      "lookupOffset": 113,
+      "height": 504,
+      "lookupOffset": 120,
       "pageColumns": 4,
       "pageRows": 4,
       "activePages": 11
     },
     {
       "width": 256,
-      "height": 239,
-      "lookupOffset": 117,
+      "height": 252,
+      "lookupOffset": 124,
       "pageColumns": 2,
       "pageRows": 2,
       "activePages": 4
     },
     {
       "width": 128,
-      "height": 119,
-      "lookupOffset": 119,
+      "height": 126,
+      "lookupOffset": 126,
       "pageColumns": 1,
       "pageRows": 1,
       "activePages": 1
     },
     {
       "width": 64,
-      "height": 59,
-      "lookupOffset": 120,
+      "height": 63,
+      "lookupOffset": 127,
       "pageColumns": 1,
       "pageRows": 1,
       "activePages": 1
     },
     {
       "width": 32,
-      "height": 29,
-      "lookupOffset": 121,
+      "height": 31,
+      "lookupOffset": 128,
       "pageColumns": 1,
       "pageRows": 1,
       "activePages": 1
     },
     {
       "width": 16,
-      "height": 14,
-      "lookupOffset": 122,
+      "height": 15,
+      "lookupOffset": 129,
       "pageColumns": 1,
       "pageRows": 1,
       "activePages": 1
@@ -107,7 +107,7 @@
     {
       "width": 8,
       "height": 7,
-      "lookupOffset": 123,
+      "lookupOffset": 130,
       "pageColumns": 1,
       "pageRows": 1,
       "activePages": 1
@@ -115,7 +115,7 @@
     {
       "width": 4,
       "height": 3,
-      "lookupOffset": 124,
+      "lookupOffset": 131,
       "pageColumns": 1,
       "pageRows": 1,
       "activePages": 1
@@ -123,18 +123,18 @@
     {
       "width": 2,
       "height": 1,
-      "lookupOffset": 125,
+      "lookupOffset": 132,
       "pageColumns": 1,
       "pageRows": 1,
-      "activePages": 1
+      "activePages": 0
     },
     {
       "width": 1,
       "height": 1,
-      "lookupOffset": 126,
+      "lookupOffset": 133,
       "pageColumns": 1,
       "pageRows": 1,
-      "activePages": 1
+      "activePages": 0
     }
   ]
 }

@@ -16,8 +16,8 @@ import zipfile
 from pathlib import Path
 
 from shapely import constrained_delaunay_triangles
-from shapely.geometry import LineString, Point, box, shape, mapping
-from shapely.ops import unary_union
+from shapely.geometry import LineString, Point, Polygon, box, shape, mapping
+from shapely.ops import nearest_points, substring, transform as transform_geometry, unary_union
 from import_map import ROOT, NS, SOURCE, ORIGIN, local
 from export_runtime_harbour import encode as encode_runtime_harbour
 
@@ -38,7 +38,7 @@ RAMPS = {'Southbound':['ID_024204','ID_010882','ID_010888'],
 ISLAND_BOUNDS = (-2400,350,2050,2100)
 KOWLOON_BOUNDS = (-900,-3350,650,-1191.124)
 WEST_BOUNDS = (-2700,-4800,650,50)
-NORTHWEST_BOUNDS = (-4600,-6000,0,-3900)
+NORTHWEST_BOUNDS = (-4600,-6000,650,-3900)
 KWAI_CHUNG_BOUNDS = (-6500,-8500,-3100,-4400)
 TSUEN_WAN_BOUNDS = (-8500,-11000,-3900,-6900)
 WEST_COAST_BOUNDS = (-13800,-11200,-6400,-6900)
@@ -50,6 +50,15 @@ EAST_ROUNDABOUTS = [('Hereford / Renfrew',['TD_107211','TD_107576','TD_107598','
 WEST_ROUNDABOUTS = [('Kwai Yue / Kwai Hei',['TD_8457','TD_9137','TD_9138'])]
 REQUIRED_ROUNDABOUTS = EAST_ROUNDABOUTS + WEST_ROUNDABOUTS
 WESTERN_APPROACHES = ['TD_57333']
+# Ground-level Kowloon Tong links reviewed against the exact TD centreline archive.
+REVIEWED_KOWLOON_TONG_ROADS = [
+    'TD_108064', 'TD_108061', 'TD_108062', 'TD_108063', 'TD_107934', 'TD_107935',
+    'TD_107715', 'TD_107716', 'TD_107718', 'TD_107719',
+    'TD_107656', 'TD_107657', 'TD_110086', 'TD_107620',
+    'TD_107621', 'TD_107623', 'TD_107624',
+    'TD_108065', 'TD_108066', 'TD_107747',
+    'TD_107225', 'TD_107587',
+]
 # These source-current branches were inspected with the 2026-10-28 junction fix
 # and deliberately deferred: they extend beyond TD_57333 or are a separate spur.
 DEFERRED_CONNECTED_ROADS = {
@@ -113,7 +122,115 @@ WONG_TAI_SIN = ['-TD_102650','-TD_115861','-TD_102706','-TD_102390','-TD_102389'
 WONG_TAI_SIN_NETWORK = ['TD_103730']
 SINGLE_LANE_WIDTHS = {'TD_103438':3.2,'TD_103954':3.0}
 
-def build(source):
+TST_PROMENADE_SITE = '1503005628'
+TST_SALISBURY_SITE = '1810015202'
+TST_EAST_SHORELINE = '1101166493'
+TST_WEST_SHORELINE = '1101166503'
+SOUTHWEST_EDIT_BOUNDS = (-1121.441, -670, 47.987940581, 232)
+SOUTHWEST_CHART_GAP_BOUNDS = (-1121.441, -80, -891, 232)
+SOUTHWEST_PROMENADE_BOUNDS = (-460, 170, SOUTHWEST_EDIT_BOUNDS[2], SOUTHWEST_EDIT_BOUNDS[3])
+MUSEUM_WATER_BOUNDS = (SOUTHWEST_EDIT_BOUNDS[2], 130, 112, 222)
+
+
+def southwest_source_geometry(geometry):
+    """Convert source WGS84 geometry to the game's local metre coordinates."""
+    scale_x=111320*math.cos(math.radians(ORIGIN[1]))
+    return transform_geometry(lambda x,y,z=None:((x-ORIGIN[0])*scale_x,-(y-ORIGIN[1])*111320),geometry)
+
+
+def southwest_support_and_water(kowloon, tst_site_land):
+    """Use exact chart water and cached iB1000 footprints to repair the southwest apron."""
+    water_path=ROOT/'Data/southwest-water-source.geojson'
+    shoreline_path=ROOT/'Data/southwest-shoreline-source.geojson'
+    buildings_path=ROOT/'Data/southwest-building-ground-source.geojson'
+    cultural_site_path=ROOT/'Data/southwest-public-spaces-source.geojson'
+    water_data=json.loads(water_path.read_text())
+    shoreline_data=json.loads(shoreline_path.read_text())
+    buildings_data=json.loads(buildings_path.read_text())
+    cultural_data=json.loads(cultural_site_path.read_text())
+    water=unary_union([shape(feature['geometry']) for feature in water_data['features']])
+    decks=unary_union([southwest_source_geometry(shape(feature['geometry'])) for feature in shoreline_data['features']
+                       if feature['properties'].get('source_type') in ('JPW','FFL')])
+    buildings=unary_union([southwest_source_geometry(shape(feature['geometry'])) for feature in buildings_data['features']])
+    cultural_site=unary_union([southwest_source_geometry(shape(feature['geometry'])) for feature in cultural_data['features']
+                               if feature['properties'].get('layer')=='Site' and feature['properties'].get('SITEID')=='1503005422'])
+    # The public promenade extends below the Cultural Centre Site boundary.
+    promenade=box(*SOUTHWEST_PROMENADE_BOUNDS).difference(water)
+    support=unary_union([decks,buildings,cultural_site.difference(water),promenade])
+    edit_window=box(*SOUTHWEST_EDIT_BOUNDS)
+    chart_gap=box(*SOUTHWEST_CHART_GAP_BOUNDS).intersection(kowloon).difference(support)
+    museum_water=water.intersection(kowloon).intersection(box(*MUSEUM_WATER_BOUNDS)).difference(support.union(tst_site_land))
+    water_cut=unary_union([water.intersection(kowloon).intersection(edit_window).difference(support),chart_gap,museum_water])
+    assert water.is_valid and support.is_valid and water_cut.is_valid, 'Southwest source geometry is invalid'
+    assert water_cut.area>400000, 'Official water boundary no longer covers the reviewed apron'
+    return water_cut,support,museum_water,decks,shoreline_data,water_path,shoreline_path,buildings_path,cultural_site_path
+
+
+def build_tst_shoreline_geometry(district, east_land, site_features, east_shoreline, west_shoreline):
+    """Return the source-supported TST sites, apron water cut, and joined waterfront edge."""
+    sites={f['properties']['SITEID']:shape(f['geometry']) for f in site_features}
+    assert set(sites)=={TST_PROMENADE_SITE,TST_SALISBURY_SITE}, 'Unexpected TST source-site set'
+    promenade=sites[TST_PROMENADE_SITE]
+
+    def source_lines(features, shoreline_id):
+        return [LineString([local(p) for p in feature['geometry']['coordinates']])
+                for feature in features if str(feature['properties'].get('SHORELINEID'))==shoreline_id]
+
+    east_lines=source_lines(east_shoreline,TST_EAST_SHORELINE)
+    west_lines=source_lines(west_shoreline,TST_WEST_SHORELINE)
+    assert len(east_lines)==1 and west_lines, 'Required TST SWA source fragments changed'
+    east_line=east_lines[0]
+    parts=list(promenade.geoms) if promenade.geom_type=='MultiPolygon' else [promenade]
+    west_endpoints=[Point(p) for line in west_lines for p in (line.coords[0],line.coords[-1])]
+    candidate=[]
+    for part in parts:
+        ring=LineString(part.exterior.coords)
+        west_join=min(west_endpoints,key=ring.distance)
+        east_endpoint=min((Point(east_line.coords[0]),Point(east_line.coords[-1])),key=ring.distance)
+        candidate.append((ring.distance(west_join)+ring.distance(east_endpoint),part,ring,west_join,east_endpoint))
+    _,part,ring,west_join,east_join=min(candidate,key=lambda row:row[0])
+    west_anchor=nearest_points(ring,west_join)[0]
+    east_anchor=nearest_points(ring,east_join)[0]
+    assert west_anchor.distance(west_join)<.02 and east_anchor.distance(east_join)<.02, \
+        'TST source Site perimeter no longer joins the surveyed seawall fragments'
+    start,end=ring.project(west_anchor),ring.project(east_anchor)
+    assert abs(end-start)<ring.length/2, 'TST seaward Site arc is ambiguous'
+    site_arc=substring(ring,min(start,end),max(start,end))
+    site_coords=list(site_arc.coords)
+    if start>end:site_coords.reverse()
+    east_coords=list(east_line.coords)
+    if Point(east_coords[-1]).distance(east_anchor)<Point(east_coords[0]).distance(east_anchor):east_coords.reverse()
+    assert math.dist(site_coords[-1],east_coords[0])<.02, 'TST Site / SWA join changed'
+    site_coords[-1]=east_coords[0]
+    waterfront=LineString(site_coords+east_coords[1:])
+    assert waterfront.is_simple and 1100<waterfront.length<1180, 'TST source frontage changed'
+
+    top=district.bounds[3]
+    top_edge=LineString([(waterfront.bounds[0]-1,top),(waterfront.bounds[2]+1,top)])
+    crossings=waterfront.intersection(top_edge)
+    crossings=[crossings] if crossings.geom_type=='Point' else list(getattr(crossings,'geoms',[]))
+    crossings=[p for p in crossings if p.geom_type=='Point']
+    assert len(crossings)==1, 'The TST waterfront must meet the old apron edge once'
+    crossing=crossings[0]
+    coast_segment=substring(waterfront,waterfront.project(crossing),waterfront.length)
+    east_end=coast_segment.coords[-1]
+    source_water=Polygon(list(coast_segment.coords)+[(east_end[0],top),(crossing.x,top)])
+    assert source_water.is_valid, 'TST source water cut is invalid'
+
+    # The eastern official land source covers the rest of the former apron through its old edge.
+    east_clip=box(550,-1220,district.bounds[2],top)
+    east_cut=district.difference(east_land).intersection(east_clip)
+    east_parts=[p for p in (east_cut.geoms if hasattr(east_cut,'geoms') else [east_cut])
+                if p.geom_type=='Polygon' and p.area>.01]
+    east_cut=unary_union(east_parts)
+    west_cut=district.intersection(source_water)
+    cut=unary_union([east_cut,west_cut])
+    if cut.geom_type=='GeometryCollection':
+        cut=unary_union([p for p in cut.geoms if p.geom_type in ('Polygon','MultiPolygon') and p.area>.01])
+    assert cut.is_valid and cut.area>300000, 'TST apron water cut is incomplete'
+    return unary_union(list(sites.values())),cut,waterfront,east_cut
+
+def build(source, *, retain_road_inventory=False):
     coast_data=json.loads((ROOT/'Data/west-kowloon-coast.json').read_text())
     northwest_coast=json.loads((ROOT/'Data/lai-chi-kok-coast.json').read_text())
     # Keep the established coast exactly; only add land outside its earlier map rectangle.
@@ -141,6 +258,7 @@ def build(source):
     ids = set(SOUTH+ISLAND+NORTH+[i.lstrip("-") for i in SCENIC+CENTRAL+KOWLOON+WEST+SHAM_SHUI_PO+LAI_CHI_KOK+KWAI_CHUNG+TSUEN_WAN+WEST_COAST+EAST_KOWLOON+WONG_TAI_SIN+WONG_TAI_SIN_NETWORK])
     ids.update(i for _,members in REQUIRED_ROUNDABOUTS for i in members)
     ids.update(WESTERN_APPROACHES)
+    ids.update(REVIEWED_KOWLOON_TONG_ROADS)
     # ROUTE_ID is the stable source key. Pin old sections to their source snapshot
     # and validate a requested datum conversion against shared geometry before connecting new roads.
     previous = json.loads((ROOT/'Data/cross-harbour-source.geojson').read_text())
@@ -172,11 +290,16 @@ def build(source):
                 name=props.get('STREET_ENAME','')
                 west=(props.get('ELEVATION')=='0' or (props.get('ELEVATION')=='1' and name.startswith('CASTLE PEAK ROAD') and line.bounds[2]<TSUEN_WAN_BOUNDS[0])) and props.get('TRAVEL_DIRECTION')!='4' and name not in ('','-99','&lt;Null&gt;','TUEN MUN ROAD','TSUEN WAN ROAD') and not any(s in name for s in ('HIGHWAY','CROSSING','CORRIDOR','FLYOVER','INTERCHANGE')) and west_land.covers(line.buffer(12)) and line.difference(old_kowloon).length>1
                 east=props.get('ELEVATION')=='0' and props.get('TRAVEL_DIRECTION')!='4' and name not in ('','-99','&lt;Null&gt;') and not any(s in name for s in ('HIGHWAY','CROSSING','CORRIDOR','FLYOVER','INTERCHANGE','TUNNEL')) and east_land.covers(line.buffer(12)) and line.difference(old_kowloon).length>1
-                if ident in ids or prior or north or west or east or (name in ISLAND_STREETS and island.covers(line.buffer(12))):
+                auto_selection=north or west or east or (name in ISLAND_STREETS and island.covers(line.buffer(12)))
+                if ident in ids or prior or (auto_selection and not retain_road_inventory):
                     records[ident] = prior if prior else {'type':'Feature','properties':dict(props, source_id=ident, source_sha256=source_hash),
                                       'geometry':{'type':'LineString','coordinates':coords}}
             element.clear()
     assert ids <= records.keys(), 'Source road IDs changed; review the extract before rebuilding.'
+    if retain_road_inventory:
+        retained_ids={f['properties']['source_id'] for f in previous['features']}
+        assert set(records)==retained_ids|set(REVIEWED_KOWLOON_TONG_ROADS), \
+            'Retained-road mode must preserve prior roads plus only the reviewed Kowloon Tong links'
     assert matched>400, 'Road datum does not agree with the existing map'
     print('ANTILA_ROAD_DATUM_OK:',matched,'shared sections within 2.5 cm; pinned older revisions:',changed)
     original = {i:LineString([local(p) for p in f['geometry']['coordinates']]) for i,f in records.items()}
@@ -229,7 +352,11 @@ def build(source):
     roads = []
     # Source level 1 identifies the deck; smooth authored ramps follow connected road endpoints.
     # ponytail: 7 m deck / 150 m ramps supply bus clearance; replace heights with surveyed levels when available.
-    adjacent={};ends={};incident={};deck={i for i,r in records.items() if r['properties']['ELEVATION']=='1'}
+    # These Cornwall Street records cross a railway, which Antila does not model.
+    # Keep their source level for provenance while representing their road surface at street elevation.
+    STREET_LEVEL_RAIL_CROSSINGS={'TD_107934','TD_107935'}
+    adjacent={};ends={};incident={};deck={i for i,r in records.items()
+        if r['properties']['ELEVATION']=='1' and i not in STREET_LEVEL_RAIL_CROSSINGS}
     for ident,line in lines.items():
         if ident in tube_info:continue
         a,b=(tuple(round(v,1) for v in p) for p in (line.coords[0],line.coords[-1]));ends[ident]=(a,b)
@@ -325,11 +452,21 @@ def build(source):
                 cutouts.append(LineString(run).buffer(5.4,cap_style=2));run=[]
         if run:cutouts.append(LineString(run).buffer(5.4,cap_style=2))
     bounds = district_data['bounds']
-    # Preserve the established TST apron; extend its former eastern cutoff with sourced land.
+    # Keep the established inland base, but replace its unsupported waterfront apron from source coast.
     district = box(bounds[0]-110,bounds[1]-130,bounds[2]+110,bounds[3]+120)
-    kowloon=unary_union([district,box(*KOWLOON_BOUNDS),west_land,east_land])
-    assert kowloon.is_valid and kowloon.geom_type=='Polygon', 'Eastern land must join the existing mainland'
-    land = unary_union([kowloon,island])
+    tst_site_path=ROOT/'Data/tst-shoreline-source.geojson'
+    tst_site_data=json.loads(tst_site_path.read_text())
+    east_shoreline=json.loads((ROOT/'Data/east-kowloon-shoreline.geojson').read_text())['features']
+    west_shoreline=json.loads((ROOT/'Data/west-kowloon-shoreline.geojson').read_text())['features']
+    tst_site_land,tst_water_cut,tst_frontier,tst_east_cut=build_tst_shoreline_geometry(
+        district,east_land,tst_site_data['features'],east_shoreline,west_shoreline)
+    kowloon=unary_union([district,box(*KOWLOON_BOUNDS),west_land,east_land]).difference(tst_water_cut)
+    kowloon=unary_union([kowloon,tst_site_land])
+    southwest_water_cut,southwest_support,museum_water,southwest_decks,southwest_shoreline_data,southwest_water_path,southwest_shoreline_path,southwest_building_path,southwest_site_path=southwest_support_and_water(kowloon,tst_site_land)
+    kowloon=unary_union([kowloon.difference(southwest_water_cut),southwest_support,tst_site_land])
+    assert kowloon.is_valid and kowloon.geom_type in ('Polygon','MultiPolygon'), 'Corrected mainland geometry is invalid'
+    island_geometry=island
+    land = unary_union([kowloon,island_geometry])
     for road in roads:
         if not road['tunnel']:
             carriageway=LineString([(p[0],p[2]) for p in road['points']]).buffer(road['width']/2)
@@ -347,6 +484,11 @@ def build(source):
     surface = unary_union([LineString([(p[0],p[2]) for p in r['points']]).buffer(r['width']/2) for r in roads if not r['tunnel'] and not r['elevated']]).difference(unary_union(cutouts))
     surface_triangles = [list(t.exterior.coords)[:3] for t in constrained_delaunay_triangles(surface).geoms]
     ground_triangles = [list(t.exterior.coords)[:3] for t in constrained_delaunay_triangles(ground).geoms]
+    deck_paving = southwest_decks.intersection(ground)
+    deck_faces = list(constrained_delaunay_triangles(deck_paving).geoms)
+    assert deck_paving.is_valid and deck_paving.area>0 and abs(sum(t.area for t in deck_faces)-deck_paving.area)<.01, \
+        'Surveyed deck paving triangulation is empty, invalid or incomplete'
+    harbour_paving_triangles = [list(t.exterior.coords)[:3] for t in deck_faces]
     assert abs(sum(abs((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]))/2 for a,b,c in ground_triangles)-ground.area)<.01
     metadata = {'provider':'Transport Department, HKSAR Government','source':SOURCE,
         'source_sha256':source_hash,
@@ -358,7 +500,20 @@ def build(source):
         'terms':'https://data.gov.hk/en/terms-and-conditions', 'world_units_per_metre':1,
         'dictionary':'https://static.data.gov.hk/td/road-network-v2/dataspec/rdnet_dataspec.zip',
         'tunnel_reference':'https://www.td.gov.hk/en/transport_in_hong_kong/tunnels_and_bridges_n/location_map/index_t.html',
-        'note':'Original XY preserved in approximate local metre coordinates. ELEVATION is a relative road level, not metres. Road widths are authored: 6 m for elevated carriageways, 12 m for broad roads including the low Hung Hing / Tonnochy approach, 3.2 m for TD_103438 and 3.0 m for TD_103954, based on source spacing and analytic bus clearance; widths are not surveyed. Tunnel depth 32 m, 5.6 m interior and 7 m elevated decks with cosine ramps over 150 m outside shared level junction aprons are authored. Aprons extend until adjoining centreline branches separate by 7.5 m. Shorelines derive from LandsD iB1000 with recorded gap repairs. Turn restrictions are not inferred.'}
+        'tst_shoreline_source_sha256':hashlib.sha256(tst_site_path.read_bytes()).hexdigest(),
+        'southwest_water_source_sha256':hashlib.sha256(southwest_water_path.read_bytes()).hexdigest(),
+        'southwest_shoreline_source_sha256':hashlib.sha256(southwest_shoreline_path.read_bytes()).hexdigest(),
+        'southwest_building_source_sha256':hashlib.sha256(southwest_building_path.read_bytes()).hexdigest(),
+        'southwest_cultural_site_source_sha256':hashlib.sha256(southwest_site_path.read_bytes()).hexdigest(),
+        'southwest_cultural_site_source':'Data/southwest-public-spaces-source.geojson',
+        'southwest_edit_bounds':list(SOUTHWEST_EDIT_BOUNDS),
+        'southwest_chart_gap_bounds':list(SOUTHWEST_CHART_GAP_BOUNDS),
+        'southwest_promenade_bounds':list(SOUTHWEST_PROMENADE_BOUNDS),
+        'museum_water_bounds':list(MUSEUM_WATER_BOUNDS),
+        'southwest_water_correction_area_m2':round(southwest_water_cut.area,3),
+        'southwest_water_correction_bounds':list(southwest_water_cut.bounds),
+        'southwest_source_support_area_m2':round(southwest_support.area,3),
+        'note':'Original XY preserved in approximate local metre coordinates. ELEVATION is a relative road level, not metres. Road widths are authored: 6 m for elevated carriageways, 12 m for broad roads including the low Hung Hing / Tonnochy approach, 3.2 m for TD_103438 and 3.0 m for TD_103954, based on source spacing and analytic bus clearance; widths are not surveyed. Tunnel depth 32 m, 5.6 m interior and 7 m elevated decks with cosine ramps over 150 m outside shared level junction aprons are authored. Aprons extend until adjoining centreline branches separate by 7.5 m. Shorelines derive from LandsD iB1000 with recorded gap repairs; the TST apron is bounded by SWA 1101166493 and the joined Site 1503005628 frontage, with source Site footprints retained. The southwest water cut follows georeferenced LandsD KN12/KN13 water fills clipped to legacy ground and edit bounds; a source-free connector through the reviewed offshore gap is clipped to legacy ground and excludes all iB1000 support, with no wall emitted on its edge. iB1000 JPW/FFL decks, building footprints, non-water Site 1503005422 and the charted public promenade beyond the Site are retained. Turn restrictions are not inferred.'}
     # Enclose the joined mainland, including the retained TST apron. Its old district
     # rectangle is now internal; source seawalls below replace only coincident edges.
     border=kowloon.boundary
@@ -368,17 +523,33 @@ def build(source):
         unary_union([LineString(p) for p in tsuen_wan_coast['coastline']]).difference(kwai_region),
         unary_union([LineString(p) for p in west_coast['coastline']]).difference(tsuen_region),
         unary_union([LineString(p) for p in east_coast['coastline']]).difference(unary_union([west_land,box(*KOWLOON_BOUNDS)]))]).difference(district.buffer(.1)).difference(unary_union(cutouts).buffer(1))
+    southwest_swa=[]
+    museum_swa=[]
+    southwest_window=box(*SOUTHWEST_EDIT_BOUNDS)
+    museum_window=box(*MUSEUM_WATER_BOUNDS)
+    for feature in southwest_shoreline_data['features']:
+        if feature['properties'].get('source_type')!='SWA':
+            continue
+        line=southwest_source_geometry(shape(feature['geometry']))
+        if line.intersects(museum_window):
+            museum_swa.append(line.intersection(museum_window))
+        if line.intersects(southwest_window.buffer(50)):
+            southwest_swa.append(line.difference(museum_window))
+    # Snap the surveyed museum wall to the shared game terrain edge through the chart seam.
+    museum_wall=border.intersection(museum_water.boundary).intersection(unary_union(museum_swa).buffer(.5))
+    shore=unary_union([shore,tst_frontier,*southwest_swa,museum_wall]).difference(unary_union(cutouts).buffer(1))
     def line_parts(g):
         return [list(p.coords) for p in (g.geoms if hasattr(g,'geoms') else [g]) if p.geom_type=='LineString' and p.length>.5]
     output = {'metadata':metadata,'bounds':[WEST_COAST_BOUNDS[0]-80,WEST_COAST_BOUNDS[1]-80,EAST_KOWLOON_BOUNDS[2]+80,ISLAND_BOUNDS[3]+50], 'island_bounds':ISLAND_BOUNDS, 'kowloon_north_bounds':KOWLOON_BOUNDS,
               'island_land':island_coast['land'],'island_coastline':line_parts(unary_union([LineString(p) for p in island_coast['coastline']]).difference(unary_union(cutouts).buffer(1))),
               'island_boundary':line_parts(island.boundary.intersection(box(*ISLAND_BOUNDS).boundary)), 'island_coast_metadata':island_coast['metadata'],
               'kowloon_east_land':mapping(east_land),'east_kowloon_bounds':EAST_KOWLOON_BOUNDS,'east_coast_metadata':east_coast['metadata'],
-              'kowloon_west_land':mapping(west_land),'kowloon_coastline':line_parts(shore),'kowloon_boundary':line_parts(border.difference(shore.buffer(.3))), 'coast_metadata':coast_data['metadata'],
+              'kowloon_west_land':mapping(west_land),'kowloon_coastline':line_parts(shore),'kowloon_boundary':line_parts(border.difference(shore.buffer(.3)).difference(southwest_water_cut.boundary.buffer(.3))), 'coast_metadata':coast_data['metadata'],
               'kowloon_northwest_bounds':NORTHWEST_BOUNDS,'northwest_coast_metadata':northwest_coast['metadata'],'kwai_chung_bounds':KWAI_CHUNG_BOUNDS,'kwai_chung_coast_metadata':kwai_chung_coast['metadata'],
               'tsuen_wan_bounds':TSUEN_WAN_BOUNDS,'tsuen_wan_coast_metadata':tsuen_wan_coast['metadata'],
               'west_coast_bounds':WEST_COAST_BOUNDS,'west_coast_metadata':west_coast['metadata'],'roads':roads,
-              'routes':routes,'tubes':tubes,'ground_triangles':ground_triangles,'water_triangles':water_triangles,'surface_triangles':surface_triangles}
+              'routes':routes,'tubes':tubes,'ground_triangles':ground_triangles,'water_triangles':water_triangles,'surface_triangles':surface_triangles,
+              'harbour_paving_triangles':harbour_paving_triangles}
     payloads=[(ROOT/'Data/cross-harbour-source.geojson',json.dumps({'type':'FeatureCollection','metadata':metadata,'features':list(records.values())},ensure_ascii=False,separators=(',',':'),allow_nan=False)),
               (ROOT/'Data/cross-harbour.json',json.dumps(output,ensure_ascii=False,separators=(',',':'),allow_nan=False)),
               (ROOT/'Data/cross-harbour-runtime.json',encode_runtime_harbour(output))]
@@ -391,7 +562,9 @@ def build(source):
     finally:
         for temp in staged:temp.unlink(missing_ok=True)
     print('ANTILA_TUNNEL_DATA_OK:',len(roads),'source sections;',[(t['name'],round(t['length_m'],1)) for t in tubes],'; continuous routes',len(routes))
+    if retain_road_inventory:
+        print('ANTILA_ROAD_INVENTORY_RETAINED:',len(records),'source sections')
 
 
 if __name__ == '__main__':
-    build(Path(sys.argv[1]))
+    build(Path(sys.argv[1]),retain_road_inventory='--retain-road-inventory' in sys.argv[2:])

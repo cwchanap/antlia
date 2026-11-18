@@ -6,7 +6,7 @@ from pathlib import Path
 from shapely import STRtree, union_all
 from shapely.geometry import LineString, Point, Polygon, box, shape
 from import_map import local
-from import_tunnel import EAST_KOWLOON, EAST_KOWLOON_BOUNDS, KOWLOON_BOUNDS, WEST_BOUNDS
+from import_tunnel import EAST_KOWLOON, EAST_KOWLOON_BOUNDS, KOWLOON_BOUNDS, SOUTHWEST_EDIT_BOUNDS, WEST_BOUNDS
 
 ROOT=Path(__file__).resolve().parents[1]
 def read(name):return json.loads((ROOT/'Data'/name).read_text())
@@ -38,11 +38,12 @@ def check_boundaries(data):
     perimeter=Polygon(mainland.exterior).boundary
     boundary=union_all([LineString(p) for p in data['kowloon_boundary']])
     walls=union_all([boundary,*[LineString(p) for p in data['kowloon_coastline']]])
-    assert boundary.difference(mainland.boundary.buffer(.002)).length<.1,'Boundary wall must follow the actual mainland or water edge'
-    missing=perimeter.difference(walls.buffer(.35)).length
+    assert boundary.difference(ground.boundary.buffer(.002)).length<.1,'Boundary wall must follow the actual mainland or water edge'
+    # The southwest waterfront keeps surveyed seawalls and open mapped water edges.
+    missing=perimeter.difference(box(*SOUTHWEST_EDIT_BOUNDS)).difference(walls.buffer(.35)).length
     assert missing<1,('Mainland perimeter wall has unprotected gaps',missing)
     assert perimeter.distance(Point(3150,-2355.5))<.01,'Physical boundary fixture must remain on the outer edge'
-    print('ANTILA_MAINLAND_BOUNDARY_SOURCE_OK: outer ground perimeter enclosed; no interior boundary wall')
+    print('ANTILA_MAINLAND_BOUNDARY_SOURCE_OK: perimeter outside the southwest waterfront remains enclosed and boundary walls follow ground edges')
 
 
 def check():
@@ -56,7 +57,7 @@ def check():
     for p in [(1800,-300),(2500,-1500),(2600,-2400)]:assert not land.contains(Point(p)),p
     sources={f['properties']['source_id']:f for f in read('cross-harbour-source.geojson')['features']}
     roads={r['id']:r for r in data['roads']};route=data['routes'][12]
-    assert len(roads)==len(data['roads'])==len(sources)==7227, 'Expected the complete current road/source set, including four reviewed additions'
+    assert len(roads)==len(data['roads'])==len(sources)==7275, 'Expected the complete road/source set, including the reviewed Kowloon Tong links'
     check_roundabouts(roads,sources)
     check_boundaries(data)
     assert len(data['routes'])==14 and route['source_ids']==EAST_KOWLOON

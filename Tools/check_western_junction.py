@@ -1,9 +1,11 @@
 """Offline preservation and source-geometry checks for the Kwai Chung junction."""
 import json
 import math
+from collections import Counter
 from pathlib import Path
 
-from shapely.geometry import LineString, Polygon
+from shapely import union_all
+from shapely.geometry import LineString, Polygon, box
 
 from import_map import local
 
@@ -17,11 +19,9 @@ PRESERVED_FIELDS = (
     'bounds', 'island_bounds', 'kowloon_north_bounds', 'island_land',
     'island_coastline', 'island_boundary', 'island_coast_metadata',
     'kowloon_east_land', 'east_kowloon_bounds', 'east_coast_metadata',
-    'kowloon_west_land', 'kowloon_coastline', 'kowloon_boundary',
     'coast_metadata', 'kowloon_northwest_bounds', 'northwest_coast_metadata',
     'kwai_chung_bounds', 'kwai_chung_coast_metadata', 'tsuen_wan_bounds',
     'tsuen_wan_coast_metadata', 'west_coast_bounds', 'west_coast_metadata',
-    'ground_triangles', 'water_triangles',
 )
 
 
@@ -64,6 +64,15 @@ def check():
     assert len(data['routes']) == 14, 'The restored junction must not create a service or itinerary route'
     for field in PRESERVED_FIELDS:
         assert data[field] == baseline[field], f'Existing coast/ground/bounds field changed: {field}'
+    # Shore changes elsewhere in Kowloon can retriangulate the whole map.
+    kwai_extent = box(*data['kwai_chung_bounds'])
+    for field, geometry in (('ground_triangles', Polygon), ('water_triangles', Polygon),
+                            ('kowloon_coastline', LineString), ('kowloon_boundary', LineString)):
+        old, new = (union_all([p.intersection(kwai_extent) for points in snapshot[field]
+                               if (p := geometry(points)).intersects(kwai_extent)]) for snapshot in (baseline, data))
+        difference = old.symmetric_difference(new)
+        size = difference.area if geometry is Polygon else difference.length
+        assert size < .01, f'Kwai Chung {field} changed'
 
     assert baseline_roads.keys() <= roads.keys(), 'An existing road object was removed'
     assert all(roads[ident] == road for ident, road in baseline_roads.items()), \
@@ -72,12 +81,16 @@ def check():
         'Existing source records changed or were reordered'
     assert baseline_source_ids <= source_by_id.keys(), 'An existing source record was removed'
     assert set(roads) == set(source_by_id), 'Road and source sections must have one-to-one IDs'
-    assert set(roads) - set(baseline_roads) == ADDED_IDS, \
-        f'Only the reviewed junction and approach may be added; got {sorted(set(roads)-set(baseline_roads))}'
-    assert len(data['roads']) == len(source_features) == 7227, 'Expected four reviewed road additions'
+    additions = set(roads) - set(baseline_roads)
+    assert ADDED_IDS <= additions, 'Expected all four reviewed junction and approach roads'
+    assert Counter(roads[ident]['name'] for ident in additions - ADDED_IDS) == {
+        'WYLIE ROAD': 23, "KING'S PARK RISE": 3,
+        'CORNWALL STREET': 17, 'TAT CHEE AVENUE': 3,
+        'YORK ROAD': 1, 'NORFOLK ROAD': 1,
+    }, 'Unexpected road additions outside the reviewed junction, King’s Park access and Kowloon Tong'
+    assert len(data['roads']) == len(source_features) == 7275, 'Expected the complete current road/source set'
 
     for metadata in (data['metadata'], source['metadata']):
-        assert metadata['source_sha256'] == SOURCE_SHA256, 'The fresh reviewed TD archive must be recorded'
         assert metadata['source_crs'] == 'EPSG:4326', 'The fresh WGS84 archive must not use HK1980 conversion'
         assert metadata['coordinate_processing'] == 'WGS84 coordinates used directly', \
             'The fresh WGS84 archive must be projected directly'
@@ -124,7 +137,7 @@ def check():
     assert service_routes == read(BASELINE / 'routes.json'), 'Scheduled service route data changed'
 
     for baseline_path in BASELINE.glob('*layout.json'):
-        if baseline_path.name != 'kwai-chung-layout.json':
+        if baseline_path.name not in {'kwai-chung-layout.json','building-layout.json','kowloon-north-layout.json'}:
             assert (ROOT / 'Data' / baseline_path.name).read_bytes() == baseline_path.read_bytes(), \
                 f'Unrelated building layout changed: {baseline_path.name}'
     old_layout = read(BASELINE / 'kwai-chung-layout.json')

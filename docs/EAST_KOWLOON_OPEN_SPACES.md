@@ -1,8 +1,35 @@
 # Kowloon and western New Territories open spaces
 
+## Tsim Sha Tsui, Jordan, Yau Ma Tei and Tai Kok Tsui
+
+| Area | Sites |
+| --- | --- |
+| Tsim Sha Tsui | Signal Hill Garden, Salisbury Garden, and the Tsim Sha Tsui Promenade |
+| Jordan | King George V Memorial Park |
+| Yau Ma Tei | King's Park Rest Garden, King's Park Recreation Ground, and Man Cheong Street Park |
+| Tai Kok Tsui | Hoi Fai Road Park, Hoi Fai Road Promenade and Playable Space, Lok Kwan Street Park, and Sycamore Playground |
+
+The four-district refresh provided **39 sites, 132 sports outlines, 94 fitted courts, 3,629 fixtures and 100,289 paving triangles**. Its 52 official map sheets supply 86 Site and 147 sports fragments.
+
+The iB1000 Site and BuiltStructurePolygon features provide the boundaries and sports outlines. Footpaths, entrances, seating and planting are authored for the flat game terrain and checked for access from existing public paving. Hoi Fai Road's three sites are distinct from Hoi Fan Road Park in the earlier fill. The football pitches at King George V Memorial Park and Sycamore Playground use hard surfaces, following the venue listings. [King George V venue listing](https://www.lcsd.gov.hk/clpss/en/webApp/Facility/Details.do?ftid=56), [Sycamore venue listing](https://www.lcsd.gov.hk/clpss/en/webApp/Facility/Details.do?did=17&fcid=8&ftid=11).
+
+Transport Department centrelines add 23 Wylie Road sections and three King's Park Rise sections. The northern building footprints were reclipped to their 3.5 m carriageway clearance. The engine checks both the signed Wylie Road to King's Park Rise drive and the established Jordan to Mong Kok drive. The 14 exploration itineraries and H1–H3 service data retain their original paths.
+
+The Tsim Sha Tsui ground and water meshes use 1.14 km of joined iB1000 Site and SWA seawall frontage. The cut returns 38.40 hectares of the former apron to the harbour, before 0.41 hectares of sourced public ground are restored around the two waterfront sites. The Hung Hom Harbourfront approach is clipped to the ground edge and retains its connection to street pavement. The shoreline source and its sheet hashes are in `Data/tst-shoreline-source.geojson`. Run `Tools/check_tst_shoreline.py` with the geodata environment to verify the land, coast and road clearance.
+
+The Centenary Garden drainage works are marked in game at the iB1000 work-in-progress annotation. The drainage project is scheduled to finish in mid-2027. [Drainage Services Department project 4175CD](https://www.dsd.gov.hk/EN/Our_Projects/All_Projects/4175CD.html).
+
+The offline check reproduced the layout exactly from the 52 source sheets and rejected 41 invalid refresh cases without overwriting either output. The game passed 159 path, entrance and ground-support probes, 132 sports-surface probes, fixture clearance for all 3,629 fixtures, and 94 recreation collider checks. The terrain-mask check matched all three baked masks. The King’s Park drive and the existing Jordan–Yau Ma Tei–Mong Kok drive passed without contacts during integration. Rebuilding the paths also repositioned benches at ten earlier sites.
+
+## Southwest Kowloon waterfront
+
+The waterfront correction follows the Lands Department harbour outlines between West Kowloon Art Park and Tsim Sha Tsui. Surveyed ferry decks and buildings retain support. Ground now covers the charted public promenade south of the Cultural Centre site. The museum seawall follows the corrected water edge east of the site. The terrain paving mask uses the surveyed footprints of piers and floating landings. [Tsim Sha Tsui GeoPDF](https://www.landsd.gov.hk/doc/en/mapping/ehkg/MapPages/GeoPDF/KN12_TsimShaTsui.pdf) · [West Kowloon GeoPDF](https://www.landsd.gov.hk/doc/en/mapping/ehkg/MapPages/GeoPDF/KN13_WestKowloon.pdf)
+
+The Cultural Centre has a paved piazza on its surveyed site and uses at-grade pedestrian detail for its street and promenade connections. Wonderland uses its surveyed site outline to reserve open event ground. The two sites bring the layout to 41. Local clearance changes update paving and bench placement at Signal Hill Garden, Salisbury Garden and the Tsim Sha Tsui Promenade. [Cultural Centre site map](https://www.lcsd.gov.hk/en/hkcc/common/b5/hiring/files/HKCC%20Site%20Map%20%28Jun%202024%29.pdf) · [West Kowloon Art Park access guide](https://webmedia.westkowloon.hk/documents/Art-Park-Access-Guide-202601-EN-tagged.pdf)
+
 ## West Kowloon fill — 17 November 2026
 
-The current integrated layout adds **West Kowloon Art Park and the Waterfront Promenade**, retaining **106,109.57 m²** of government Site boundaries. It contains **27 sites, 120 sports outlines across 135 fragments, 88 unchanged sport fittings, 3,302 fixtures and 86,722 paving triangles**, with 121 interior path/access probes. The earlier 25-site source features, garden/path/access/sample arrays, all 3,068 fixtures, 120 surfaces, 88 fittings and 81,836 paving triangles remain exact.
+The earlier West Kowloon fill added **West Kowloon Art Park and the Waterfront Promenade**, retaining **106,109.57 m²** of government Site boundaries. It contains **27 sites, 120 sports outlines across 135 fragments, 88 unchanged sport fittings, 3,302 fixtures and 86,722 paving triangles**, with 121 interior path/access probes. The earlier 25-site source features, garden/path/access/sample arrays, all 3,068 fixtures, 120 surfaces, 88 fittings and 81,836 paving triangles remain exact.
 
 | Site | Source ID | Source area (m²) | Paving (m²) | Trees | Benches |
 | --- | --- | ---: | ---: | ---: | ---: |
@@ -28,6 +55,39 @@ Regenerate and check with:
 Run native `--harbour-rg8-check` and `--sparse-recreation-check` for texture filtering. The preservation baseline for this fill is the prior 25-site `Data/` snapshot. Evidence, matched overview captures and focused Art Park/promenade views are retained in `evidence/west-kowloon-open-spaces-2026-11-17/`. Detailed internal landscaping, current venue access, scene-reload stress and a new performance benchmark are outside this fill.
 
 Verification on 17 November: the build passed with **0 warnings / 0 errors**. The source checker passed deterministic regeneration and **30 rejected-input preservation cases**, including the same-ID/same-sheet Art Park patch regression. The full engine suite exited 0: **133,749 bus-envelope queries, 25 physical exploration/approach drives, H1/H2/H3, all 15 scheduled stops and 119 passengers**, plus the original 1.08 km driving/boarding regression. West Kowloon’s drive covered 6,099 m without contacts. Native checks passed all **121 paving/connectivity/support probes, 120 sports probes, 861 infield probes, 3,302 fixture clearances and 88 fitting colliders**; six final views were inspected. The rebuilt RG8 paving resource matched its RGB source over **186,122,240 GPU pixels in 710 windows**, with no differences at 1/255. The recreation PNG, sparse binary resources, original surface mask and sports GLB remain byte-identical; the full sparse source/mip round-trip passed, and native sparse filtering was not repeated. [Before/after gallery](../evidence/west-kowloon-open-spaces-2026-11-17/index.html), [verification record](../evidence/west-kowloon-open-spaces-2026-11-17/verification.json).
+
+## Sham Shui Po, Cornwall Street Park and Kowloon Tong — 18 November 2026
+
+The final 59-site recreation inventory adds five larger Sham Shui Po district sites, six Nam Cheong Street sitting-out areas, Cornwall Street Park and six Kowloon Tong sites to the previous 41-site inventory. The 57 source-bounded sites plus two supplemental southwest waterfront spaces use **284 iB1000 features**: 115 Site patches and 169 sports-outline sheet fragments. The combined layout contains **152 source sports outlines, 109 intact sport fittings, 3,997 fixtures and 115,264 paving triangles**.
+
+| Site | iB1000 Site ID | Site sheets |
+| --- | --- | --- |
+| Tung Chau Street Park | `1503005112` | `11-NW-13D`, `11-NW-14C` |
+| Maple Street Playground | `1503005184` | `11-NW-14A`, `11-NW-14C` |
+| Sham Shui Po Park | `1503005071` | `11-NW-13B` |
+| Sham Shui Po Park Stage 2 | `1503005077` | `11-NW-13B` |
+| Tai Hang Tung Recreation Ground | `1503005450` | `11-NW-14B`, `11-NW-14D` |
+| Nam Cheong Street Sitting-out Areas 1–4 | `1503005180`, `1503005170`, `1503005157`, `1503005144` | `11-NW-14A` |
+| Nam Cheong Street Sitting-out Areas 5–6 | `1503005135`, `1503005123` | `11-NW-14C` |
+| Cornwall Street Park | `1503005508` | `11-NW-9B`, `11-NW-9D` (two patches), `11-NW-10C` |
+| To Yuen Street Playground | `1503005539` | `11-NW-9D` (two patches), `11-NW-10C` |
+| Kent Road Garden | `1503005553` | `11-NW-10A`, `11-NW-10C` |
+| Kam Shing Road Recreation Ground | `1503005688` | `11-NW-10A`, `11-NW-10B` |
+| Cornwall Street Children's Playground | `1503005627` | `11-NW-10A` |
+| Cornwall Street/Ede Road Garden | `1503005605` | `11-NW-10A` |
+| Dorset Crescent Rest Garden | `1502005648` | `11-NW-10A`, `11-NW-10C` |
+
+The Kowloon Tong refresh preserves the 11 exact Site patches across those six additions and adds the three basketball courts `1500001910`, `1500001941` and `1500001955` from sheets `11-NW-10C`, `11-NW-10C` and `11-NW-10A`, respectively. Kent Road Garden's nonrectangular `1500001941` surface remains unchanged; its fitted court uses a 0.5 m inscribed rectangle measuring 14.019 × 25.379 m. Cornwall Street/Ede Road Garden uses a compact walkable plaza treatment, while Dorset Crescent Rest Garden fits one bench and one planter around its access path. Cornwall Street Park's paths, access and furniture are regenerated against the restored squash and tennis centre's current building clearance.
+
+The two Tung Chau Street Park football pitches and Maple Street Playground pitch use hard-court styling, following the current [LCSD Tung Chau facility listing](https://www.lcsd.gov.hk/en/parks/tcsp/facilities/outdoor.html) and [Maple Street refurbishment record](https://www.lcsd.gov.hk/en/common/images/en/doc/2020/HAB366E.pdf). Tai Hang Tung retains two surveyed gateball outlines as simple courts and its three football pitches as grass fields, checked against the [official recreation-ground plan](https://www.lcsd.gov.hk/ls/tender/en/list/forms/LCLSQLRKSSPTHTRG202001_EN.pdf). Sports footprints and categories remain tied to the government outlines.
+
+The six narrow Nam Cheong Street areas use their safe remaining site ground as paved sitting-out space, each with an authored corner bench and a tested connector to existing public paving. Bench circles stay at least 3 m (2.7 m for the two smaller benches) from the path probes and clear the entrance corridor. Sham Shui Po Park Stage 2 uses a checked authored 86.7 m access route to Lai Chi Kok Road after the automatically nearest connector failed building clearance. Cornwall Street Park retains all four Site patches across sheets 9B, 9D and 10C, giving 23,984.65 m² of source ground; its generated paths connect to existing public paving without a custom road target. Paths, entrances, paving, benches, planting and finish are authored approximations rather than surveyed internal park layouts.
+
+The Tai Hang Tung gateball courts use small gates and centre poles sized from the published equipment dimensions. [World Gateball Union rules](https://gateball.or.jp/wgu/play/pdf/play05_02.pdf)
+
+The source checker validates the exact Site and sports `(ID, sheet)` fragments, regenerated path and access geometry, a probe for every paved component and fixtures on all six sitting-out areas. The interior paving-probe clearance is 1.1 m, and the compact entrances use a 0.75 m step inside each narrow site. Tung Chau fixture placement treats building `214665`'s outer footprint as solid, including its courtyard ring, to match runtime clearance. Existing sports outlines and site boundaries retain their surveyed geometry. Rebuilding the paths repositioned benches at 16 earlier sites.
+
+The final in-game park and path checks passed on the 59-site layout, with 109 fitted court colliders and 3,997 clear fixtures. The focused refresh check reproduced the staged JSON byte-for-byte and rejected a detached paving component after its connectivity probe was removed.
 
 ## 28 October source snapshot
 

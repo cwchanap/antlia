@@ -83,15 +83,29 @@ public partial class Main
         if(activePages<=0 || activePages>=ushort.MaxValue || sparse.ActivePages!=activePages ||
            sparse.LookupWidth!=lookupWidth || sparse.LookupHeight!=lookupOffset || lookupWidth>16384 || lookupOffset>16384)
             throw new Exception("Sparse recreation active-page or lookup dimensions are invalid");
-        int atlasColumns=(int)Math.Ceiling(Math.Sqrt(activePages+1)),atlasRows=(activePages+atlasColumns)/atlasColumns;
-        int atlasWidth=(int)System.Numerics.BitOperations.RoundUpToPowerOf2((uint)(atlasColumns*SparsePaddedPage));
-        int atlasHeight=(int)System.Numerics.BitOperations.RoundUpToPowerOf2((uint)(atlasRows*SparsePaddedPage));
+        var (atlasColumns,atlasRows,atlasWidth,atlasHeight)=SparseAtlasLayout(activePages);
         if(atlasWidth>16384 || atlasHeight>16384 || sparse.AtlasColumns!=atlasColumns || sparse.AtlasRows!=atlasRows ||
            sparse.AtlasWidth!=atlasWidth || sparse.AtlasHeight!=atlasHeight)
             throw new Exception("Sparse recreation atlas dimensions exceed the Compatibility renderer limit or differ from the page grid");
         long payloadBytes=(long)atlasWidth*atlasHeight*3+(long)lookupWidth*lookupOffset*3+SparseLodRampPayloadBytes;
         if(payloadBytes>SparsePayloadLimit)throw new Exception($"Sparse recreation decoded texture payload exceeds {SparsePayloadLimit} bytes");
         if(sparse.TexturePayloadBytes!=payloadBytes)throw new Exception("Sparse recreation decoded payload size differs from its metadata");
+    }
+
+    private static (int Columns,int Rows,int Width,int Height) SparseAtlasLayout(int activePages)
+    {
+        int columns=(int)Math.Ceiling(Math.Sqrt(activePages+1)),rows=(activePages+columns)/columns;
+        int width=(int)System.Numerics.BitOperations.RoundUpToPowerOf2((uint)(columns*SparsePaddedPage));
+        int height=(int)System.Numerics.BitOperations.RoundUpToPowerOf2((uint)(rows*SparsePaddedPage));
+        int halfRows=(height/2)/SparsePaddedPage;
+        // Use the spare columns before doubling the power-of-two backing height.
+        if((long)width*height*3>SparsePayloadLimit && (width/SparsePaddedPage)*halfRows>activePages)
+        {
+            columns=(activePages+halfRows)/halfRows;
+            rows=(activePages+columns)/columns;
+            height/=2;
+        }
+        return (columns,rows,width,height);
     }
 
     private static void VerifySparseResourceHash(string path,string expectedSha256)
@@ -186,9 +200,7 @@ public partial class Main
             mipInfo[mip]=info with{ActivePages=levelPages};
         }
         if(activePages>=ushort.MaxValue)throw new Exception($"Sparse atlas lookup supports at most {ushort.MaxValue-1} active pages; found {activePages}");
-        int atlasColumns=(int)Math.Ceiling(Math.Sqrt(activePages+1)),atlasRows=(activePages+atlasColumns)/atlasColumns;
-        int atlasWidth=(int)System.Numerics.BitOperations.RoundUpToPowerOf2((uint)(atlasColumns*SparsePaddedPage));
-        int atlasHeight=(int)System.Numerics.BitOperations.RoundUpToPowerOf2((uint)(atlasRows*SparsePaddedPage));
+        var (atlasColumns,atlasRows,atlasWidth,atlasHeight)=SparseAtlasLayout(activePages);
         if(atlasWidth>16384 || atlasHeight>16384)throw new Exception($"Sparse atlas exceeds the GL Compatibility 16,384 texture edge: {atlasWidth}x{atlasHeight}");
         long texturePayloadBytes=(long)atlasWidth*atlasHeight*3+lookupPayloadBytes+SparseLodRampPayloadBytes;
         if(texturePayloadBytes>SparsePayloadLimit)throw new Exception($"Sparse recreation payload exceeds the 32 MiB cap: {texturePayloadBytes} bytes");

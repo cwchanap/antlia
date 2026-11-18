@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 
 public partial class Main
 {
@@ -19,6 +20,7 @@ public partial class Main
         }
         foreach(var b in data.RootElement.GetProperty("buildings").EnumerateArray())
         {
+            if(b.TryGetProperty("open_top_support",out var openTopSupport)&&openTopSupport.GetBoolean())continue;
             var polygon=b.GetProperty("rings")[0].EnumerateArray()
                 .Select(p=>new Vector2(p[0].GetSingle(),p[1].GetSingle())).ToArray();
             var center=b.GetProperty("center");
@@ -94,12 +96,21 @@ public partial class Main
                     throw new Exception("Unpaved gap between building pads at " + patch.Center);
             }
         GD.Print($"ANTILA_PAVING_OK: {_pavementPatches.Count} small enclosed pavement gaps filled");
-        bool priorStreamingCheck=_buildingStreamingCheck;_buildingStreamingCheck=true;
         int checkedRoofs=0;
+        using var kowloonLayout = JsonDocument.Parse(FileAccess.GetFileAsString("res://Data/building-layout.json"));
+        var landmarkIds = new HashSet<int> {336429, 336430, 1108244369, 1810141373, 1108244351, 1108244354, 1108244403};
+        var landmarks = kowloonLayout.RootElement.GetProperty("buildings").EnumerateArray()
+            .Where(b => landmarkIds.Contains(b.GetProperty("id").GetInt32())).ToArray();
+        if (!landmarkIds.SetEquals(landmarks.Select(b => b.GetProperty("id").GetInt32())))
+            throw new Exception("Kowloon Park and the Tsim Sha Tsui waterfront need all restored landmark roofs");
+        var landmarkRoofs = landmarks
+            .Select(b => { var p = b.GetProperty("center"); return new Vector3(p[0].GetSingle(), 0, p[1].GetSingle()); })
+            .ToHashSet();
+        bool priorStreamingCheck=_buildingStreamingCheck;_buildingStreamingCheck=true;
         try
         {
             await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
-            foreach(var lot in _lots.Where((_,i)=>i%41==0).Concat(_lots.OrderByDescending(l=>l.Height).Take(10))
+            foreach(var lot in _lots.Where((l,i)=>i%41==0 || landmarkRoofs.Contains(l.Center)).Concat(_lots.OrderByDescending(l=>l.Height).Take(10))
                 .OrderBy(l=>Mathf.FloorToInt(l.Center.X/1000f)).ThenBy(l=>Mathf.FloorToInt(l.Center.Z/1000f))
                 .ThenBy(l=>l.Center.X).ThenBy(l=>l.Center.Z))
             {

@@ -16,14 +16,80 @@ public partial class Main
             Check(GetWorld3D().DirectSpaceState.IntersectShape(query,1).Count==0,"Former eastern district fence must not divide the expanded mainland");
         using(var ray=PhysicsRayQueryParameters3D.Create(seam+Vector3.Up*.2f,seam+Vector3.Down*.2f,1))
             Check(GetWorld3D().DirectSpaceState.IntersectRay(ray).Count>0,"Removing the internal fence must preserve mainland ground");
-        foreach(var edge in new[]{EastBoundaryProbe,new Vector3(0,0,Map.Bounds.End.Y+120)})
+        using(var ray=PhysicsRayQueryParameters3D.Create(EastBoundaryProbe+Vector3.Up*2,EastBoundaryProbe+Vector3.Down,1))
         {
-            using var ray=PhysicsRayQueryParameters3D.Create(edge+Vector3.Up*2,edge+Vector3.Down,1);
             var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
             Check(hit.Count>0 && hit["position"].AsVector3().Y>.9f &&
-                (hit["collider"].AsGodotObject() as Node)!.GetParent().Name=="KowloonBoundary","True outer map boundary must retain its collision wall at "+edge);
+                (hit["collider"].AsGodotObject() as Node)!.GetParent().Name=="KowloonBoundary","True outer map boundary must retain its collision wall at "+EastBoundaryProbe);
+        }
+        // Shoreline 1101166493 crosses x=700 at z=-314.12.
+        var coast=new Vector3(700,0,-314.12f);
+        using(var ray=PhysicsRayQueryParameters3D.Create(coast+Vector3.Up*2,coast+Vector3.Down,1))
+        {
+            var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
+            Check(hit.Count>0 && (hit["collider"].AsGodotObject() as Node)!.GetParent().Name=="KowloonSeawall",
+                "The sourced Tsim Sha Tsui shoreline must have a seawall collider");
+        }
+        foreach(var (at,land) in new[]{(new Vector3(700,0,-340),true),(new Vector3(700,0,-285),false),(new Vector3(700,0,40),false)})
+        {
+            using var ray=PhysicsRayQueryParameters3D.Create(at+Vector3.Up*.2f,at+Vector3.Down*.2f,1);
+            Check((GetWorld3D().DirectSpaceState.IntersectRay(ray).Count>0)==land,
+                "Tsim Sha Tsui ground or harbour water is misplaced at "+at);
+        }
+        foreach(var (point,solid) in new[]{
+            (new Vector3(-1000,0,-500),false),(new Vector3(-700,0,-170),false),(new Vector3(-550,0,100),false),
+            (new Vector3(-1550,0,-550),true),(new Vector3(-756.811f,0,11.337f),true),
+            (new Vector3(-542.038f,0,-243.544f),true),(new Vector3(-287.087f,0,200.897f),true),
+            (new Vector3(82.35f,0,152.97f),true),(new Vector3(86.35f,0,152.97f),false)})
+        {
+            using var ray=PhysicsRayQueryParameters3D.Create(point+Vector3.Up*.2f,point+Vector3.Down*.2f,1);
+            Check((GetWorld3D().DirectSpaceState.IntersectRay(ray).Count>0)==solid,
+                "Southwest waterfront ground must follow the surveyed shoreline and decks at "+point);
+        }
+        foreach(var southwestCoast in new[]{new Vector3(-332.27f,0,169.64f),new Vector3(84.35f,0,152.97f)})
+        {
+            using var ray=PhysicsRayQueryParameters3D.Create(southwestCoast+Vector3.Up*2,southwestCoast+Vector3.Down,1);
+            var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
+            Check(hit.Count>0 && (hit["collider"].AsGodotObject() as Node)!.GetParent().Name=="KowloonSeawall",
+                "Surveyed southwest waterfront must keep its seawall collider at "+southwestCoast);
+        }
+        // Cornwall Street Park and both sides of the former inland cut beside City University.
+        foreach(var point in new[]{new Vector3(172.04f,0,-4884.615f),new Vector3(27,0,-4840),new Vector3(418,0,-4830)})
+        {
+            using var ray=PhysicsRayQueryParameters3D.Create(point+Vector3.Up*.25f,point+Vector3.Down*.25f,1);
+            var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
+            Check(hit.Count>0 && (hit["collider"].AsGodotObject() as Node)!.GetParent().Name=="HarbourGround",
+                "Former inland cut beside Shek Kip Mei must have mainland ground at "+point);
         }
         using var mask=((Texture2D)_terrain.GetShaderParameter("harbour_mask").AsGodotObject()).GetImage();
+        // Interior probes on surveyed pier decks 1513000311 and 1108329108.
+        foreach(var point in new[]{new Vector2(-767.5f,66.5f),new Vector2(-480.5f,-256.5f)})
+        {
+            var uv=(point-HarbourBounds.Position)/HarbourBounds.Size;
+            Check(mask.GetPixel((int)(uv.X*mask.GetWidth()),(int)(uv.Y*mask.GetHeight())).G>.95f,
+                "Surveyed pier deck must have hard paving at "+point);
+        }
+        foreach(string id in new[]{"TD_108064","TD_108063","TD_107934","TD_107935","TD_108065","TD_108066","TD_107747","TD_107225","TD_107587"})
+        {
+            Check(_harbourRoadIndex.ContainsKey(id),"Missing Kowloon Tong road section "+id);
+            var points=HarbourRoads[_harbourRoadIndex[id]].Points;
+            for(int i=1;i<points.Count-2;i+=Math.Max(1,points.Count/7))
+            {
+                var a=points[i];var b=points[i+1];
+                var center=(a+b)/2;var side=(b-a).Normalized().Cross(Vector3.Up);
+                foreach(float lane in new[]{-1.8f,0,1.8f})
+                {
+                    var at=center+side*lane;
+                    var uv=(new Vector2(at.X,at.Z)-HarbourBounds.Position)/HarbourBounds.Size;
+                    Check(mask.GetPixel((int)(uv.X*mask.GetWidth()),(int)(uv.Y*mask.GetHeight())).R>.95f,
+                        "Kowloon Tong street lacks asphalt at "+at+" on "+id);
+                    using var ray=PhysicsRayQueryParameters3D.Create(at+Vector3.Up*.25f,at+Vector3.Down*.25f,1);
+                    Check(GetWorld3D().DirectSpaceState.IntersectRay(ray).Count>0,
+                        "Kowloon Tong street lacks ground support at "+at+" on "+id);
+                }
+            }
+        }
+        GD.Print("ANTILA_KOWLOON_TONG_ROADS_OK: Cornwall Street, Tat Chee Avenue, York Road and Norfolk Road");
         int samples=0;
         foreach(var ids in new[]{new[]{"TD_107211","TD_107576","TD_107598","TD_107575","TD_107601"},new[]{"TD_107564","TD_107580","TD_107235"}})
         {
@@ -43,7 +109,7 @@ public partial class Main
                 }
             }
         }
-        GD.Print($"ANTILA_EAST_MAP_FIXES_OK: two closed government roundabouts; {samples} asphalt/support probes; former fence clear; true outer wall retained");
+        GD.Print($"ANTILA_EAST_MAP_FIXES_OK: two closed government roundabouts; {samples} asphalt/support probes; outer wall, Cornwall Street inland join and Tsim Sha Tsui coast verified");
     }
 
     private async Task CheckEastKowloon()

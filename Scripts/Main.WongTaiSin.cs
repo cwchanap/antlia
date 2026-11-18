@@ -8,7 +8,7 @@ public partial class Main
     public void CheckWongTaiSinReady()
     {
         void Check(bool ok,string message){if(!ok)throw new Exception(message);}
-        Check(HarbourRoads.Count==7227,"Wong Tai Sin road section count changed");
+        Check(HarbourRoads.Count==7275,"Harbour road section count changed");
         Check(_harbourRoutes.Count==14 && _harbourRouteSources.Count==14,"Wong Tai Sin drive and source itinerary missing");
         Check(Routes.Select(r=>r.Number).SequenceEqual(new[]{"H1","H2","H3"}),"Wong Tai Sin must not add or change scheduled services");
         Check(HarbourBounds.Position==new Vector2(-13880,-11280) && HarbourBounds.End==new Vector2(3230,2150),"Wong Tai Sin must preserve the harbour map and mask bounds");

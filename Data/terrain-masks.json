@@ -4,13 +4,13 @@
       -6529,
       -9276,
       9648,
-      9026
+      9511
     ],
     "width": 8192,
-    "height": 7664,
+    "height": 8076,
     "format": "Rgb8",
     "mipLevels": 14,
-    "sha256": "2AD326E2C613485C8FAAF2C4AC68AED94E68C5211E61E3DE336142F00694B4C5"
+    "sha256": "BECA875BF49F2CAC88A1C47833ABD1FCF33A3A1AEF97C6E7DA01F808BAF19AF0"
   },
   "surface_mask": {
     "bounds": [
@@ -23,7 +23,7 @@
     "height": 3724,
     "format": "Rgb8",
     "mipLevels": 13,
-    "sha256": "D30BA94E09F144CB5DCBEAC31DCBA9C785FEFDC9817D888CAA5903385B01F880"
+    "sha256": "AC27A3BB85F836F3C4DBC61D4FC6E9D2DBEEB8E521C2C40CB8F0B17993E09BCE"
   },
   "harbour_mask": {
     "bounds": [
@@ -36,6 +36,6 @@
     "height": 7258,
     "format": "Rgb8",
     "mipLevels": 14,
-    "sha256": "3AF7693129B6FDAE9485BD120C9690F0A85FD0A8F36848A98B16E8B5F4AF4961"
+    "sha256": "AB5550A292B8A8AFD1B10156D0E9E8A57B27C3209EE35701C5F29CFB13F59CFB"
   }
 }

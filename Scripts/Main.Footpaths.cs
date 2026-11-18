@@ -139,6 +139,15 @@ public partial class Main
         foreach(var detail in _footpathDetails.Where(d=>d.Model=="pedestrian-railing"))
             Check(!_crossingLandings.Any(l=>Geometry2D.IntersectPolygons(FootpathPolygon(l,new(.65f,1.55f)),
                 FootpathPolygon(detail.Pose,detail.Half)).Count>0),"railings must not close a crossing landing");
+        foreach (var (a, b) in ParkPaths())
+        {
+            int intervals = Math.Max(1, Mathf.CeilToInt(a.DistanceTo(b) / 2));
+            for (int i = 0; i <= intervals; i++)
+            {
+                var at = a.Lerp(b, i / (float)intervals);
+                Check(LotClear(new(at.X, at.Z), 3), "Kowloon Park path intersects a building");
+            }
+        }
         await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
         using var shape=new BoxShape3D {Size=new(2.4f,1.8f,2.4f)};
         using var query=new PhysicsShapeQueryParameters3D {Shape=shape,CollisionMask=1};

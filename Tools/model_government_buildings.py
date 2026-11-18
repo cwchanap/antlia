@@ -68,13 +68,16 @@ def build():
             chunks[key] = ([], [], [], [], [], []) # visual vertices/faces/UVs/materials, collision vertices/faces
         vertices, faces, uvs, indices, cv, cf = chunks[key]
         ox, oz = key[0]*128, key[1]*128
-        def vertex(p, h): return (p[0]-ox, -p[1]+oz, h)
+        roof_height = b['height']
+        base_height = b.get('base_height',0.0)
+        height = roof_height-base_height
+        assert height>0, f"Building {b['id']} must rise above its supported base"
+        def vertex(p, h): return (p[0]-ox, -p[1]+oz, base_height+h)
         def face(points, uv, material):
             start = len(vertices); vertices.extend(points)
             faces.append(tuple(range(start, start+len(points)))); uvs.extend(uv); indices.append(material)
         def collision(points):
             start = len(cv); cv.extend(points); cf.append(tuple(range(start, start+len(points))))
-        height = b['height']
         style = b['style']
         u0 = .5 if style in (1,3) else 0
         v0 = .5 if style in (0,1) else 0
@@ -113,13 +116,20 @@ def build():
                         assert u0 < u1 <= u0+.5 and v0 < v1 <= v0+.5
                         face([vertex(q,lo),vertex(p,lo),vertex(p,hi),vertex(q,hi)],
                              [(u0+.002,v0+.002),(u1,v0+.002),(u1,v1),(u0+.002,v1)], b['id']%4)
-                # Recess-free thin parapet face stays on the legal footprint boundary.
-                face([vertex(end,height),vertex(a,height),vertex(a,height+.55),vertex(end,height+.55)], [(0,0)]*4, 4)
-                face([vertex(a,height),vertex(end,height),vertex(end,height+.55),vertex(a,height+.55)], [(0,0)]*4, 4)
-        for triangle in b['roof']:
-            points = [vertex(p,height) for p in reversed(triangle)]
-            face(points, [(0,0)]*3, 4); collision(points)
-        if b['roof_clearance']>3 and height>12 and b['id']%3==0:
+                # Open supports meet the tower underside directly, without a parapet overlapping its facade.
+                if not b.get('open_top_support',False):
+                    face([vertex(end,height),vertex(a,height),vertex(a,height+.55),vertex(end,height+.55)], [(0,0)]*4, 4)
+                    face([vertex(a,height),vertex(end,height),vertex(end,height+.55),vertex(a,height+.55)], [(0,0)]*4, 4)
+        if base_height>0:
+            # Podium undersides and tower support faces come from source-backed footprints.
+            for triangle in b['roof']:
+                points = [vertex(p,0) for p in triangle]
+                face(points, [(0,0)]*3, 4); collision(points)
+        if not b.get('open_top_support',False):
+            for triangle in b['roof']:
+                points = [vertex(p,height) for p in reversed(triangle)]
+                face(points, [(0,0)]*3, 4); collision(points)
+        if not b.get('open_top_support',False) and b['roof_clearance']>3 and height>12 and b['id']%3==0:
             # Small rooftop plant rooms add depth without changing the surveyed main massing.
             x,z = b['center']
             corners = [[x-1.5,z-1],[x+1.5,z-1],[x+1.5,z+1],[x-1.5,z+1]]

@@ -54,7 +54,7 @@ public partial class Main
         bool NearbyMissing(Vector3 position)=>_buildingChunks.Any(c=>c.Instance==null && BuildingDistanceSquared(c.Bounds,position)<=BuildingLoadRadius*BuildingLoadRadius);
         int detailed=_city.FindChildren("*","MeshInstance3D",true,false).Cast<MeshInstance3D>().Count(m=>m.Name.ToString().StartsWith("District"));
         if(detailed>=500)throw new Exception($"Building streaming eagerly retained {detailed} detailed chunks at H1");
-        Check(_buildingChunks.Count==3135 && detailed>50,"Streaming manifest or starting building window missing");
+        Check(_buildingChunks.Count==3170 && detailed>50,"Streaming manifest or starting building window missing");
         Check(BuildingDistanceSquared(new Rect2(-128,-128,256,256),new Vector3(-128,0,128))==0 &&
             BuildingDistanceSquared(new Rect2(-128,-128,256,256),new Vector3(-131,0,132))==25,
             "Chunk selection must use conservative mesh bounds at negative cell edges");
@@ -119,7 +119,7 @@ public partial class Main
             // Leave outstanding requests behind, then immediately return: stale jobs must be drained and discarded.
             Bus.ResetAt(_harbourRoutes[10].Points[^1],0);Window(Bus.Position);Bus.ResetAt(original,Map.Heading(22));Window(original);
             Check(!_buildingChunks.Any(c=>c.Requested),"Teleport retained obsolete background requests");
-            GD.Print($"ANTILA_BUILDING_STREAMING_OK: {detailed}/3135 initial detail chunks; peak {peak}; {teleports+2} teleports, real roof collision, {(headless?"main-thread":"background")} approach, eviction and return");
+            GD.Print($"ANTILA_BUILDING_STREAMING_OK: {detailed}/3170 initial detail chunks; peak {peak}; {teleports+2} teleports, real roof collision, {(headless?"main-thread":"background")} approach, eviction and return");
         }
         finally
         {

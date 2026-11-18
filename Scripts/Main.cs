@@ -26,7 +26,7 @@ public partial class Main : Node3D
     private Node3D _city = null!;
     private readonly Vector2[] _park = {new(-26,-368),new(-193,-361),new(-378,-570),new(-415,-903),new(-63,-920)};
     private ShaderMaterial _terrain = null!;
-    private readonly List<Vector3> _parkPath = new(){new(-80,0,-430),new(-145,0,-520),new(-180,0,-660),new(-315,0,-720),new(-310,0,-835),new(-100,0,-880)};
+    private readonly List<Vector3> _parkPath = new(){new(-80,0,-430),new(-145,0,-520),new(-180,0,-660),new(-328,0,-720),new(-328,0,-835),new(-100,0,-880)};
     private readonly Dictionary<string, StandardMaterial3D> _materials = new();
     private readonly Dictionary<Vector3,BoxMesh> _boxMeshes = new();
     private readonly Dictionary<string, PackedScene> _assetScenes = new();
@@ -393,7 +393,8 @@ public partial class Main : Node3D
             {
                 trees.Add(p);float size=.85f+rng.NextSingle()*.65f;
                 float rotation=rng.NextSingle()*Mathf.Tau;
-                if(!NearParkEntrance(p,7))Asset("banyan",p,rotation,new(size,size*1.15f,size));
+                if(!NearParkEntrance(p,7) && LotClear(new(p.X,p.Z),size*5))
+                    Asset("banyan",p,rotation,new(size,size*1.15f,size));
             }
         }
         foreach(var (name,p,f,id) in Map.StreetSamples(20))

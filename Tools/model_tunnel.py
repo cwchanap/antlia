@@ -83,7 +83,10 @@ try:
         vs,fs=[],[]
         for line in data[key]:
             for a,b in zip(line,line[1:]):
-                a=Vector((a[0],0,a[1]));b=Vector((b[0],0,b[1]));side=(b-a).cross(Vector((0,1,0))).normalized()*.3
+                a=Vector((a[0],0,a[1]));b=Vector((b[0],0,b[1]))
+                # Sub-millimetre source joins can collapse at GLB vertex precision.
+                if (b-a).length<.001:continue
+                side=(b-a).cross(Vector((0,1,0))).normalized()*.3
                 k=len(vs)
                 vs.extend(p+side*s+Vector((0,h,0)) for p in (a,b) for s,h in [(-1,-2.2),(1,-2.2),(1,1),(-1,1)])
                 # Outward faces make the wall top and both approaches collide from outside.

@@ -95,6 +95,14 @@ public partial class Main
         IslandLand=FlatPoints(root.GetProperty("island_land").GetProperty("coordinates")[0]);
         foreach(var line in root.GetProperty("kowloon_coastline").EnumerateArray())KowloonCoastline.Add(FlatPoints(line));
         foreach(var line in root.GetProperty("island_coastline").EnumerateArray())IslandCoastline.Add(FlatPoints(line));
+        var sourcedPaving=root.GetProperty("harbour_paving_triangles");
+        if(sourcedPaving.GetArrayLength()==0)throw new Exception("Surveyed harbour deck paving is missing from runtime data");
+        foreach(var triangle in sourcedPaving.EnumerateArray())
+        {
+            var points=FlatPoints(triangle);
+            if(points.Length!=3)throw new Exception("Surveyed harbour paving entries must be triangles");
+            _harbourPaving.Add(points);
+        }
         HarbourBounds=new(b[0].GetSingle(),b[1].GetSingle(),b[2].GetSingle()-b[0].GetSingle(),b[3].GetSingle()-b[1].GetSingle());
         List<Vector3> Points(JsonElement row)=>row.GetProperty("points").EnumerateArray().Select(p=>new Vector3(p[0].GetSingle(),p[1].GetSingle(),p[2].GetSingle())).ToList();
         foreach(var road in root.GetProperty("roads").EnumerateArray())
@@ -145,6 +153,12 @@ public partial class Main
             foreach(float x in new[]{-7f,7f})Box(sign,new(x,3.8f,0),new(.2f,7.6f,.2f),"a3aaa5");
             Label(sign,text,new(0,7.3f,.15f),.023f,40);
         }
+        // iB1000 marks drainage works here within Urban Council Centenary Garden (DSD 4175CD).
+        var worksSign=new Node3D {Name="CentenaryGardenWorks",Position=new(417.09f,0,-518.95f),Rotation=new(0,-1.86f,0)};
+        AddChild(worksSign);
+        Box(worksSign,new(0,2.25f,0),new(8.2f,2.35f,.18f),"4d4835");
+        foreach(float x in new[]{-3.7f,3.7f})Box(worksSign,new(x,1.3f,0),new(.2f,2.6f,.2f),"a3aaa5");
+        Label(worksSign,"市政局百週年紀念花園\nCENTENARY GARDEN\nDRAINAGE WORKS IN PROGRESS",new(0,2.25f,.11f),.012f,40);
         return ground;
     }
 
@@ -787,9 +801,10 @@ public partial class Main
             var path=new List<Vector3>();
             foreach(var id in ids)
             {
-                var points=HarbourRoads[_harbourRoadIndex[id]].Points;
-                Check(path.Count==0 || path[^1].DistanceTo(points[0])<.12f,$"Kwai Chung physical test path is open at {id}");
-                if(path.Count==0)path.AddRange(points);else path.AddRange(points.Skip(1));
+                var points=HarbourRoads[_harbourRoadIndex[id.TrimStart('-')]].Points;
+                var directed=id.StartsWith('-')?points.AsEnumerable().Reverse().ToList():points;
+                Check(path.Count==0 || path[^1].DistanceTo(directed[0])<.12f,$"Physical test path is open at {id}");
+                path.AddRange(directed.Skip(path.Count==0?0:1));
             }
             return path;
         }
@@ -797,12 +812,14 @@ public partial class Main
             (Name:"Kwai Chung roundabout and Wing Shun approach",Points:SourcePath("TD_9138","TD_8457","TD_9137","TD_57333")),
             (Name:"Kwai Yue to Kwai Hei roundabout approach",Points:SourcePath("TD_9097","TD_8457","TD_57784"))
         };
+        var kingsParkDrive=(Name:"Wylie Road to King's Park Rise",
+            Points:SourcePath("-TD_104667","-TD_104662","TD_104568","TD_104553","TD_104659"));
         int driveCount=0;
         // Check the newest districts first, before repeating the longer established drives.
-        foreach(var route in flyovers.Concat(new[]{(Name:"Hung Hing ramp bend",Points:_harbourRoutes[3].Points.Skip(130).Take(90).ToList()),(Name:"Wan Chai ramp bend",Points:_harbourRoutes[1].Points.Skip(130).Take(90).ToList()),(Name:"Lin Cheung ramp entry",Points:_harbourRoutes[6].Points.Skip(730).Take(200).ToList()),(Name:"South portal ramp",Points:ramp),(Name:"Hung Hom exit bend",Points:_harbourRoutes[2].Points.Skip(780).ToList())}).Concat(singleLaneApproaches).Concat(kwaiJunctionDrives).Concat(_harbourRoutes.AsEnumerable().Reverse())
+        foreach(var route in flyovers.Concat(new[]{(Name:"Hung Hing ramp bend",Points:_harbourRoutes[3].Points.Skip(130).Take(90).ToList()),(Name:"Wan Chai ramp bend",Points:_harbourRoutes[1].Points.Skip(130).Take(90).ToList()),(Name:"Lin Cheung ramp entry",Points:_harbourRoutes[6].Points.Skip(730).Take(200).ToList()),(Name:"South portal ramp",Points:ramp),(Name:"Hung Hom exit bend",Points:_harbourRoutes[2].Points.Skip(780).ToList())}).Concat(singleLaneApproaches).Concat(kwaiJunctionDrives).Append(kingsParkDrive).Concat(_harbourRoutes.AsEnumerable().Reverse())
             .Where(r=>(!OS.GetCmdlineUserArgs().Contains("--island-check") || r.Name==_harbourRoutes[3].Name) &&
                 (!OS.GetCmdlineUserArgs().Contains("--central-check") || r.Name==_harbourRoutes[4].Name) &&
-                (!OS.GetCmdlineUserArgs().Contains("--kowloon-check") || r.Name==_harbourRoutes[5].Name) &&
+                (!OS.GetCmdlineUserArgs().Contains("--kowloon-check") || r.Name==_harbourRoutes[5].Name || r.Name==kingsParkDrive.Name) &&
                 (!OS.GetCmdlineUserArgs().Contains("--west-check") || r.Name==_harbourRoutes[6].Name || r.Name==_harbourRoutes[7].Name) &&
                 (!OS.GetCmdlineUserArgs().Contains("--northwest-check") || r.Name==_harbourRoutes[8].Name) &&
                 (!OS.GetCmdlineUserArgs().Contains("--kwai-chung-check") || r.Name==_harbourRoutes[9].Name || r.Name.StartsWith("Kwai Chung ",StringComparison.Ordinal) || r.Name.StartsWith("Kwai Yue ",StringComparison.Ordinal)) &&
@@ -812,7 +829,7 @@ public partial class Main
                 (!OS.GetCmdlineUserArgs().Contains("--wong-tai-sin-check") || r.Name==_harbourRoutes[13].Name)))
         {
             var path=route.Points;var f=(path[1]-path[0]).Normalized();
-            bool scenic=_harbourRoutes.Skip(3).Any(r=>r.Name==route.Name) || route.Name is "Lin Cheung ramp entry" or "Hung Hing ramp bend" || route.Name.StartsWith("Fung Mo single-lane approach",StringComparison.Ordinal) || route.Name.StartsWith("Kwai Chung ",StringComparison.Ordinal) || route.Name.StartsWith("Kwai Yue ",StringComparison.Ordinal);float side=scenic?-1:1;
+            bool scenic=_harbourRoutes.Skip(3).Any(r=>r.Name==route.Name) || route.Name is "Lin Cheung ramp entry" or "Hung Hing ramp bend" || route.Name==kingsParkDrive.Name || route.Name.StartsWith("Fung Mo single-lane approach",StringComparison.Ordinal) || route.Name.StartsWith("Kwai Chung ",StringComparison.Ordinal) || route.Name.StartsWith("Kwai Yue ",StringComparison.Ordinal);float side=scenic?-1:1;
             driveCount++;
             int routeIndex=_harbourRoutes.FindIndex(r=>r.Name==route.Name);
             var routeLaneData=routeIndex>=0?RouteLaneData(routeIndex):null;
@@ -856,7 +873,7 @@ public partial class Main
             if(route.Name==_harbourRoutes[0].Name || route.Name==_harbourRoutes[2].Name)Check(minY<-30,"bus must descend through the harbour tunnel");
             GD.Print($"ANTILA_HARBOUR_DRIVE_OK: {route.Name}; {Bus.DistanceDriven-driven:0} m; minimum y={minY:0.0}; no contacts");
         }
-        GD.Print($"ANTILA_HARBOUR_DRIVE_SUITE_OK: {driveCount} physical drive paths; includes Fung Mo approaches and the Kwai Chung roundabout / Wing Shun junction");
+        GD.Print($"ANTILA_HARBOUR_DRIVE_SUITE_OK: {driveCount} physical drive paths");
         Bus.TestThrottle=Bus.TestBrake=Bus.TestSteer=0;Bus.AutomaticTest=false;HarbourDrive=false;Engine.TimeScale=1;
         Bus.ResetAt(Map.At(22,-7.3f),Map.Heading(22));SetPhysicsProcess(true);
     }

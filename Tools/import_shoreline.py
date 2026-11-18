@@ -51,7 +51,9 @@ elif KWAI_CHUNG:
     BBOX = (114.108,22.334,114.143,22.372)
     RAW = ROOT/'Data/kwai-chung-shoreline.geojson'
 elif NORTHWEST:
-    BOUNDS = (-4600,-6000,0,-3900)
+    # Continue the inland frame to the existing Kowloon/east-Kowloon join.
+    # The retained coastline extract is unchanged and no new shoreline is inferred.
+    BOUNDS = (-4600,-6000,650,-3900)
     BBOX = (114.127,22.329,114.173,22.350)
     RAW = ROOT/'Data/lai-chi-kok-shoreline.geojson'
 NS = {'g':'http://www.opengis.net/gml','f':'http://www.safe.com/gml/fme'}

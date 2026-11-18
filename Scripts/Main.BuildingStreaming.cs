@@ -49,8 +49,8 @@ public partial class Main
             chunk.Proxy=proxies[chunk.Source][row.GetProperty("proxy_name").GetString()!.Replace('.','_')];
             _buildingChunks.Add(chunk);
         }
-        if(_buildingChunks.Count!=3135 || _buildingChunks.Select(c=>c.Id).Distinct().Count()!=3135 || proxies.Sum(p=>p.Value.Count)!=3135 ||
-            _buildingChunks.Select(c=>c.Proxy.GetInstanceId()).Distinct().Count()!=3135)
+        if(_buildingChunks.Count!=3170 || _buildingChunks.Select(c=>c.Id).Distinct().Count()!=3170 || proxies.Sum(p=>p.Value.Count)!=3170 ||
+            _buildingChunks.Select(c=>c.Proxy.GetInstanceId()).Distinct().Count()!=3170)
             throw new Exception("Building chunk/proxy inventory changed; regenerate and validate the manifest");
     }
 

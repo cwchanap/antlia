@@ -1,7 +1,11 @@
 # Government building layout — 13 September 2026
 
 
-The [24 October Wong Tai Sin extension](WONG_TAI_SIN_EXPANSION.md) brings the current total to **39,946 derived parts in 3,135 render/collision chunk pairs**, including 8,528 eastern parts. Its northern asset contains 1,666 parts in 202 chunk pairs. Earlier counts below apply to their recorded snapshots.
+The [24 October Wong Tai Sin extension](WONG_TAI_SIN_EXPANSION.md) brought the total at that date to **39,946 derived parts in 3,135 render/collision chunk pairs**, including 8,528 eastern parts. Its northern asset contains 1,666 parts in 202 chunk pairs. Earlier counts below apply to their recorded snapshots.
+
+The four-district refresh restores the Kowloon Park Sports Centre (336429) and Administration Building (336430), moves the park path clear of the Sports Centre, and reclips the northern footprints beside the sourced Wylie Road and King’s Park Rise carriageways.
+
+The Tsim Sha Tsui waterfront adds 18 parts from 13 height-backed iB1000 building records, covering the Hong Kong Cultural Centre, Museum of Art, Space Museum and Former Kowloon–Canton Railway Clock Tower. The Kowloon Tong expansion adds 167 rendered parts from 144 previously absent source records, with one small Cornwall Street Park record removed by the required road clearance. The current total is **40,168 parts in 3,170 render/collision chunk pairs**.
 
 The [30 October building-streaming change](BUILDING_STREAMING.md) packages those pairs independently and loads detailed geometry/collision near the bus. Collision-derived skyline proxies remain visible at a distance. Loaded chunks share three texture families, release hidden render meshes after collision construction and dispose owned resources on eviction. The original source GLBs, government data and detailed geometry are retained; roof and clearance checks load their probe regions before testing.
 
@@ -183,3 +187,15 @@ The final simplify/intersect step could return a GeometryCollection containing a
 Regenerated northern and western layouts preserve every previously shipped building part byte-for-byte and recover **24 parts / 13,129.28 m²** of footprint coverage. Northern Kowloon now has 5,112 parts (+10); western Kowloon has 6,096 (+14). The four reported IDs include Man Kee Mansion's podium (228041), King's Court (263953), Kimberd Court (226983) and MTR Mong Kok Station (82955). All six regional GLBs and both editable Blender sources were rebuilt through Blender MCP. The 231 northern and 413 western spatial chunks remain unchanged. Raw government building caches, road geometry, heights of existing parts and map boundaries are unchanged. Other regions were not regenerated in this scoped repair; the shared fix applies to future regeneration.
 
 `Tools/check_buildings.py` reproduces the missing component before the fix and passes after it. The in-engine check also probes five roof locations across the four reported IDs. Before/after assets and evidence are retained locally in `Art/before-mong-kok-fix-2026-10-18/` and `evidence/mong-kok-fix-2026-10-18/`. [Mong Kok open-space work and final verification](MONG_KOK_OPEN_SPACES.md) describes the companion scenery changes.
+
+## Cullinan West and V Walk podium support — 17 November 2026
+
+The seven Cullinan West tower footprints use source OBJECTIDs 54076, 149593, 203401, 228383, 260821, 268148 and 268379. Their CSDI base datum is 26.9 mPD. The adjoining V Walk podium is source OBJECTID 262652, with a 3.9 mPD base and 28.2 mPD roof. In the local layout datum this places the tower bases and the podium roof at 24.3 m, so the towers rest on the source podium rather than floating above the original ground-level road outlines.
+
+The V Walk upper podium is retained only inside its source footprint and the road-clearance region. Its street-crossing underside is at local y=6.0 m: a 4.2 m low-bus envelope plus 1.8 m clearance. The original Transport Department roads TD_107160 and TD_107055 remain below it without changing their centerlines or geometry. Open-top support pads carry the tower bases; the runtime roof inventory skips these pads because their underside is not an exposed roof.
+
+The related northwest building import preserves the legacy boundary and supplements only the former-water rectangle x=0..550 m, z=-6000..-4800 m. It retains source fragments for Festival Walk, True Light and CityU, while leaving the adjoining x=550..650 m East-Kowloon ownership unchanged. The resulting nine new northwest building chunks are added to the existing manifest inventory; no existing cells outside the audited West/NW boundary cells need rebuilding.
+
+Regenerate the building layouts with the existing government-data importer, then run Tools/model_government_buildings.py with WEST=True and NORTHWEST=True separately in Blender. Rebuild the 3,170-pair package with Tools/split_building_chunks.py. Importer assertions check source datums, tower-to-podium contact, source-footprint coverage, low-bus clearance and road-buffer exclusion. Native roof rays for the seven tower tops and a close-up of the podium connection remain part of the combined scene verification.
+
+The facades and massing remain derived game geometry on flat terrain, not survey-grade 3D reconstructions.

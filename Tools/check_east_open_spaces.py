@@ -14,7 +14,14 @@ import import_open_spaces as shared
 
 WESTERN_SITE_IDS={
     '1503000390','1503000414','1503000381','1503005413','1503000199',
-    '1503005076','1810011761','1910064509','1910069198','1910053970','1910053968'
+    '1503005076','1810011761','1910064509','1910069198','1910053970','1910053968',
+    '1503005535','1503005281','1810014504','1810044652','1503005514',
+    '1910056230','1810032161','1910062401','1503005115','1503005152',
+    '1503005112','1503005184','1503005071','1503005077','1503005450',
+    '1503005180','1503005170','1503005157','1503005144','1503005135','1503005123',
+    '1503005508',
+    '1810015202','1503005628',
+    '1503005539','1503005553','1503005627','1503005605','1502005648'
 }
 NEW_SPORT_IDS={
     '1910088626','1910088625','1910088624','1500001823','1500004939','1500004938',
@@ -25,8 +32,37 @@ NEW_SPORT_IDS={
     '1910085686','1910085685','1500004918','1500004917','1500000760','1500000757',
     '1500000756','1810061752','1810018589','1500004928','1500001289','1500001287',
     '1500004927','1500001285','1500001283','1500001361','1500001360','1500001359',
-    '1500001358'
+    '1500001358','1500001977','1500001978','1500002016','1500002017','1500002018',
+    '1500002019','1500002020','1500002021','1500002074','1500002075','1500004994','1500004995',
+    '1500001861','1500001862','1500001863','1500001864','1500002076','1500002077',
+    '1500002078','1500002080','1500002081','1500002082','1500002090','1500002093',
+    '1500002094','1500005007','1500005008','1810017066','1810025769',
+    '1500001910','1500001941','1500001955'
 }
+KOWLOON_TONG_SITE_NAMES={
+    '1503005539':'To Yuen Street Playground',
+    '1503005553':'Kent Road Garden',
+    '1503005688':'Kam Shing Road Recreation Ground',
+    '1503005627':"Cornwall Street Children's Playground",
+    '1503005605':'Cornwall Street/Ede Road Garden',
+    '1502005648':'Dorset Crescent Rest Garden',
+}
+KOWLOON_TONG_COURT_SITES={
+    '1500001910':'1503005539', '1500001941':'1503005553', '1500001955':'1503005688',
+}
+CORNWALL_PARK_SITE_ID='1503005508'
+BENCH_RELAYOUT_SITE_IDS={
+    '1503000199','1503000381','1503000390','1503000414','1503005076',
+    '1503005535','1503005714','1503005718','1503005853','1503005863',
+    '1503005871','1503005881','1810014504','1810044652','1910059822',
+    '1910069198'
+}
+BENCH_COUNT_DELTAS={
+    '1503000199':1,'1503000390':-1,'1503000414':-1,'1503005076':-1,
+    '1503005535':1,'1503005714':-2,'1503005718':1,'1503005863':-1,
+    '1503005881':2,'1910069198':1
+}
+GROUND_CLIPPED_ACCESS_SITE_ID='1910071209'
 
 
 def check(cache,manifest_path,preservation_baseline=None):
@@ -40,14 +76,57 @@ def check(cache,manifest_path,preservation_baseline=None):
         for feature in raw['features'] if feature.get('properties',{}).get('layer')=='Site'}
     sport_ids={str(feature.get('properties',{}).get('BUILTSTRUCTUREPOLYGONID'))
         for feature in raw['features'] if feature.get('properties',{}).get('layer')=='BuiltStructurePolygon'}
-    assert len(WESTERN_SITE_IDS)==11 and WESTERN_SITE_IDS<=source_site_ids and WESTERN_SITE_IDS<=site_ids,'Western source sites missing from the integrated source/layout: '+repr(sorted(WESTERN_SITE_IDS-(source_site_ids&site_ids)))
-    assert len(NEW_SPORT_IDS)==49 and NEW_SPORT_IDS<=sport_ids,'Western source sports missing from the integrated source: '+repr(sorted(NEW_SPORT_IDS-sport_ids))
-    assert len(site_ids)==27 and len(sport_ids)==120,'Combined inventory must contain 27 sites and 120 unique sports IDs'
+    assert len(WESTERN_SITE_IDS)==40 and WESTERN_SITE_IDS<=source_site_ids and WESTERN_SITE_IDS<=site_ids,'Western source sites missing from the integrated source/layout: '+repr(sorted(WESTERN_SITE_IDS-(source_site_ids&site_ids)))
+    assert len(NEW_SPORT_IDS)==81 and NEW_SPORT_IDS<=sport_ids,'Western source sports missing from the integrated source: '+repr(sorted(NEW_SPORT_IDS-sport_ids))
+    assert site_ids==importer.EXPECTED_SITE_IDS|{'1503005422','1910058892'} and len(sport_ids)==152,'Combined inventory must contain 57 source sites plus two supplemental southwest spaces, and 152 unique sports IDs'
+    assert {uid:site['name'] for uid,site in ((s['id'],s) for s in data['sites']) if uid in KOWLOON_TONG_SITE_NAMES}==KOWLOON_TONG_SITE_NAMES,\
+        'A reviewed Kowloon Tong site is missing or mislabeled'
+    court_sites={surface['source_id']:surface['site'] for surface in data['surfaces']
+                 if surface['source_id'] in KOWLOON_TONG_COURT_SITES}
+    assert court_sites==KOWLOON_TONG_COURT_SITES,'A Kowloon Tong basketball court is missing or assigned to the wrong site'
+    court_fittings={fitting['source_id']:fitting for fitting in data['sports']
+                    if fitting['source_id'] in KOWLOON_TONG_COURT_SITES}
+    assert {uid:fitting['site'] for uid,fitting in court_fittings.items()}==KOWLOON_TONG_COURT_SITES,\
+        'A Kowloon Tong basketball court is missing its fitted recreation model'
+    for source_id,fitting in court_fittings.items():
+        if source_id!='1500001941':
+            continue
+        cx,cz=fitting['center'];fx,fz=fitting['forward'];rx,rz=fz,-fx
+        half_width=fitting['width']/2;half_length=fitting['length']/2
+        rectangle=importer.Polygon([
+            (cx-rx*half_width-fx*half_length,cz-rz*half_width-fz*half_length),
+            (cx+rx*half_width-fx*half_length,cz+rz*half_width-fz*half_length),
+            (cx+rx*half_width+fx*half_length,cz+rz*half_width+fz*half_length),
+            (cx-rx*half_width+fx*half_length,cz-rz*half_width+fz*half_length),
+        ])
+        source_surface=importer.union_all([
+            importer.Polygon(surface['rings'][0],surface['rings'][1:])
+            for surface in data['surfaces'] if surface['source_id']==source_id
+        ])
+        assert rectangle.difference(source_surface).area<=.01,\
+            'A Kowloon Tong fitted court extends outside its surveyed surface: '+source_id
+    kent=court_fittings['1500001941']
+    assert abs(kent['width']-14.018553)<.001 and abs(kent['length']-25.379270)<.001,\
+        'Kent Road Garden fitting lost its source-contained 0.5m inscribed rectangle'
     importer.validate_layout(source,target)
     check_western_path_connectivity(data)
     assert {s['source_id'] for s in data['surfaces']}==importer.EXPECTED_SPORTS,'Mapped sport outline lost'
-    assert len(raw['features'])==194 and data['metadata']['source_feature_count']==194,'Expected 194 exact Site and sport source fragments'
-    assert data['metadata']['source_site_fragment_count']==59 and data['metadata']['source_sport_fragment_count']==135,'Source fragment counts changed'
+    football_kinds={surface['source_id']:surface['kind'] for surface in data['surfaces']
+                    if surface['source_id'] in {'1500001977','1500002075','1500002078','1500002094','1500002093'}}
+    assert football_kinds=={'1500001977':'court','1500002075':'court','1500002078':'court',
+                            '1500002094':'court','1500002093':'court'},'LCSD hard-surface football courts were not retained'
+    gateball_kinds={surface['source_id']:surface['kind'] for surface in data['surfaces']
+                    if surface['source_id'] in importer.GATEBALL_IDS}
+    assert gateball_kinds=={uid:'court' for uid in importer.GATEBALL_IDS},'Tai Hang Tung gateball outlines were not treated as courts'
+    west_layout=json.loads((importer.ROOT/'Data/west-kowloon-layout.json').read_bytes())
+    tung_chau_shell=next((importer.Polygon(building['rings'][0]) for building in west_layout['buildings']
+                          if building['id']==214665),None)
+    assert tung_chau_shell is not None and not any(
+        importer.Point(f['position']).buffer(f['radius']).intersects(tung_chau_shell)
+        for f in data['fixtures'] if f['site']=='1503005112'),\
+        'Tung Chau Street Park fixture circle enters building 214665 outer shell'
+    assert len(raw['features'])==284 and data['metadata']['source_feature_count']==284,'Expected 284 exact Site and sport source fragments'
+    assert data['metadata']['source_site_fragment_count']==115 and data['metadata']['source_sport_fragment_count']==169,'Source fragment counts changed'
     if preservation_baseline is not None:
         check_preservation(Path(preservation_baseline),raw,data)
     for uid,point in [('1503005881',(1989.2677387146189,-2149.3834432934027)),
@@ -55,6 +134,16 @@ def check(cache,manifest_path,preservation_baseline=None):
         garden=next(g for g in data['gardens'] if g['site']==uid)
         assert any(importer.Point(sample).distance(importer.Point(point))<.01 for sample in garden['samples']),\
             'Former isolated loop lost its in-engine connectivity probe: '+uid
+    stage2=next(g for g in data['gardens'] if g['site']=='1503005077')
+    stage2_paths=importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in stage2['paths']])
+    stage2_access=importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in stage2['access']])
+    stage2_route=importer.LineString([(-1501,-4110),(-1556,-4043)]).buffer(1.8,cap_style='flat')
+    assert stage2_access.symmetric_difference(stage2_route).area<.01 and \
+           stage2_paths.intersection(stage2_route).area>8 and len(stage2['samples'])>=2,\
+        'Sham Shui Po Park Stage 2 lost its surveyed safe route and path probes'
+    assert all(any(f['site']==uid and f['asset']=='bench' for f in data['fixtures'])
+               for uid in importer.SIT_OUT_SITE_IDS),\
+        'A Nam Cheong Street sitting-out area lost its authored bench'
     tracks=importer.union_all([importer.Polygon(p.exterior) for feature in raw['features']
         if feature['properties'].get('USAGETYPE')=='RAT' for p in importer.geometry_polygons(importer.source_local(feature))])
     paving=importer.union_all([importer.Polygon(t) for t in data['paving']])
@@ -152,10 +241,22 @@ def check(cache,manifest_path,preservation_baseline=None):
                                      'missing_western_sport_fragment_1500004928_7-SW-12C')
         reject_removed_polygon_patch('6-SE-25B','Site','SITEID','1503000199',
                                      'missing_same_sheet_site_patch_1503000199_6-SE-25B')
+        reject_removed_polygon_patch('11-NW-19D','Site','SITEID','1810014504',
+                                     'missing_kings_park_same_sheet_patch_1810014504_11-NW-19D')
+        reject_removed_polygon_patch('11-NW-18D','Site','SITEID','1810032161',
+                                     'missing_hoi_fai_prom_same_sheet_patch_1810032161_11-NW-18D')
+        reject_removed_polygon_patch('11-NW-24B','BuiltStructurePolygon','BUILTSTRUCTUREPOLYGONID','1500002016',
+                                     'missing_kings_park_sport_patch_1500002016_11-NW-24B')
+        reject_removed_polygon_patch('11-SW-4D','Site','SITEID','1810015202',
+                                     'missing_salisbury_site_patch_1810015202_11-SW-4D')
+        reject_removed_polygon_patch('11-SW-5C','Site','SITEID','1503005628',
+                                     'missing_tst_promenade_site_patch_1503005628_11-SW-5C')
         for label,layer,id_field,source_id,tile_name in (
                 ('missing_sport_fragment','BuiltStructurePolygon','BUILTSTRUCTUREPOLYGONID','1500001706','11-NE-21A'),
                 ('missing_site_fragment','Site','SITEID','1503000199','6-SE-25B'),
                 ('missing_art_park_source_fragment_1910053970_11-NW-23D','Site','SITEID','1910053970','11-NW-23D'),
+                ('missing_salisbury_source_fragment_1810015202_11-SW-4D','Site','SITEID','1810015202','11-SW-4D'),
+                ('missing_tst_promenade_source_fragment_1503005628_11-SW-5C','Site','SITEID','1503005628','11-SW-5C'),
                 ('missing_western_sport_fragment','BuiltStructurePolygon','BUILTSTRUCTUREPOLYGONID','1500004928','7-SW-12C')):
             for mutation in ('missing','duplicate','wrong_tile'):
                 case_label=label if mutation=='missing' else label+'_'+mutation
@@ -179,7 +280,8 @@ def check(cache,manifest_path,preservation_baseline=None):
                     with patch.object(importer,'build',return_value=target),patch.object(shared,'TARGET',saved_target):
                         importer.refresh(source_path=saved_source,target_path=saved_target)
                 except AssertionError as error:
-                    assert 'reviewed fragments' in str(error), case_label+' rejected for the wrong reason'
+                    expected='reviewed IDs' if source_id=='1810015202' and mutation=='missing' else 'reviewed fragments'
+                    assert expected in str(error), case_label+' rejected for the wrong reason'
                 else:raise AssertionError('Invalid saved source accepted by direct rebuild: '+case_label)
                 assert (saved_source.read_bytes(),saved_target.read_bytes())==before,'Direct rebuild changed prior outputs: '+case_label
                 saved_source_rejections+=1
@@ -207,7 +309,7 @@ def check(cache,manifest_path,preservation_baseline=None):
             reject('missing_derived_sport_id_1500001703',manifest,'Derived surfaces differ from reviewed source IDs')
         run(manifest)
         assert saved_source.read_bytes()==source and saved_target.read_bytes()==target,'Complete rebuild is not deterministic'
-    print(f'ANTILA_EAST_OPEN_SPACE_REFRESH_OK: 27 sites across 59 Site fragments; 120 source sports across 135 sheet fragments; complete deterministic rebuild; {len(rejected)+saved_source_rejections} rejected cases ({len(rejected)} ZIP refreshes, {saved_source_rejections} direct saved-source rebuilds); outputs preserved')
+    print(f'ANTILA_EAST_OPEN_SPACE_REFRESH_OK: {len(site_ids)} sites across {data["metadata"]["source_site_fragment_count"]} Site fragments; {len(sport_ids)} source sports across {data["metadata"]["source_sport_fragment_count"]} sheet fragments; complete deterministic rebuild; {len(rejected)+saved_source_rejections} rejected cases ({len(rejected)} ZIP refreshes, {saved_source_rejections} direct saved-source rebuilds); outputs preserved')
 
 
 def check_touching_paving():
@@ -219,13 +321,23 @@ def check_touching_paving():
 
 
 def check_western_path_connectivity(data):
-    _,lots,_,_,_,_,_,_,west_regions,pavement_patches,paving_margin=importer.safe_site_polygons()
+    _,lots,east_roads,east_prop_roads,east_land,east_targets,east_carriageways,ground,west_regions,pavement_patches,paving_margin=importer.safe_site_polygons()
+    east_region=(east_roads,east_prop_roads,east_land,east_targets,east_carriageways)
+    district_roads=json.loads((importer.ROOT/'Data/nathan-road.json').read_text())
+    road_network=json.loads((importer.ROOT/'Data/cross-harbour.json').read_text())
     gardens={garden['site']:garden for garden in data['gardens']}
     for site_id in sorted(WESTERN_SITE_IDS):
         garden=gardens[site_id]
+        site=importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in garden['rings']])
         paths=importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in garden['paths']])
         access=importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in garden['access']])
-        street_targets=west_regions[importer.WESTERN_SITE_COAST[site_id]][3]
+        region=west_regions[importer.WESTERN_SITE_COAST[site_id]]
+        if site_id in importer.GROUND_SCOPE_SITE_IDS:
+            region=importer.ground_scope_region(region,east_region,ground)
+        region=importer.site_road_scope(site_id,site,region,district_roads)
+        if site_id=='1503005115':
+            region=(*region[:3],importer.lok_kwan_street_targets(site,road_network),region[4])
+        street_targets=region[3]
         if site_id=='1910053968':
             assert paths.covers(importer.Point(-1600,-415.5)),\
                 'West Kowloon Waterfront Promenade lost its narrow source-strip path'
@@ -257,7 +369,11 @@ def check_western_path_connectivity(data):
     assert not any(row.get('site')=='1910069198' and row.get('component')=='1910069198:02'
                    for row in rejected),\
         'Kwai Chung disconnected source component was rejected rather than connected'
-    print('ANTILA_EAST_OPEN_SPACE_CONNECTIVITY_OK: 11 western sites; retained path components connect to public paving; Kwai Chung failed probe preserved')
+    print(f'ANTILA_EAST_OPEN_SPACE_CONNECTIVITY_OK: {len(WESTERN_SITE_IDS)} western sites; retained path components connect to public paving; Kwai Chung failed probe preserved')
+
+
+def garden_geometry(garden,field):
+    return importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in garden[field]])
 
 
 def check_preservation(baseline_dir,raw,data):
@@ -275,19 +391,99 @@ def check_preservation(baseline_dir,raw,data):
                     str(feature['properties'].get('BUILTSTRUCTUREPOLYGONID')) in sport_ids)]
     assert canonical(source_rows({'features':raw['features']},old_site_ids,old_sport_ids))==\
            canonical(source_rows(old_source,old_site_ids,old_sport_ids)),'Existing Site/sport source geometries or attributes changed'
-    for field,key in [('sites','id'),('surfaces','source_id'),('sports','source_id')]:
+    old_sites={str(site['id']):site for site in old_layout['sites']}
+    new_sites={str(site['id']):site for site in data['sites']}
+    assert set(old_sites)<=set(new_sites),'An existing park site was removed'
+    for uid,baseline in old_sites.items():
+        current=new_sites[uid]
+        for key in ('id','name','source_area_m2','bounds'):
+            assert current[key]==baseline[key],'Existing site geometry or identity changed: '+uid
+        count_delta=current['fixtures']-baseline['fixtures']
+        if uid==CORNWALL_PARK_SITE_ID:
+            assert current['fixtures']==sum(f['site']==uid for f in data['fixtures']),\
+                'Cornwall Street Park site fixture count differs from its regenerated furniture'
+        else:
+            assert uid in BENCH_RELAYOUT_SITE_IDS or count_delta==0,'Existing fixture count changed: '+uid
+            assert count_delta in (0,BENCH_COUNT_DELTAS.get(uid,0)),'Unexpected legacy bench count change: '+uid
+    for field,key in [('surfaces','source_id'),('sports','source_id')]:
         baseline=old_layout[field]
-        retained=[row for row in data[field] if str(row[key]) in (old_site_ids if field=='sites' else old_sport_ids)]
-        assert retained==baseline,'Existing recreation records changed: '+field
-    old_gardens={garden['site'] for garden in old_layout['gardens']}
-    assert [garden for garden in data['gardens'] if garden['site'] in old_gardens]==old_layout['gardens'],\
-        'Existing site, path, access or connectivity sample arrays changed'
-    assert [fixture for fixture in data['fixtures'] if fixture['site'] in old_site_ids]==old_layout['fixtures'],\
-        'Existing authored fixture records changed'
-    assert data['paving'][:len(old_layout['paving'])]==old_layout['paving'],'Existing paving triangles changed'
+        retained=[row for row in data[field] if str(row[key]) in old_sport_ids]
+        assert retained==baseline,'Existing sports records changed: '+field
+    old_gardens={garden['site']:garden for garden in old_layout['gardens']}
+    new_gardens={garden['site']:garden for garden in data['gardens']}
+    lost_access_area=0
+    for uid,baseline in old_gardens.items():
+        current=new_gardens[uid]
+        assert garden_geometry(baseline,'rings').symmetric_difference(garden_geometry(current,'rings')).area<=.01,\
+            'Existing site boundary changed: '+uid
+        if uid==CORNWALL_PARK_SITE_ID:
+            # Cornwall Street Squash & Table Tennis Centre was restored in the current
+            # building layout. Rebuild this park's path and entrance against its new 4m
+            # building clearance; the regional connectivity check validates the new geometry.
+            continue
+        for field in ('rings','paths'):
+            assert garden_geometry(baseline,field).symmetric_difference(garden_geometry(current,field)).area<=.01,\
+                'Existing site/path ground geometry changed: '+uid+':'+field
+        old_access=garden_geometry(baseline,'access');new_access=garden_geometry(current,'access')
+        if uid==GROUND_CLIPPED_ACCESS_SITE_ID:
+            retained=new_access.area/old_access.area
+            assert .99<=retained<=1 and len(importer.geometry_polygons(new_access))==1,\
+                'Hung Hom access clip lost too much area or disconnected the corridor'
+            _,_,_,_,_,east_targets,_,ground,_,_,_=importer.safe_site_polygons()
+            expected_access=old_access.intersection(ground)
+            assert new_access.symmetric_difference(expected_access).area<=.01,\
+                'Hung Hom access is not the exact shared-ground intersection'
+            assert new_access.difference(ground).area<=.01,'Hung Hom access retains unsupported ground'
+            assert new_access.intersects(east_targets) and new_access.intersection(garden_geometry(current,'paths')).area>.1,\
+                'Hung Hom clipped access lost its street or path join'
+            path= garden_geometry(current,'paths')
+            old_path_samples=[sample for sample in baseline['samples'] if path.covers(importer.Point(sample))]
+            new_path_samples=[sample for sample in current['samples'] if path.covers(importer.Point(sample))]
+            assert old_path_samples==new_path_samples,'Hung Hom interior path connectivity probes changed'
+            assert len(baseline['samples'])==len(current['samples']) and all(
+                new_access.covers(importer.Point(sample)) for sample in current['samples']
+                if not path.covers(importer.Point(sample))),\
+                'Hung Hom access connectivity probe is missing'
+            lost_access_area=old_access.area-new_access.area
+            assert abs((baseline['paving_area_m2']-current['paving_area_m2'])-lost_access_area)<.02,\
+                'Hung Hom paving area changed beyond the supported access clip'
+        else:
+            assert old_access.symmetric_difference(new_access).area<=.01,'Existing park access geometry changed: '+uid
+            assert current['samples']==baseline['samples'],'Existing path connectivity probes changed: '+uid
+            assert current['paving_area_m2']==baseline['paving_area_m2'],'Existing path paving volume changed: '+uid
+    old_volume=sum(garden['paving_area_m2'] for uid,garden in old_gardens.items()
+                   if uid!=CORNWALL_PARK_SITE_ID)
+    new_volume=sum(new_gardens[uid]['paving_area_m2'] for uid in old_gardens
+                   if uid!=CORNWALL_PARK_SITE_ID)
+    assert abs((old_volume-new_volume)-lost_access_area)<.02,'Historical paving volume changed beyond the supported access clip'
+
+    old_fixtures={uid:[fixture for fixture in old_layout['fixtures'] if fixture['site']==uid] for uid in old_site_ids}
+    new_fixtures={uid:[fixture for fixture in data['fixtures'] if fixture['site']==uid] for uid in old_site_ids}
+    for uid in old_site_ids:
+        previous=old_fixtures[uid];current=new_fixtures[uid]
+        if uid==CORNWALL_PARK_SITE_ID:
+            _,lots,*_=importer.safe_site_polygons(include_southwest_landmarks=False)
+            clearance=lots.buffer(4)
+            assert all(clearance.intersection(importer.Point(fixture['position']).buffer(fixture['radius'])).area<=.01
+                       for fixture in current),\
+                'Regenerated Cornwall Street Park fixture enters current building clearance'
+            continue
+        if uid not in BENCH_RELAYOUT_SITE_IDS:
+            assert current==previous,'Existing authored fixtures changed: '+uid
+            continue
+        canonical_rows=lambda rows:Counter(json.dumps(row,sort_keys=True,separators=(',',':')) for row in rows)
+        old_nonbench=[row for row in previous if row['asset']!='bench']
+        new_nonbench=[row for row in current if row['asset']!='bench']
+        assert canonical_rows(new_nonbench)==canonical_rows(old_nonbench),'Existing non-bench fixtures changed: '+uid
+        old_benches=[row for row in previous if row['asset']=='bench']
+        new_benches=[row for row in current if row['asset']=='bench']
+        assert len(new_benches)-len(old_benches) in (0,BENCH_COUNT_DELTAS.get(uid,0)),\
+            'Unexpected bench count change: '+uid
     baseline_counts=(len(old_layout['sites']),len(old_layout['surfaces']),len(old_layout['sports']),
                      len(old_layout['fixtures']),len(old_layout['paving']))
-    assert baseline_counts in ((16,71,50,1505,44518),(25,120,88,3068,81836)),\
+    assert baseline_counts in ((16,71,50,1505,44518),(25,120,88,3068,81836),
+                               (27,120,88,3302,86722),(41,132,94,3620,103444),
+                               (53,149,106,3976,111845)),\
         'Unexpected preservation baseline counts: '+repr(baseline_counts)
     for key,ids in [('source_revisions',old_site_ids),('sports_revisions',old_sport_ids)]:
         assert {uid:value for uid,value in data['metadata'][key].items() if uid in ids}==\
@@ -295,7 +491,8 @@ def check_preservation(baseline_dir,raw,data):
             'Existing source revision records changed: '+key
     print(f'ANTILA_EAST_OPEN_SPACE_PRESERVATION_OK: {baseline_counts[0]} prior sites; '
           f'{baseline_counts[1]} source outlines; {baseline_counts[2]} fittings; '
-          f'{baseline_counts[3]:,} fixtures; {baseline_counts[4]:,} paving triangles; source geometry and arrays exact')
+          f'{baseline_counts[3]:,} prior fixtures; geometry and paving preserved; '
+          f'one {lost_access_area:.2f}m² supported access clip; approved bench-only changes retained')
 
 
 if __name__=='__main__':

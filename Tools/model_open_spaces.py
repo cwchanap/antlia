@@ -9,11 +9,12 @@ import math
 from pathlib import Path
 from mathutils import Vector
 
-ROOT=Path('/Users/chanwaichan/workspace/antila')
+ROOT=Path(__file__).resolve().parents[1]
 MARKING_WIDTH=.11
 BASKETBALL_CIRCLE_RADIUS=1.8
 BASKETBALL_KEY_DEPTH=5.8
 BASKETBALL_MARKING_GAP=.1
+GATEBALL_IDS={'1500001863','1500001864'}
 
 
 def basketball_marking_parameters(length):
@@ -72,7 +73,7 @@ def build(region='mong-kok'):
         data=json.loads(data_path.read_text())
         basketball_markings,adjusted_basketball_ids=validate_basketball_markings(data['sports'])
         if region=='east-kowloon':
-            assert len(basketball_markings)==23 and len(adjusted_basketball_ids)==2,\
+            assert len(basketball_markings)==30 and len(adjusted_basketball_ids)==2,\
                 'Reviewed east-Kowloon BAC inventory or dimension-adjusted count changed'
         checked_marking_vertices=0
         for court in data['sports']:
@@ -124,7 +125,16 @@ def build(region='mong-kok'):
                     net(-goal/2,goal/2,back,1.8)
             w=court['width']/2-.3;l=court['length']/2-.3
             if court['usage']=='FOF':
-                if court['site']=='1503005174':
+                if court['source_id'] in GATEBALL_IDS:
+                    # Gate and centre-pole fittings are sized from the WGU rules.
+                    rectangle(-w,-l,w,l)
+                    for x,y,dx,dy in ((-w+4,l-2,0,.115),(w-2,l-12,.115,0),(-w+2,0,.115,0)):
+                        for side in (-1,1):
+                            leg=(x+side*dx,y+side*dy)
+                            beam((*leg,0),(*leg,.195),.005,2)
+                        beam((x-dx,y-dy,.195),(x+dx,y+dy,.195),.005,2)
+                    beam((0,0,0),(0,0,.2),.01,2)
+                elif court['site']=='1503005174':
                     # Split the combined source outline, then run each pitch across it.
                     # Keep five-a-side goals even though the corrected length exceeds 40 m.
                     split_axis=forward.copy();forward,right=right,-forward

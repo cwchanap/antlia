@@ -70,7 +70,8 @@ public partial class Main
                 foreach(int id in candidates)if(p.DistanceTo(details[id].Item1)<details[id].Item2+margin+1)actual=true;
             Check(expected==actual,"Harbour dynamic detail index must retain negative-coordinate and cell-edge collision hits");
         }
-        Check(_harbourSceneryCounts==(1268,4523,544,138),
+        // The restored Sham Shui Po lots and park entrances reserve space from roadside props.
+        Check(_harbourSceneryCounts==(1268,4531,544,138),
             $"Harbour scenery placement changed: {_harbourSceneryCounts.Trees} trees, {_harbourSceneryCounts.Lamps} lamps, {_harbourSceneryCounts.People} pedestrians, {_harbourSceneryCounts.Kiosks} kiosks");
         GD.Print("ANTILA_HARBOUR_SCENERY_FILTER_OK: negative coordinates, cell edges, exact road/lot/detail matches and deterministic source ordering");
     }
