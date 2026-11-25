@@ -180,7 +180,7 @@ def local_geometry(geometry):
     return polygon
 
 
-from import_tunnel import ISLAND_BOUNDS, KOWLOON_BOUNDS, WEST_BOUNDS, NORTHWEST_BOUNDS, KWAI_CHUNG_BOUNDS, TSUEN_WAN_BOUNDS, WEST_COAST_BOUNDS, EAST_KOWLOON_BOUNDS
+from import_tunnel import CHI_MAN_STREET_ID, ISLAND_BOUNDS, KOWLOON_BOUNDS, WEST_BOUNDS, NORTHWEST_BOUNDS, KWAI_CHUNG_BOUNDS, TSUEN_WAN_BOUNDS, WEST_COAST_BOUNDS, EAST_KOWLOON_BOUNDS
 ISLAND_BBOX = (ORIGIN[0]+ISLAND_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-ISLAND_BOUNDS[3]/111320,
                ORIGIN[0]+ISLAND_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-ISLAND_BOUNDS[1]/111320)
 
@@ -199,6 +199,8 @@ KOWLOON_TONG_RAW_FEATURE_COUNT = 222
 KOWLOON_TONG_SELECTED_FEATURE_COUNT = 145
 KOWLOON_TONG_SELECTED_CSUIDS_SHA256 = '9eef70f180fc85aa3d7a1ecdc025bfbb128da01b9293df8b44ff816a00f298ca'
 KOWLOON_TONG_SELECTED_UNION_AREA_M2 = 58082.88613457147
+KOWLOON_CITY_BOUNDARY = 'Data/kowloon-city-district-boundary.geojson'
+CHI_MAN_BUILDING_NOTE = ' Chi Man Street (TD_105191) uses a 0.1 m setback beyond its 5 m carriageway to preserve the surveyed SPCA footprint.'
 
 KWAI_CHUNG_BBOX = (ORIGIN[0]+KWAI_CHUNG_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-KWAI_CHUNG_BOUNDS[3]/111320,
                    ORIGIN[0]+KWAI_CHUNG_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-KWAI_CHUNG_BOUNDS[1]/111320)
@@ -212,12 +214,32 @@ WEST_COAST_BBOX = (ORIGIN[0]+WEST_COAST_BOUNDS[0]/(111320*math.cos(math.radians(
 EAST_KOWLOON_BBOX = (ORIGIN[0]+EAST_KOWLOON_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-EAST_KOWLOON_BOUNDS[3]/111320,
                      ORIGIN[0]+EAST_KOWLOON_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-EAST_KOWLOON_BOUNDS[1]/111320)
 
+
+def kowloon_city_boundary():
+    boundary=json.loads((ROOT/KOWLOON_CITY_BOUNDARY).read_text())
+    feature,=boundary['features']
+    encoded=json.dumps(feature,sort_keys=True,ensure_ascii=False,separators=(',',':'),allow_nan=False)
+    feature_sha256=hashlib.sha256(encoded.encode()).hexdigest()
+    if feature['properties']['District']!='Kowloon City District' or feature_sha256!=boundary['metadata']['feature_sha256']:
+        raise ValueError('Kowloon City District boundary does not match its recorded feature identity')
+    return local_geometry(feature['geometry']),feature_sha256
+
+
+def building_road_clearance(road):
+    # The surveyed Chi Man Street centreline clears the SPCA wall by 2.646 m.
+    if road['id']==CHI_MAN_STREET_ID and road['width']==5:
+        return road['width']/2+.1
+    return max(12,road['width'])/2+3.5
+
+
 def download_island(north=False, west=False, northwest=False, kwai_chung=False, tsuen_wan=False, west_coast=False, east_kowloon=False):
     bbox = EAST_KOWLOON_BBOX if east_kowloon else WEST_COAST_BBOX if west_coast else TSUEN_WAN_BBOX if tsuen_wan else KWAI_CHUNG_BBOX if kwai_chung else NORTHWEST_BBOX if northwest else WEST_BBOX if west else KOWLOON_BBOX if north else ISLAND_BBOX
     target=ROOT/('Data/east-kowloon-buildings.geojson' if east_kowloon else 'Data/west-coast-buildings.geojson' if west_coast else 'Data/tsuen-wan-buildings.geojson' if tsuen_wan else 'Data/kwai-chung-buildings.geojson' if kwai_chung else 'Data/lai-chi-kok-buildings.geojson' if northwest else 'Data/west-kowloon-buildings.geojson' if west else 'Data/kowloon-north-buildings.geojson' if north else 'Data/island-buildings.geojson')
-    previous_bytes=target.read_bytes() if east_kowloon and target.exists() else None
-    previous=json.loads(previous_bytes) if previous_bytes else None
-    if previous is not None and not isinstance(previous,dict):raise ValueError('Invalid saved east-Kowloon building source')
+    if east_kowloon and not target.exists():
+        raise FileNotFoundError('Restore the bundled East Kowloon building source before refreshing its pinned records')
+    previous_bytes=target.read_bytes() if east_kowloon else None
+    previous=json.loads(previous_bytes) if previous_bytes is not None else None
+    if east_kowloon and not isinstance(previous,dict):raise ValueError('Invalid saved east-Kowloon building source')
     previous_features=previous.get('features') if previous else []
     previous_metadata=previous.get('metadata') if previous else {}
     if previous is not None:
@@ -237,9 +259,9 @@ def download_island(north=False, west=False, northwest=False, kwai_chung=False, 
         if not isinstance(previous_bbox,list) or len(previous_bbox)!=4 or any(type(v) not in (int,float) or not math.isfinite(v) for v in previous_bbox):
             raise ValueError('Missing previous east-Kowloon query bounds')
         previous_ids=set(previous_ids);previous_csuids=set(previous_csuids)
-        previous_north=local([previous_bbox[0],previous_bbox[3]])[1]
+        previous_east,previous_north=local([previous_bbox[2],previous_bbox[3]])
     query = dict(geometry=','.join(map(str,bbox)),geometryType='esriGeometryEnvelope',
-                 inSR=4326,spatialRel='esriSpatialRelIntersects',where='1=1')
+                 inSR=4326,spatialRel='esriSpatialRelIntersects',where="Status='Active'" if east_kowloon else '1=1')
     def request(**params):
         with urllib.request.urlopen(SOURCE+'?'+urllib.parse.urlencode(query | params),timeout=60) as response:
             result=json.load(response)
@@ -279,11 +301,21 @@ def download_island(north=False, west=False, northwest=False, kwai_chung=False, 
     if previous is not None:
         west_south=local([bbox[0],bbox[1]]);east_north=local([bbox[2],bbox[3]])
         expanded_bounds=[west_south[0],east_north[1],east_north[0],west_south[1]]
-        northern_strip=box(expanded_bounds[0],expanded_bounds[1],expanded_bounds[2],previous_north)
+        west,north_edge,east,south=expanded_bounds
+        east_extension=east>previous_east+.01
+        # An eastward refresh must not replace the established northern strip or
+        # admit newer records there unless the query also extends farther north.
+        donor_bbox=previous_metadata['bbox_wgs84']
+        retained_north=local([donor_bbox[2],donor_bbox[3]])[1] if east_extension else previous_north
+        retained_east=previous_east if east_extension else east
+        addition_region=box(west,north_edge,east,south).difference(box(west,retained_north,retained_east,south))
+        if east_extension:
+            district,district_sha256=kowloon_city_boundary()
+            addition_region=addition_region.intersection(district)
         additions=[];occupied_ids=set(previous_ids);next_internal_id=max(previous_ids|ids,default=0)+1;id_remaps=[]
         for feature,polygon in zip(features,local_polygons):
             props=feature['properties'];source_id=props['OBJECTID'];uid=props['BuildingCSUID']
-            if uid in previous_csuids or polygon.intersection(northern_strip).area<=.01:continue
+            if uid in previous_csuids or props.get('Status')!='Active' or polygon.intersection(addition_region).area<=.01:continue
             if source_id in occupied_ids:
                 internal_id=next_internal_id;next_internal_id+=1
                 feature={**feature,'properties':{**props,'source_OBJECTID':source_id,'OBJECTID':internal_id}}
@@ -317,12 +349,13 @@ def download_island(north=False, west=False, northwest=False, kwai_chung=False, 
         added_objectids=sorted(f['properties'].get('source_OBJECTID',f['properties']['OBJECTID']) for f in added_features.values())
         if len(added_features)!=len(added_csuids):raise ValueError('Duplicate east-Kowloon addition identity')
         total_added=len(added_csuids)
-        merge_provenance=dict(strategy='preserve saved eastern features verbatim; append only unseen records intersecting the expanded northern strip',
+        selection='the expansion within the official Kowloon City District boundary' if east_extension else 'the expanded northern strip'
+        merge_provenance=dict(strategy=f'preserve saved eastern features verbatim; append only unseen active records intersecting {selection}',
             preserved_source_sha256=original_source_sha256 or hashlib.sha256(previous_bytes).hexdigest(),
             preserved_source_metadata=original_source_metadata or previous_metadata,
             preserved_feature_count=original_feature_count or len(previous_features),
             donor_source_sha256=hashlib.sha256(previous_bytes).hexdigest(),
-            donor_source_metadata={key:previous_metadata.get(key) for key in ('source','bbox_wgs84','retrieved_utc','query_feature_count','query_features_sha256')},
+            donor_source_metadata={key:previous_metadata.get(key) for key in ('source','bbox_wgs84','retrieved_utc','query_retrieved_utc','query_feature_count','query_features_sha256')},
             query_feature_count=count,query_features_sha256=query_features_sha256,
             objectid_semantics='OBJECTID is the unique layout/cache key; source_OBJECTID records the upstream ID when a new feature ID collides with a preserved feature',
             added_feature_count=total_added,cumulative_added_feature_count=total_added,incremental_added_feature_count=len(additions),added_csuids=added_csuids,
@@ -332,6 +365,11 @@ def download_island(north=False, west=False, northwest=False, kwai_chung=False, 
             geometry_vintage_semantics='preserved features retain their original source geometry and attributes; appended features use the recorded current query',
             shared_height_ordering='The file-level retrieved_utc remains pinned to the preserved source snapshot so historical east-Kowloon heights keep their prior precedence',
             expanded_bounds_local=expanded_bounds,previous_north_boundary_local_z=previous_north)
+        if east_extension:
+            merge_provenance['previous_east_boundary_local_x']=previous_east
+            merge_provenance['district_boundary_feature_sha256']=district_sha256
+            if original_provenance:
+                merge_provenance['northern_strip_provenance']=original_provenance.get('northern_strip_provenance',original_provenance)
     metadata=dict(source=SOURCE,bbox_wgs84=list(bbox),retrieved_utc=previous_metadata.get('retrieved_utc',retrieved_utc) if east_kowloon and previous is not None else retrieved_utc,
                   query_feature_count=count,query_features_sha256=query_features_sha256)
     if east_kowloon and previous is not None:metadata['query_retrieved_utc']=retrieved_utc
@@ -379,7 +417,7 @@ def build(island=False, north=False, west=False, northwest=False, kwai_chung=Fal
     harbour = json.loads((ROOT/'Data/cross-harbour.json').read_text())
     for road in harbour['roads']:
         if not road['tunnel'] or road.get('ramp',False):
-            buffers.append(LineString([(p[0],p[2]) for p in road['points']]).buffer(max(12,road['width'])/2+3.5,quad_segs=2,join_style='mitre').intersection(boundary))
+            buffers.append(LineString([(p[0],p[2]) for p in road['points']]).buffer(building_road_clearance(road),quad_segs=2,join_style='mitre').intersection(boundary))
     road_zone = union_all(buffers)
     # The prototype permits a bus turn into Granville: protect the long nose through that tight corner.
     turning_zone = LineString(roads["points"]).interpolate(503).buffer(32, quad_segs=8)
@@ -719,6 +757,8 @@ def build(island=False, north=False, west=False, northwest=False, kwai_chung=Fal
     meta["small_pavement_gaps_filled"] = len(pavement_patches)
     if island or north or west or northwest or kwai_chung or tsuen_wan or west_coast or east_kowloon:
         meta['note'] = 'Derived expansion corridor massing on the authored land apron, not survey-grade reconstruction. Original WGS84 footprints and relative roof heights; flat ground; connected-part minimum base datum and upper-envelope podium/tower silhouettes. Buildings clipped to the land boundary and 3.5m beyond the surface carriageways. Missing heights use storeys x 3.2m or 9.6m. Facades, paving and vegetation are authored; selected street centrelines come from the Transport Department; the coastline remains authored.'
+    if (north or east_kowloon) and any(road['id']==CHI_MAN_STREET_ID and road['width']==5 for road in harbour['roads']):
+        meta['note'] += CHI_MAN_BUILDING_NOTE
     if east_kowloon or west or northwest or kwai_chung or tsuen_wan or west_coast:meta['note']=meta['note'].replace('authored land apron','government-derived land boundary').replace('the coastline remains authored','the western coastline comes from LandsD iB1000 Shoreline and CartoHydroLine seawall/high-water features, with recorded short gap repairs; prior building regions are excluded to avoid duplicate geometry')
     if west:
         meta['raised_podium_support']={'source_site':'V Walk','source_OBJECTID':V_WALK_PODIUM_ID,'source_base_mPD':podium_base,

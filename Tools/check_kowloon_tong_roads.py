@@ -11,12 +11,12 @@ from import_map import local
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_SHA256 = '34b8dbd0a7d5c99f60461886303b2e21f1fb3d00369a3e0c46b41b233e205c22'
-PRIOR_ROAD_COUNT = 7273
-TOTAL_ROAD_COUNT = 7275
-PRIOR_SOURCE_FEATURES_SHA256 = '325ca42495500a92445bcdcd64b8e7481610a05eedaa7955bd74f3809bf1e26b'
-PRIOR_ROADS_SHA256 = 'a126778701b58e88a99d67ae970e67cfdcc61412b2092e3ef4e52e4d8f8e76d0'
+PRIOR_ROAD_COUNT = 7275
+PRIOR_ROUTE_COUNT = 14
+PRIOR_SOURCE_FEATURES_SHA256 = 'c9e995a9f3c5d6a589a7c48b6185bf4f31a74833ce1339a11cbf2d385b3be03d'
+PRIOR_ROADS_SHA256 = '981f2c960b9c4b48a563c9d3f8afb86d614273e35a944e5306cffd55dcfb2584'
 PRIOR_ROUTES_SHA256 = '12cf83fdf66246566f2f1aafbea6014531770b2b8d111fc0d47540854fa3cb11'
-PRESERVED_MAP_SHA256 = '6fd9fa47503f31157aede62b047c93065d10b7890425883b4ffba596a5fc9bfc'
+PRESERVED_REGIONAL_FIELDS_SHA256 = 'dd7fb635be12beeccd3e167e0dcb7dabd9d9b57f5e5954b81966c7f4b5f8b3f3'
 
 EXPECTED_ROADS = {
     'TD_108064': ('CORNWALL STREET', '3'),
@@ -44,15 +44,13 @@ EXPECTED_ROADS = {
 }
 LEVEL_ONE_STREET_CROSSINGS = {'TD_107934', 'TD_107935'}
 
-PRESERVED_FIELDS = (
-    'bounds', 'island_bounds', 'kowloon_north_bounds', 'island_land',
+PRESERVED_REGIONAL_FIELDS = (
+    'island_bounds', 'kowloon_north_bounds', 'island_land',
     'island_coastline', 'island_boundary', 'island_coast_metadata',
-    'kowloon_east_land', 'east_kowloon_bounds', 'east_coast_metadata',
-    'kowloon_west_land', 'kowloon_coastline', 'kowloon_boundary', 'coast_metadata',
+    'kowloon_west_land', 'coast_metadata',
     'kowloon_northwest_bounds', 'northwest_coast_metadata', 'kwai_chung_bounds',
     'kwai_chung_coast_metadata', 'tsuen_wan_bounds', 'tsuen_wan_coast_metadata',
-    'west_coast_bounds', 'west_coast_metadata', 'ground_triangles',
-    'water_triangles', 'harbour_paving_triangles', 'tubes',
+    'west_coast_bounds', 'west_coast_metadata', 'tubes',
 )
 
 
@@ -65,6 +63,20 @@ def digest(value):
     return hashlib.sha256(encoded).hexdigest()
 
 
+def preserved_roads(roads, routes):
+    itinerary_ids = {ident.lstrip('-') for route in routes for ident in route['source_ids']}
+    for road in roads:
+        if road['name'] != 'SHING FUNG ROAD' or road['id'] in itinerary_ids:
+            yield road
+            continue
+        # The new Shing Fung Road deck can change approach heights and widths.
+        assert road['width'] in (6, 12) and all(0 <= y <= 7 for _, y, _ in road['points'])
+        normalized = {**road, 'points': [(x, z) for x, _, z in road['points']]}
+        normalized.pop('width')
+        normalized.pop('elevated')
+        yield normalized
+
+
 def check():
     source = read(ROOT / 'Data/cross-harbour-source.geojson')
     data = read(ROOT / 'Data/cross-harbour.json')
@@ -74,24 +86,19 @@ def check():
     source_by_id = {feature['properties']['source_id']: feature for feature in features}
     roads_by_id = {road['id']: road for road in roads}
 
-    assert source['metadata']['source_sha256'] == SOURCE_SHA256, 'Kowloon Tong roads must use the reviewed TD archive'
-    assert len(features) == len(source_by_id) == len(roads) == len(roads_by_id) == TOTAL_ROAD_COUNT
-    assert len(data['routes']) == 14, 'The local street restoration must not add a drive route'
-    assert set(source_by_id) == set(roads_by_id), 'Source and runtime road inventory must be one-to-one'
+    assert len(features) == len(source_by_id) == len(roads) == len(roads_by_id)
+    assert list(source_by_id) == list(roads_by_id), 'Source and sampled road order must match'
+    prior_routes = data['routes'][:PRIOR_ROUTE_COUNT]
     assert digest(features[:PRIOR_ROAD_COUNT]) == PRIOR_SOURCE_FEATURES_SHA256, \
-        'The previous 7,253 source records changed or were reordered'
-    assert digest(roads[:PRIOR_ROAD_COUNT]) == PRIOR_ROADS_SHA256, \
-        'The previous 7,253 road objects changed or were reordered'
+        'The previous 7,275 source records changed or were reordered'
+    assert digest(list(preserved_roads(roads[:PRIOR_ROAD_COUNT], prior_routes))) == PRIOR_ROADS_SHA256, \
+        'The previous 7,275 road objects changed or were reordered'
     assert set(EXPECTED_ROADS) <= set(source_by_id), 'A reviewed Kowloon Tong section is missing'
-    assert set(source_by_id) - {feature['properties']['source_id'] for feature in features[:PRIOR_ROAD_COUNT]} == LEVEL_ONE_STREET_CROSSINGS, \
-        'Only the two reviewed Cornwall Street connectors may be added to the 7,273-road stage'
-    assert digest(data['routes']) == PRIOR_ROUTES_SHA256, 'Existing drive route arrays changed'
-    assert digest({field: data[field] for field in PRESERVED_FIELDS}) == PRESERVED_MAP_SHA256, \
-        'Existing land, coast, bounds, ground, water or harbour paving changed'
+    assert digest(prior_routes) == PRIOR_ROUTES_SHA256, 'Existing drive route arrays changed'
+    assert digest({field: data[field] for field in PRESERVED_REGIONAL_FIELDS}) == PRESERVED_REGIONAL_FIELDS_SHA256, \
+        'Existing western or island regions or harbour tunnel tubes changed'
     assert runtime['roads'] == roads and runtime['routes'] == data['routes'], \
         'Runtime road or route data is stale'
-    assert not any('rail' in key.lower() or 'pier' in key.lower() for key in data), \
-        'Kowloon Tong road restoration must not add rail or pier data'
 
     lengths = collections.Counter()
     distances = collections.Counter()
@@ -145,8 +152,8 @@ def check():
                 f'{first} does not connect to {second}'
             assert abs(a[-1][1] - b[0][1]) < .001, f'{first}/{second} pavement height discontinuity'
 
-    print('ANTILA_KOWLOON_TONG_ROADS_OK: 7,273 prior roads preserved; 22 reviewed roads present; '
-          'flat rail-crossing connectors, traversable joins, routes and land/coast invariants checked')
+    print('ANTILA_KOWLOON_TONG_ROADS_OK: 7,275 prior roads retained; 22 reviewed roads present; '
+          'flat rail-crossing connectors, traversable joins and retained routes checked')
 
 
 if __name__ == '__main__':

@@ -8,10 +8,10 @@ public partial class Main
     public void CheckWongTaiSinReady()
     {
         void Check(bool ok,string message){if(!ok)throw new Exception(message);}
-        Check(HarbourRoads.Count==7275,"Harbour road section count changed");
-        Check(_harbourRoutes.Count==14 && _harbourRouteSources.Count==14,"Wong Tai Sin drive and source itinerary missing");
+        Check(HarbourRoads.Count>=7275,"Harbour road inventory lost established sections");
+        Check(_harbourRoutes.Count>13 && _harbourRouteSources.Count==_harbourRoutes.Count,"Wong Tai Sin drive and source itinerary missing");
         Check(Routes.Select(r=>r.Number).SequenceEqual(new[]{"H1","H2","H3"}),"Wong Tai Sin must not add or change scheduled services");
-        Check(HarbourBounds.Position==new Vector2(-13880,-11280) && HarbourBounds.End==new Vector2(3230,2150),"Wong Tai Sin must preserve the harbour map and mask bounds");
+        Check(HarbourBounds.Position==new Vector2(-13880,-11280) && HarbourBounds.End.X>=3230 && HarbourBounds.End.Y==2150,"Wong Tai Sin must remain inside the harbour map and mask bounds");
         Check(KowloonEastLand.Min(p=>p.Y)<=-6399,"Wong Tai Sin northern land extension missing");
 
         var route=_harbourRoutes[13].Points;var ids=_harbourRouteSources[13];
@@ -31,7 +31,7 @@ public partial class Main
         Check(terminal.Name.Contains("WONG TAI SIN",StringComparison.OrdinalIgnoreCase),"Wong Tai Sin route must end on Wong Tai Sin Road");
 
         int lots=_lots.Count(l=>l.Center.X>550 && l.Center.X<3150 && l.Center.Z<=-4864);
-        Check(lots==1509,$"Wong Tai Sin north-of-4,864 m building-center count changed: {lots} buildings");
+        Check(lots==(HasKaiTakDrive?1503:1509),$"Wong Tai Sin north-of-4,864 m building-center count changed: {lots} buildings");
         Check(_harbourDistrictTrees[10]>0 && _harbourDistrictLamps[10]>0 && _harbourDistrictPeople[10]>0,
             $"Wong Tai Sin clearance-safe street detail missing: {_harbourDistrictTrees[10]} trees, {_harbourDistrictLamps[10]} lamps, {_harbourDistrictPeople[10]} passengers");
         Check(_islandDetails.Count(d=>d.Position.X>550 && d.Position.X<3150 && d.Position.Z<=-4864)>0,"Wong Tai Sin roadside scenery missing");

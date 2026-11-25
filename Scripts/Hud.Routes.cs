@@ -101,7 +101,8 @@ public partial class Hud
             Text("No stops or scoring. Press a key while stopped:",free.Position.X+96,free.Position.Y+57,13,_muted);
             Text("T Tunnel   I Island   J Central   K Nathan   L West",free.Position.X+96,free.Position.Y+80,12,_paper);
             Text("N Lai Chi Kok   B Kwai Chung   U Tsuen Wan",free.Position.X+96,free.Position.Y+95,11,_paper);
-            Text("O Coast   P East   Y Wong Tai Sin",free.Position.X+96,free.Position.Y+108,11,_paper);
+            string kaiTak=Game.HasKaiTakDrive?"   F Kai Tak":"";
+            Text("O Coast   P East   Y Wong Tai Sin"+kaiTak,free.Position.X+96,free.Position.Y+108,11,_paper);
         }
         Panel(620,64,760,756);
         Text($"{route.Number}   {route.Name}",640,98,18);

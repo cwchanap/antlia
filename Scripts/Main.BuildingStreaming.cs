@@ -32,15 +32,17 @@ public partial class Main
     {
         using var manifest=JsonDocument.Parse(FileAccess.GetFileAsString("res://Data/building-chunks.json"));
         if(manifest.RootElement.GetProperty("version").GetInt32()!=1)throw new Exception("Unsupported building chunk manifest");
+        var sources=manifest.RootElement.GetProperty("sources");
+        var rows=manifest.RootElement.GetProperty("chunks");
         var proxies=new Dictionary<string,Dictionary<string,MeshInstance3D>>();
-        foreach(var source in manifest.RootElement.GetProperty("sources").EnumerateArray())
+        foreach(var source in sources.EnumerateArray())
         {
             using var scene=GD.Load<PackedScene>(source.GetProperty("proxy").GetString()!);
             var model=scene.Instantiate<Node3D>();_city.AddChild(model);
             string name=System.IO.Path.GetFileNameWithoutExtension(source.GetProperty("path").GetString()!);
             proxies[name]=model.FindChildren("*","MeshInstance3D",true,false).Cast<MeshInstance3D>().ToDictionary(m=>m.Name.ToString());
         }
-        foreach(var row in manifest.RootElement.GetProperty("chunks").EnumerateArray())
+        foreach(var row in rows.EnumerateArray())
         {
             var min=row.GetProperty("min");var max=row.GetProperty("max");
             var chunk=new BuildingChunk {Id=row.GetProperty("id").GetString()!,Path=row.GetProperty("path").GetString()!,Source=row.GetProperty("source").GetString()!,
@@ -49,8 +51,10 @@ public partial class Main
             chunk.Proxy=proxies[chunk.Source][row.GetProperty("proxy_name").GetString()!.Replace('.','_')];
             _buildingChunks.Add(chunk);
         }
-        if(_buildingChunks.Count!=3170 || _buildingChunks.Select(c=>c.Id).Distinct().Count()!=3170 || proxies.Sum(p=>p.Value.Count)!=3170 ||
-            _buildingChunks.Select(c=>c.Proxy.GetInstanceId()).Distinct().Count()!=3170)
+        int expected=rows.GetArrayLength();
+        if(expected==0 || proxies.Count!=sources.GetArrayLength() || _buildingChunks.Count!=expected ||
+            _buildingChunks.Select(c=>c.Id).Distinct().Count()!=expected || proxies.Sum(p=>p.Value.Count)!=expected ||
+            _buildingChunks.Select(c=>c.Proxy.GetInstanceId()).Distinct().Count()!=expected)
             throw new Exception("Building chunk/proxy inventory changed; regenerate and validate the manifest");
     }
 

@@ -2,9 +2,13 @@
 import bpy
 import json
 import math
+from os import environ
 from pathlib import Path
 
-ROOT = Path('/Users/chanwaichan/workspace/antila')
+project_override = globals().get('ANTILA_ROOT') or environ.get('ANTILA_ROOT')
+if not project_override and not globals().get('__file__'):
+    raise RuntimeError('Set ANTILA_ROOT to the checkout when running through Blender MCP.')
+ROOT = Path(project_override or Path(__file__).resolve().parents[1]).expanduser().resolve()
 ISLAND = globals().get('ISLAND',False)
 NORTH = globals().get('NORTH',False)
 WEST = globals().get('WEST',False)
@@ -157,11 +161,15 @@ def export():
         bpy.context.window.scene = city_scene
         # Keep each offline GLB below 100 MB.
         # Split on an existing 128 m chunk boundary, without changing geometry.
-        for asset in (['hung-hom-buildings','to-kwa-wan-buildings','kowloon-city-buildings','wong-tai-sin-buildings'] if EAST_KOWLOON else [ASSET] if WEST_COAST else ['tsuen-wan-buildings','tsuen-wan-west-buildings','kwai-chung-north-buildings'] if TSUEN_WAN else ['kwai-chung-buildings','kwai-chung-east-buildings','lai-king-buildings'] if KWAI_CHUNG else ['lai-chi-kok-west-buildings','lai-chi-kok-buildings','cheung-sha-wan-buildings'] if NORTHWEST else ['west-kowloon-buildings','tai-kok-tsui-buildings','sham-shui-po-west-buildings','sham-shui-po-east-buildings'] if WEST else ['yau-ma-tei-buildings','mong-kok-buildings'] if NORTH else [ASSET,'central-buildings'] if ISLAND else [ASSET]):
+        for asset in (['hung-hom-buildings','to-kwa-wan-buildings','kowloon-city-buildings','wong-tai-sin-buildings','kai-tak-buildings'] if EAST_KOWLOON else [ASSET] if WEST_COAST else ['tsuen-wan-buildings','tsuen-wan-west-buildings','kwai-chung-north-buildings'] if TSUEN_WAN else ['kwai-chung-buildings','kwai-chung-east-buildings','lai-king-buildings'] if KWAI_CHUNG else ['lai-chi-kok-west-buildings','lai-chi-kok-buildings','cheung-sha-wan-buildings'] if NORTHWEST else ['west-kowloon-buildings','tai-kok-tsui-buildings','sham-shui-po-west-buildings','sham-shui-po-east-buildings'] if WEST else ['yau-ma-tei-buildings','mong-kok-buildings'] if NORTH else [ASSET,'central-buildings'] if ISLAND else [ASSET]):
             bpy.ops.object.select_all(action='DESELECT')
             for obj in city_scene.objects:
                 if EAST_KOWLOON:
-                    district='wong-tai-sin-buildings' if obj.location.y>=4864 else 'hung-hom-buildings' if obj.location.y<2048 else 'to-kwa-wan-buildings' if obj.location.y<3328 else 'kowloon-city-buildings'
+                    if obj.location.y>=4864:district='wong-tai-sin-buildings'
+                    elif obj.location.x>=3328:district='kai-tak-buildings'
+                    elif obj.location.y<2048:district='hung-hom-buildings'
+                    elif obj.location.y<3328:district='to-kwa-wan-buildings'
+                    else:district='kowloon-city-buildings'
                     if asset==district:obj.select_set(True)
                 elif TSUEN_WAN:
                     district='kwai-chung-north-buildings' if obj.location.x >= -5632 else 'tsuen-wan-west-buildings' if obj.location.x < -6784 else 'tsuen-wan-buildings'

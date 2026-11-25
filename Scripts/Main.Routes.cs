@@ -49,7 +49,7 @@ public partial class Main
     public float TripDistance=>Bus.DistanceDriven-_tripDistance;
     public int StopsServed=>StopLog.Count(s=>!s.Missed);
     public int StopsMissed=>StopLog.Count(s=>s.Missed);
-    private static readonly (Key Key,int Drive)[] FreeDriveKeys={(Key.T,0),(Key.I,3),(Key.J,4),(Key.K,5),(Key.L,6),(Key.N,8),(Key.B,9),(Key.U,10),(Key.O,11),(Key.P,12),(Key.Y,13)};
+    private static readonly (Key Key,int Drive)[] FreeDriveKeys={(Key.T,0),(Key.I,3),(Key.J,4),(Key.K,5),(Key.L,6),(Key.N,8),(Key.B,9),(Key.U,10),(Key.O,11),(Key.P,12),(Key.Y,13),(Key.F,KaiTakDriveIndex)};
 
     private static string StreetName(string name)=>string.IsNullOrWhiteSpace(name) || name is "-99" or "<Null>" or "&lt;Null&gt;"?"":name;
 
@@ -221,7 +221,7 @@ public partial class Main
                 {
                     var at=path.At(d-3+p*1.45f,lane-(pole?3.3f:3.8f));
                     string model=new[]{"mei","dennis","family","headphones"}[(p+i)%4];
-                    var passenger=GD.Load<PackedScene>($"res://Assets/Models/passenger_{model}.glb").Instantiate<Node3D>();
+                    var passenger=InstantiateAsset($"passenger_{model}");
                     people.AddChild(passenger);
                     passenger.Position=at+Vector3.Up*.05f;
                     passenger.Rotation=new(0,path.Heading(d)+Mathf.Pi/2+(p%2==0?-.12f:.10f),0);
@@ -321,6 +321,7 @@ public partial class Main
 
     private void StartFreeDrive(int drive)
     {
+        if(drive>=_harbourRoutes.Count)return;
         if(Menu){Menu=Briefing=false;Bus.SetPaused(false);Bus.RestartAudio();}
         StartHarbourDrive(drive);
     }

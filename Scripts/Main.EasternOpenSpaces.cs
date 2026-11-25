@@ -89,7 +89,10 @@ public partial class Main
         var model=_eastRecreation??throw new Exception("Eastern parks must load their sourced recreation surfaces and fittings");
         using var data=JsonDocument.Parse(FileAccess.GetFileAsString("res://Data/east-kowloon-open-spaces.json"));
         var root=data.RootElement;
-        var sittingOutAreas=new[]{"1503005180","1503005170","1503005157","1503005144","1503005135","1503005123","1503005605"};
+        var metadata=root.GetProperty("metadata");
+        bool hasKowloonCity=metadata.GetProperty("source_manifests").EnumerateArray().Any(source=>
+            source.GetProperty("path").GetString()=="Data/kowloon-city-open-spaces-source.geojson");
+        var sittingOutAreas=new[]{"1503005180","1503005170","1503005157","1503005144","1503005135","1503005123","1503005605","1502005648"};
         var expected=new[]{
             "1503005871","1503005901","1503005881","1503005751","1503005870","1503005863","1503005866","1503005714","1910071209",
             "1503005853","1503005716","1503005939","1503005718","1910059822","1503005810","1503005961","1910064509","1503000381",
@@ -97,13 +100,31 @@ public partial class Main
             "1503005535","1503005281","1810014504","1810044652","1503005514","1910056230","1810032161","1910062401","1503005115",
             "1503005152","1810015202","1503005628","1503005422",WonderlandSite,
             "1503005112","1503005184","1503005071","1503005077","1503005450","1503005508",
-            "1503005539","1503005553","1503005688","1503005627","1502005648"
+            "1503005539","1503005553","1503005688","1503005627"
         }.Concat(sittingOutAreas).ToArray();
-        Check(root.GetProperty("sites").EnumerateArray().Select(s=>s.GetProperty("id").GetString()).Order().SequenceEqual(expected.Order()),"All 59 reviewed open spaces must be present");
-        var sourceOutlines=root.GetProperty("surfaces").EnumerateArray().Select(s=>s.GetProperty("source_id").GetString()).Distinct().Count();
-        Check(sourceOutlines==152,"All 152 reviewed source sports outlines must have a rendered recreation surface");
-        var metadata=root.GetProperty("metadata");
-        Check(metadata.GetProperty("source_feature_count").GetInt32()==284 && metadata.GetProperty("source_site_fragment_count").GetInt32()==115 && metadata.GetProperty("source_sport_fragment_count").GetInt32()==169,"The complete 57-site base source fragment inventory must be loaded");
+        var sites=root.GetProperty("sites").EnumerateArray().ToDictionary(site=>site.GetProperty("id").GetString()!);
+        var sportSurfaces=root.GetProperty("surfaces").EnumerateArray().ToArray();
+        if(hasKowloonCity)
+        {
+            var surveyed=new[]{
+                ("1503005642","Carmel Village Street Garden"),
+                ("1503005679","Ho Man Tin Park"),("1503005683","Perth Street Sports Ground"),
+                ("1503005701","Ho Man Tin East Service Reservoir Playground"),("1810022853","Ho Man Tin East Sitting-out Area No. 1")};
+            expected=expected.Concat(surveyed.Select(site=>site.Item1)).ToArray();
+            foreach(var (id,name) in surveyed)
+                Check(sites.TryGetValue(id,out var site) && site.GetProperty("name").GetString()==name,"Missing surveyed recreation site: "+name);
+            foreach(var (id,outline) in new[]{("1503005679","1500002029"),("1503005679","1500002030"),("1503005679","1500004996"),
+                ("1503005683","1500002064"),("1503005683","1500002065"),("1503005683","1500002066"),("1503005683","1810060613"),
+                ("1503005701","1500004997"),("1503005701","1500004998")})
+                Check(sportSurfaces.Any(s=>s.GetProperty("site").GetString()==id && s.GetProperty("source_id").GetString()==outline),
+                    "Missing surveyed recreation surface: "+outline);
+        }
+        Check(sites.Keys.Order().SequenceEqual(expected.Order()),$"All {expected.Length} reviewed open spaces must be present");
+        int sourceOutlines=sportSurfaces.Select(s=>s.GetProperty("source_id").GetString()).Distinct().Count();
+        Check(sourceOutlines==(hasKowloonCity?161:152),"Every reviewed source sports outline must have a rendered recreation surface");
+        Check(metadata.GetProperty("source_feature_count").GetInt32()==(hasKowloonCity?298:284) &&
+            metadata.GetProperty("source_site_fragment_count").GetInt32()==(hasKowloonCity?120:115) &&
+            metadata.GetProperty("source_sport_fragment_count").GetInt32()==(hasKowloonCity?178:169),"The complete source fragment inventory must be loaded");
         var southwest=metadata.GetProperty("supplemental_site_source");
         Check(southwest.GetProperty("feature_count").GetInt32()==193 && southwest.GetProperty("site_fragment_count").GetInt32()==2,
             "Both source-backed southwest waterfront spaces must be loaded");
@@ -144,7 +165,6 @@ public partial class Main
             }
             if(id=="1503005422")Check(fixtures.Length==0,"Cultural Centre piazzas must stay clear for events");
             else if(pavedSittingOut)Check(fixtures.Length>=1,"A compact sitting-out area needs seating: "+id);
-            else if(id=="1502005648")Check(fixtures.Length>=1,"Dorset Crescent Rest Garden needs a clear fixture");
             else if(id!="1503005184" && id!="1503005688")Check(id=="1910062401" || fixtures.Length>=3,"Open space needs usable furniture and planting: "+id);
             Check(garden.GetProperty("access").GetArrayLength()>0,"Eastern park must retain pedestrian entrances: "+id);
             foreach(var prop in fixtures)

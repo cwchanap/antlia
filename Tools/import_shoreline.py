@@ -1,7 +1,8 @@
-"""LandsD iB1000 tiles -> offline West Kowloon or island shore (approximate metres).
+"""Government shoreline data -> offline land polygons (approximate metres).
 
 Run with .venv-geodata/bin/python Tools/import_shoreline.py [--island|--northwest|--kwai-chung|--tsuen-wan|--west-coast|--east-kowloon] [--download].
---download refreshes all requested archives under /tmp; source features and provenance ship in Data.
+--download refreshes the requested archives, or the CEDD Kai Tak supplements
+when --east-kowloon is set. Source features and provenance ship in Data.
 """
 import datetime
 import hashlib
@@ -15,10 +16,12 @@ import zipfile
 from pathlib import Path
 
 from pyproj import Transformer
-from shapely import STRtree, set_precision, union_all
-from shapely.geometry import LineString, Point, Polygon, box, mapping
-from shapely.ops import polygonize, unary_union, linemerge, nearest_points
+from shapely import STRtree, get_parts, make_valid, set_precision, union_all
+from shapely.geometry import LineString, Point, Polygon, box, mapping, shape
+from shapely.ops import polygonize, unary_union, linemerge, nearest_points, transform
 from import_map import ROOT, local, ORIGIN
+from import_open_spaces import replace_outputs
+from import_tunnel import KOWLOON_CITY_NORTH_FILL_BOUNDS
 
 BOUNDS = (-2700, -4800, 650, 50)
 ISLAND = '--island' in sys.argv
@@ -28,10 +31,17 @@ TSUEN_WAN = '--tsuen-wan' in sys.argv
 WEST_COAST = '--west-coast' in sys.argv
 EAST_KOWLOON = '--east-kowloon' in sys.argv
 SOURCE = 'https://portal.csdi.gov.hk/server/rest/services/common/landsd_rcd_1637223748322_25497/FeatureServer/0/query'
+EAST_KOWLOON_BASE_BOUNDS = (550,-6400,3150,-100)
+EAST_KOWLOON_BOUNDS = (550,-6400,4900,-100)
+KAI_TAK_RECLAMATION_BOUNDS = (2750,-3250,3550,-2160)
+KAI_TAK_SEA_FILL_BBOX = (114.196,22.294,114.221,22.353)
+KAI_TAK_SEA_FILL_SOURCE = 'https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/411/query'
+KAI_TAK_RECLAMATION_SOURCE = ('https://portal.csdi.gov.hk/csdi-webpage/file-api?'
+                             'dataset_id=cedd_rcd_1636520962284_7237&format=geojson&layer_name=Coastline')
 BBOX = (114.145, 22.290, 114.175, 22.339)
 RAW = ROOT/'Data/west-kowloon-shoreline.geojson'
 if EAST_KOWLOON:
-    BOUNDS = (550,-6400,3150,-100)
+    BOUNDS = EAST_KOWLOON_BASE_BOUNDS
     BBOX = (114.177,22.295,114.204,22.338)
     RAW = ROOT/'Data/east-kowloon-shoreline.geojson'
 elif ISLAND:
@@ -74,7 +84,86 @@ def connected_rock_outlines(features):
     return base+[f for i,f in enumerate(rocks) if i in selected]
 
 
+def project_polygon(geometry):
+    polygon=transform(lambda longitude, latitude, height=None: local((longitude, latitude)), shape(geometry))
+    if polygon.is_valid:
+        return polygon
+    return union_all([part for part in get_parts(make_valid(polygon)) if part.geom_type in ('Polygon','MultiPolygon')])
+
+
+def fetch_kai_tak_polygons(url, selected):
+    with urllib.request.urlopen(url, timeout=60) as response:
+        payload=response.read()
+    data=json.loads(payload)
+    if data.get('type')!='FeatureCollection' or data.get('exceededTransferLimit') or data.get('error'):
+        raise ValueError('Incomplete Kai Tak coastline source: '+url)
+    features=[feature for feature in data['features'] if selected(feature)]
+    polygons=[project_polygon(feature['geometry']) for feature in features]
+    if not polygons or any(not polygon.is_valid or polygon.geom_type not in ('Polygon','MultiPolygon')
+                           for polygon in polygons):
+        raise ValueError('Missing or invalid Kai Tak coastline polygons: '+url)
+    return {
+        'type':'FeatureCollection',
+        'metadata':{
+            'provider':'Civil Engineering and Development Department, HKSAR Government',
+            'source':url,
+            'retrieved_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            'response_sha256':hashlib.sha256(payload).hexdigest(),
+            'terms':'https://portal.csdi.gov.hk/csdi-webpage/doc/TNC',
+        },
+        'features':features,
+    }
+
+
+def download_kai_tak_extension():
+    raw=json.loads(RAW.read_text())
+    query=dict(f='geojson',geometry=','.join(map(str,KAI_TAK_SEA_FILL_BBOX)),
+               geometryType='esriGeometryEnvelope',inSR=4326,outSR=4326,
+               spatialRel='esriSpatialRelIntersects',where="FEATURECODE='SEF'",
+               outFields='*',returnGeometry='true',orderByFields='OBJECTID')
+    sea_fill=fetch_kai_tak_polygons(
+        KAI_TAK_SEA_FILL_SOURCE+'?'+urllib.parse.urlencode(query),
+        lambda feature: feature['properties']['FEATURECODE']=='SEF' and feature['properties']['DATASTATUS']=='E')
+    sea_fill['metadata']['source_scale']='1:5,000 (source records DATASOURCE 2)'
+    sea_fill['metadata']['bbox_wgs84']=KAI_TAK_SEA_FILL_BBOX
+    reclamation_extent=box(*KAI_TAK_RECLAMATION_BOUNDS)
+    reclamation=fetch_kai_tak_polygons(
+        KAI_TAK_RECLAMATION_SOURCE,
+        lambda feature: project_polygon(feature['geometry']).intersects(reclamation_extent))
+    reclamation['metadata']['source_scale']='1:100,000'
+    reclamation['metadata']['local_clip_bounds']=KAI_TAK_RECLAMATION_BOUNDS
+    # Preserve the complete published iB1000 line inventory that builds the established coast.
+    raw['kai_tak_coast_sources']={'sea_fill':sea_fill,'reclamation':reclamation}
+    if len(sea_fill['features'])!=2 or len(reclamation['features'])!=1:
+        raise ValueError('The reviewed Kai Tak sea-fill and reclamation inventory changed')
+    build(replacement_source=json.dumps(raw,separators=(',',':')).encode('utf-8'))
+
+
+def extend_kai_tak_land(existing, sources):
+    water=union_all([project_polygon(feature['geometry']) for feature in sources['sea_fill']['features']])
+    east_edge=EAST_KOWLOON_BASE_BOUNDS[2]
+    _, north, east, south=EAST_KOWLOON_BOUNDS
+    east_land=box(east_edge,north,east,south).difference(water)
+    retained_land=union_all([existing,east_land])
+    reclamation=union_all([project_polygon(feature['geometry']) for feature in sources['reclamation']['features']])
+    if not reclamation.covers(box(*KOWLOON_CITY_NORTH_FILL_BOUNDS)):
+        raise ValueError('Government mainland polygon does not cover the northern fill')
+    patches=reclamation.intersection(box(*KAI_TAK_RECLAMATION_BOUNDS)).difference(retained_land)
+    runway_approach=Point(3050,-2700)
+    runway_fill=next(part for part in get_parts(patches) if part.covers(runway_approach))
+    combined=retained_land.union(runway_fill)
+    land=next(part for part in get_parts(combined) if part.covers(Point(1200,-2000)))
+    assert land.is_valid and existing.difference(land).area<.001, 'The Kai Tak shore must preserve the existing mainland'
+    assert land.covers(Point(4200,-1360)) and land.covers(runway_approach), 'Kai Tak runway or runway approach is missing'
+    assert not any(land.covers(Point(*p)) for p in [(2600,-2400),(3650,-2210),(4050,-2000),(4700,-1200)]), \
+        'The Kai Tak shoreline must retain the harbour and approach channel'
+    return land
+
+
 def download():
+    if EAST_KOWLOON:
+        download_kai_tak_extension()
+        return
     query=dict(f='json',geometry=','.join(map(str,BBOX)),geometryType='esriGeometryEnvelope',inSR=4326,
                spatialRel='esriSpatialRelIntersects',where='1=1',outFields='*',returnGeometry='false')
     with urllib.request.urlopen(SOURCE+'?'+urllib.parse.urlencode(query),timeout=60) as response:
@@ -118,8 +207,9 @@ def download():
     RAW.write_text(json.dumps(dict(type='FeatureCollection',metadata=metadata,features=features),separators=(',',':')))
 
 
-def build():
-    raw=json.loads(RAW.read_text())
+def build(*, replacement_source=None):
+    source=RAW.read_bytes() if replacement_source is None else replacement_source
+    raw=json.loads(source)
     # The western shore joins the established district at x=-900; eastern TST is retained.
     region=box(*BOUNDS) if ISLAND or NORTHWEST or KWAI_CHUNG or TSUEN_WAN or WEST_COAST or EAST_KOWLOON else box(BOUNDS[0],BOUNDS[1],-900,BOUNDS[3])
     lines=[set_precision(LineString([local(p) for p in f['geometry']['coordinates']]),.001) for f in raw['features']]
@@ -165,15 +255,39 @@ def build():
         # recover the complete polygon edge before simplification and length filtering.
         shore=(land.boundary.difference(region.boundary.buffer(.01)) if WEST_COAST or EAST_KOWLOON else land.boundary.intersection(joined)).simplify(.25)
         if TSUEN_WAN or WEST_COAST or EAST_KOWLOON:links=[p for p in links if p.intersection(shore.buffer(.3)).length>p.length*.8]
+    output_bounds=BOUNDS
+    source_metadata=raw['metadata']
+    if EAST_KOWLOON and 'kai_tak_coast_sources' in raw:
+        sources=raw['kai_tak_coast_sources']
+        land=extend_kai_tak_land(land,sources)
+        output_bounds=EAST_KOWLOON_BOUNDS
+        shore=land.boundary.difference(box(*output_bounds).boundary.buffer(.01)).simplify(.25)
+        source_metadata=source_metadata|{
+            'kai_tak_coast_sources':{key:source['metadata'] for key,source in sources.items()},
+            'kai_tak_processing':(
+                'Keep the established iB1000 land polygon. Extend east with the CEDD sea-fill complement. '
+                'Use the CEDD geological coastline in the bounded runway reclamation where the precise '
+                'sea-fill polygons predate the road. Omit detached land across the approach channel.'
+            ),
+        }
     parts=list(shore.geoms) if hasattr(shore,'geoms') else [shore]
-    output=dict(metadata=raw['metadata']|dict(source_sha256=hashlib.sha256(RAW.read_bytes()).hexdigest(),origin_wgs84=ORIGIN,
+    output=dict(metadata=source_metadata|dict(source_sha256=hashlib.sha256(source).hexdigest(),origin_wgs84=ORIGIN,
                 processing='HK1980 Grid EPSG:2326 northing/easting to WGS84; approximate local metre projection; 1 mm topology grid; coast simplified within 0.25 m. Straight source gaps and map cuts are authored.'+(' Island: pier outlines included, 10 cm topology weld; ferry-terminal and tunnel-mouth joins up to 120 m are explicitly authored.' if ISLAND else ' Eastern Kowloon: source pier outlines included; recorded seawall joins up to 60 m are authored.' if EAST_KOWLOON else ' Tsuen Wan: source pier outlines included; recorded terminal and seawall joins up to 60 m are authored.' if TSUEN_WAN else ' Ting Kau / Sham Tseng: source pier and connected rocky-shore outlines included; recorded joins up to 120 m are authored.' if WEST_COAST else ''),
                 gap_closures=[list(p.coords) for p in links],max_gap_closure_m=max((p.length for p in links),default=0)),
-                bounds=BOUNDS,land=mapping(land),coastline=[list(p.coords) for p in parts if p.length>.5])
-    (ROOT/('Data/east-kowloon-coast.json' if EAST_KOWLOON else 'Data/west-coast-coast.json' if WEST_COAST else 'Data/tsuen-wan-coast.json' if TSUEN_WAN else 'Data/kwai-chung-coast.json' if KWAI_CHUNG else 'Data/island-coast.json' if ISLAND else 'Data/lai-chi-kok-coast.json' if NORTHWEST else 'Data/west-kowloon-coast.json')).write_text(json.dumps(output,separators=(',',':')))
+                bounds=output_bounds,land=mapping(land),coastline=[list(p.coords) for p in parts if p.length>.5])
+    target=ROOT/('Data/east-kowloon-coast.json' if EAST_KOWLOON else 'Data/west-coast-coast.json' if WEST_COAST else 'Data/tsuen-wan-coast.json' if TSUEN_WAN else 'Data/kwai-chung-coast.json' if KWAI_CHUNG else 'Data/island-coast.json' if ISLAND else 'Data/lai-chi-kok-coast.json' if NORTHWEST else 'Data/west-kowloon-coast.json')
+    coast_bytes=json.dumps(output,separators=(',',':')).encode('utf-8')
+    if replacement_source is None:
+        target.write_bytes(coast_bytes)
+    else:
+        replace_outputs([(RAW,source),(target,coast_bytes)])
     print('ANTILA_COAST_OK:',len(raw['features']),'source fragments;',round(land.area),'m² land;',round(shore.length),'m shoreline')
 
 
 if __name__=='__main__':
-    if '--download' in sys.argv:download()
-    build()
+    if '--download' in sys.argv:
+        download()
+        if not EAST_KOWLOON:
+            build()
+    else:
+        build()

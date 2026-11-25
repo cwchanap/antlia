@@ -2,7 +2,9 @@
 import hashlib
 import io
 import json
+import runpy
 import subprocess
+import sys
 import tempfile
 import zipfile
 from pathlib import Path
@@ -10,6 +12,9 @@ from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 import import_shoreline as shore
+import import_map
+import import_open_spaces
+from shapely.geometry import box, mapping, shape
 
 
 def archive_at(easting):
@@ -61,5 +66,83 @@ def check_refresh(island):
           'fresh/revised geometry and provenance; download, ZIP and XML failures preserve prior data')
 
 
+def check_kai_tak_refresh():
+    data=shore.ROOT/'Data'
+    raw_bytes=(data/'east-kowloon-shoreline.geojson').read_bytes()
+    coast_bytes=(data/'east-kowloon-coast.json').read_bytes()
+    supplements=json.loads(raw_bytes)['kai_tak_coast_sources']
+    sea_rows=supplements['sea_fill']['features']
+    mainland_rows=supplements['reclamation']['features']
+    script=Path(shore.__file__)
+
+    with tempfile.TemporaryDirectory() as folder:
+        root=Path(folder)
+        target=root/'Data'
+        target.mkdir()
+        raw=target/'east-kowloon-shoreline.geojson'
+        coast=target/'east-kowloon-coast.json'
+        raw.write_bytes(raw_bytes)
+        coast.write_bytes(coast_bytes)
+
+        def refresh(sea, mainland):
+            def download(url, **kwargs):
+                if url.startswith(shore.KAI_TAK_SEA_FILL_SOURCE+'?'):
+                    features=sea
+                elif url==shore.KAI_TAK_RECLAMATION_SOURCE:
+                    features=mainland
+                else:
+                    raise AssertionError(f'Unexpected request: {url}')
+                return io.BytesIO(json.dumps({'type':'FeatureCollection','features':features}).encode())
+
+            with patch.object(import_map,'ROOT',root), \
+                 patch.object(import_open_spaces,'TARGET',coast), \
+                 patch.object(shore.urllib.request,'urlopen',download), \
+                 patch.object(sys,'argv',[str(script),'--east-kowloon','--download']):
+                runpy.run_path(str(script),run_name='__main__')
+
+        def reject(sea, mainland, expected):
+            try:
+                refresh(sea,mainland)
+            except (AssertionError,ValueError) as error:
+                assert expected in str(error), error
+            else:
+                raise AssertionError(f'Invalid Kai Tak source passed: {expected}')
+            assert (raw.read_bytes(),coast.read_bytes())==(raw_bytes,coast_bytes), \
+                'Rejected Kai Tak refresh altered the saved raw/derived pair'
+
+        # Complete counts and valid geometries can still place the shoreline incorrectly.
+        wrong_sea=[feature|{'geometry':mapping(box(114.218,22.335,114.219,22.336))}
+                   for feature in sea_rows]
+        reject(wrong_sea,mainland_rows,'harbour and approach channel')
+
+        narrowed=shape(mainland_rows[0]['geometry']).intersection(box(114.196,22.300,114.209,22.325))
+        reject(sea_rows,[mainland_rows[0]|{'geometry':mapping(narrowed)}],'northern fill')
+
+        replace=Path.replace
+        def fail_coast_publish(path, destination):
+            if destination==coast:
+                raise OSError('test: cannot replace derived coast')
+            return replace(path,destination)
+
+        with patch.object(Path,'replace',fail_coast_publish):
+            try:
+                refresh(sea_rows,mainland_rows)
+            except OSError as error:
+                assert 'test: cannot replace derived coast' in str(error), error
+            else:
+                raise AssertionError('Derived coast replacement failure must be reported')
+        assert (raw.read_bytes(),coast.read_bytes())==(raw_bytes,coast_bytes), \
+            'Failed publication altered the saved raw/derived pair'
+
+        refresh(sea_rows,mainland_rows)
+        updated_raw=raw.read_bytes()
+        updated_coast=json.loads(coast.read_bytes())
+        assert updated_raw!=raw_bytes and coast.read_bytes()!=coast_bytes
+        assert updated_coast['metadata']['source_sha256']==hashlib.sha256(updated_raw).hexdigest()
+        assert updated_coast['land']==json.loads(coast_bytes)['land']
+    print('ANTILA_KAI_TAK_SHORELINE_REFRESH_OK: same-count rejection, north fill, rollback and linked publication')
+
+
 if __name__=='__main__':
     for island in (False,True):check_refresh(island)
+    check_kai_tak_refresh()

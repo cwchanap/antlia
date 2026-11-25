@@ -2,10 +2,14 @@
 import bpy
 import json
 import math
+from os import environ
 from pathlib import Path
 from mathutils import Vector
 
-ROOT = Path('/Users/chanwaichan/workspace/antila')
+project_override = globals().get('ANTILA_ROOT') or environ.get('ANTILA_ROOT')
+if not project_override and not globals().get('__file__'):
+    raise RuntimeError('Set ANTILA_ROOT to the checkout when running through Blender MCP.')
+ROOT = Path(project_override or Path(__file__).resolve().parents[1]).expanduser().resolve()
 SINGLE_LANE_APPROACHES = {'TD_103438','TD_103954'}
 data = json.loads((ROOT/'Data/cross-harbour.json').read_text())
 previous = bpy.context.window.scene

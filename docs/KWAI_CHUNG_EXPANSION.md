@@ -57,7 +57,7 @@ The new region has **3,422 derived building parts**. Earlier regions are exclude
 .venv-geodata/bin/python Tools/import_buildings.py
 ```
 
-For the reviewed junction refresh, pass the fresh WGS84 CENTERLINE archive to `Tools/import_tunnel.py` without `--hk1980`, then rebuild the cached Kwai Chung layout with `.venv-geodata/bin/python Tools/import_buildings.py --kwai-chung` (no download flag).
+The October 28 junction repair used its WGS84 CENTERLINE archive and rebuilt the bundled Kwai Chung layout with `.venv-geodata/bin/python Tools/import_buildings.py --kwai-chung`. The current importer retains that junction in district mode. [Current regeneration workflow](KOWLOON_CITY_DISTRICT_REVIEW.md#repeat-the-audit)
 
 Through Blender MCP execute `Tools/model_tunnel.py`, then `Tools/model_government_buildings.py` with `KWAI_CHUNG=True` and `NORTHWEST=True` separately. Keep each GLB below 100 MB and preserve `cross-harbour.glb.import`'s compression-disabled setting. Retain old exports for any other region whose rebuilt building/paving arrays are unchanged.
 

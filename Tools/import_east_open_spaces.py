@@ -24,6 +24,7 @@ from import_map import ORIGIN, ROOT, local
 from import_open_spaces import encoded, replace_outputs
 
 SOURCE = ROOT / 'Data/east-kowloon-open-spaces-source.geojson'
+KOWLOON_CITY_SOURCE = ROOT / 'Data/kowloon-city-open-spaces-source.geojson'
 TARGET = ROOT / 'Data/east-kowloon-open-spaces.json'
 SITES = {
     '1503005871': 'Hutchison Park', '1503005901': 'Tai Wan Shan Park',
@@ -161,7 +162,7 @@ SIDE_ROAD_SITE_IDS = frozenset({
 SIT_OUT_SITE_IDS = frozenset({
     '1503005180', '1503005170', '1503005157', '1503005144', '1503005135', '1503005123'
 })
-COMPACT_PLAZA_SITE_IDS = frozenset({'1503005605'})
+COMPACT_PLAZA_SITE_IDS = frozenset({'1503005605', '1502005648'})
 SIT_OUT_BENCH_POSITIONS = {
     '1503005180': ((-771.5, -4000.5), 1),
     '1503005170': ((-856.25, -3897), 1),
@@ -279,7 +280,7 @@ EXPECTED_SPORT_FRAGMENTS = {
     '1500001910': ('11-NW-10C',), '1500001941': ('11-NW-10C',),
     '1500001955': ('11-NW-10A',),
 }
-EXPECTED_SPORTS = frozenset(EXPECTED_SPORT_FRAGMENTS)
+GML_SPORT_IDS = frozenset(EXPECTED_SPORT_FRAGMENTS)
 GATEBALL_IDS = frozenset({'1500001863', '1500001864'})
 EXPECTED_SITE_FRAGMENTS = {
     '1503005714': ('11-NW-10D', '11-NW-15B'),
@@ -333,7 +334,25 @@ EXPECTED_SITE_FRAGMENTS = {
     '1503005605': ('11-NW-10A',),
     '1502005648': ('11-NW-10A', '11-NW-10C'),
 }
+GML_SITE_IDS = frozenset(SITES)
+KOWLOON_CITY_SITES = {
+    '1503005642': ('Carmel Village Street Garden', 3863.01),
+    '1503005679': ('Ho Man Tin Park', 18000.86),
+    '1503005683': ('Perth Street Sports Ground', 19453.47),
+    '1503005701': ('Ho Man Tin East Service Reservoir Playground', 31616.44),
+    '1810022853': ('Ho Man Tin East Sitting-out Area No. 1', 5104.70),
+}
+KOWLOON_CITY_SPORTS = {
+    '1500002029': ('1503005679', 'BAC'), '1500002030': ('1503005679', 'FOF'),
+    '1500004996': ('1503005679', 'BAC'),
+    '1500002064': ('1503005683', 'BAC'), '1500002065': ('1503005683', 'BAC'),
+    '1500002066': ('1503005683', 'FOF'), '1810060613': ('1503005683', 'RAT'),
+    '1500004997': ('1503005701', 'FOF'), '1500004998': ('1503005701', 'FOF'),
+}
+SITES.update({uid: name for uid, (name, _) in KOWLOON_CITY_SITES.items()})
+SITE_AREAS.update({uid: area for uid, (_, area) in KOWLOON_CITY_SITES.items()})
 EXPECTED_SITE_IDS = frozenset(SITES)
+EXPECTED_SPORTS = GML_SPORT_IDS | frozenset(KOWLOON_CITY_SPORTS)
 WESTERN_SITE_COAST = {
     '1910064509': 'west-kowloon', '1503005413': 'lai-chi-kok',
     '1503000390': 'lai-chi-kok', '1503005076': 'west-kowloon',
@@ -367,6 +386,7 @@ SYCAMORE_FOOTBALL_REFERENCE = 'https://www.lcsd.gov.hk/clpss/en/webApp/Facility/
 TUNG_CHAU_REFERENCE = 'https://www.lcsd.gov.hk/en/parks/tcsp/facilities/outdoor.html'
 MAPLE_STREET_REFERENCE = 'https://www.lcsd.gov.hk/en/common/images/en/doc/2020/HAB366E.pdf'
 TAI_HANG_TUNG_PLAN_REFERENCE = 'https://www.lcsd.gov.hk/ls/tender/en/list/forms/LCLSQLRKSSPTHTRG202001_EN.pdf'
+PERTH_FOOTBALL_REFERENCE = 'https://www.lcsd.gov.hk/clpss/en/webApp/Facility/Details.do?did=4&fcid=8&ftid=3'
 HOI_SHAM_REFERENCE = 'https://www.lcsd.gov.hk/clpss/en/webApp/PhoneAddress.do?ftid=42'
 TO_KWA_WAN_REFERENCE = 'https://www.info.gov.hk/gia/general/201306/30/P201306280790_print.htm'
 SOURCE_TO_WGS84 = Transformer.from_crs(2326, 4326, always_xy=True)
@@ -529,10 +549,10 @@ def validate_source_fragments(source):
         raise AssertionError('Government source contains an unexpected layer or sport category')
     site_ids = {str(feature.get('properties', {}).get('SITEID')) for feature in site_features}
     sport_ids = {str(feature.get('properties', {}).get('BUILTSTRUCTUREPOLYGONID')) for feature in sport_features}
-    if site_ids != EXPECTED_SITE_IDS:
-        raise AssertionError(f'Raw source Site IDs differ from reviewed IDs; missing={sorted(EXPECTED_SITE_IDS-site_ids)}; unexpected={sorted(site_ids-EXPECTED_SITE_IDS)}')
-    if sport_ids != EXPECTED_SPORTS:
-        raise AssertionError(f'Raw source sports IDs differ from reviewed IDs; missing={sorted(EXPECTED_SPORTS-sport_ids)}; unexpected={sorted(sport_ids-EXPECTED_SPORTS)}')
+    if site_ids != GML_SITE_IDS:
+        raise AssertionError(f'Raw source Site IDs differ from reviewed IDs; missing={sorted(GML_SITE_IDS-site_ids)}; unexpected={sorted(site_ids-GML_SITE_IDS)}')
+    if sport_ids != GML_SPORT_IDS:
+        raise AssertionError(f'Raw source sports IDs differ from reviewed IDs; missing={sorted(GML_SPORT_IDS-sport_ids)}; unexpected={sorted(sport_ids-GML_SPORT_IDS)}')
     expected_sites = Counter((site_id, tile) for site_id, tiles in EXPECTED_SITE_FRAGMENTS.items()
                              for tile in tiles)
     actual_sites = fragment_counter(features, 'Site', 'SITEID')
@@ -548,11 +568,58 @@ def validate_source_fragments(source):
                              repr(sorted((expected_sports-actual_sports).elements())) +
                              '; unexpected=' + repr(sorted((actual_sports-expected_sports).elements())))
     if len(features) != 284:
-        raise AssertionError('The reviewed source must contain exactly 270 Site and sport fragments')
+        raise AssertionError('The reviewed source must contain exactly 284 Site and sport fragments')
     metadata = raw.get('metadata', {})
-    if set(metadata.get('site_revisions', {})) != EXPECTED_SITE_IDS or \
-            set(metadata.get('sports_revisions', {})) != EXPECTED_SPORTS:
+    if set(metadata.get('site_revisions', {})) != GML_SITE_IDS or \
+            set(metadata.get('sports_revisions', {})) != GML_SPORT_IDS:
         raise AssertionError('Government source is missing complete Site or sports revision provenance')
+    return raw
+
+
+def combined_source(source):
+    raw = validate_source_fragments(source)
+    payload = KOWLOON_CITY_SOURCE.read_bytes()
+    survey = json.loads(payload)
+    metadata = survey['metadata']
+    if survey['type'] != 'FeatureCollection' or metadata['source_crs'] != 'EPSG:4326':
+        raise ValueError('Expected the Kowloon City WGS84 survey extract')
+    sites, sports = {}, {}
+    for feature in survey['features']:
+        props = feature['properties']
+        if props['STATUS'] != 'E' or not isinstance(props['LASTUPDATEDATE'], int):
+            raise ValueError('Invalid Kowloon City survey status or revision date')
+        if props['layer'] == 'Site':
+            target, key = sites, 'SITEID'
+        elif props['layer'] == 'BuiltStructurePolygon':
+            target, key = sports, 'BUILTSTRUCTUREPOLYGONID'
+        else:
+            raise ValueError('Unexpected Kowloon City survey layer')
+        uid = str(props[key])
+        if uid in target:
+            raise ValueError('Duplicate Kowloon City survey ID: ' + uid)
+        props[key] = uid
+        target[uid] = feature
+    if sites.keys() != KOWLOON_CITY_SITES.keys() or sports.keys() != KOWLOON_CITY_SPORTS.keys():
+        raise ValueError('Incomplete reviewed Kowloon City recreation survey')
+    labels = {str(row['site_id']): row['annotation'] for row in metadata['site_annotations']}
+    if labels.keys() != sites.keys() or len(labels) != len(metadata['site_annotations']):
+        raise ValueError('Missing surveyed Kowloon City site annotations')
+    for uid, annotation in labels.items():
+        text = ' '.join(annotation['properties']['TEXTSTRING'].split())
+        expected_text = 'Homantin East Sitting-out Area No.1' if uid == '1810022853' else KOWLOON_CITY_SITES[uid][0]
+        if text != expected_text or not shape(sites[uid]['geometry']).covers(shape(annotation['geometry'])):
+            raise ValueError('Kowloon City annotation no longer identifies its site: ' + uid)
+    for uid, (site_id, usage) in KOWLOON_CITY_SPORTS.items():
+        feature = sports[uid]
+        if feature['properties']['USAGETYPE'] != usage or \
+                not source_local(sites[site_id]).covers(source_local(feature)):
+            raise ValueError('Kowloon City sports outline differs from the reviewed site: ' + uid)
+    raw['features'].extend(survey['features'])
+    raw['metadata']['site_revisions'].update({uid: [f['properties']['LASTUPDATEDATE']] for uid, f in sites.items()})
+    raw['metadata']['sports_revisions'].update({uid: [f['properties']['LASTUPDATEDATE']] for uid, f in sports.items()})
+    raw['metadata']['source_manifests'].append({'path': str(KOWLOON_CITY_SOURCE.relative_to(ROOT)),
+        'source': metadata['source'], 'sha256': hashlib.sha256(payload).hexdigest(),
+        'retrieved_utc': metadata['retrieved_utc']})
     return raw
 
 
@@ -576,7 +643,7 @@ def source_ring(element):
 
 def parse_polygon(item, tile, layer):
     props = {e.tag.split('}')[-1]: e.text for e in item if e.tag.startswith('{' + NS['f'] + '}')}
-    if layer == 'Site' and props.get('SITEID') not in SITES:
+    if layer == 'Site' and props.get('SITEID') not in GML_SITE_IDS:
         return []
     if layer == 'BuiltStructurePolygon' and props.get('USAGETYPE') not in KINDS:
         return []
@@ -663,8 +730,8 @@ def extract(cache, manifest_path):
         if feature['properties']['layer'] == 'Site':
             uid = feature['properties']['SITEID']
             sites[uid].append(source_local(feature))
-    if set(sites) != set(SITES):
-        raise ValueError('Incomplete source Site geometry: ' + ', '.join(sorted(set(SITES) - set(sites))))
+    if set(sites) != GML_SITE_IDS:
+        raise ValueError('Incomplete source Site geometry: ' + ', '.join(sorted(GML_SITE_IDS - sites.keys())))
     land, region = regional_land()
     site_geometries = {uid: union_all(parts).intersection(land).intersection(region) for uid, parts in sites.items()}
     site_union = union_all(list(site_geometries.values()))
@@ -679,7 +746,7 @@ def extract(cache, manifest_path):
 
     site_revisions = {uid: sorted({f['properties'].get('LASTUPDATEDATE') for f in source_features
                                    if f['properties']['layer'] == 'Site' and f['properties']['SITEID'] == uid})
-                      for uid in SITES}
+                      for uid in SITES if uid in GML_SITE_IDS}
     sport_revisions = {uid: sorted({f['properties'].get('LASTUPDATEDATE') for f in source_features
                                     if f['properties']['layer'] == 'BuiltStructurePolygon' and
                                     f['properties']['BUILTSTRUCTUREPOLYGONID'] == uid})
@@ -896,8 +963,7 @@ def path_network(site_id, site, safe, sports, street_targets, carriageways, land
     path_parts = []
     access_parts = []
     if site_id in SIT_OUT_SITE_IDS | COMPACT_PLAZA_SITE_IDS:
-        # These surveyed sitting-out plots and Cornwall Street/Ede Road Garden are narrow paved
-        # spaces, not parks with room for a 4 m inset path loop. Preserve their safe walkable ground.
+        # Compact surveyed plots have room for shared paving and seating on their safe ground.
         path_parts.extend(part for part in geometry_polygons(free) if part.area >= 5)
         linework.extend(LineString(ring.coords) for part in path_parts
                         for ring in (part.exterior, *part.interiors))
@@ -1138,13 +1204,58 @@ def football_style(site_id, source_id, source_area):
         return 'field', 'LCSD lists three turf football pitches at Kowloon Tsai Park.'
     if source_id in ('1500001702', '1500001703'):
         return 'court', 'LCSD lists five-a-side football at Hoi Sham Park.'
+    if source_id == '1500002030':
+        return 'court', 'LCSD identifies the Ho Man Tin Park pitch as hard-surface.'
+    if source_id == '1500002066':
+        return 'court', 'LCSD identifies the smaller Perth Street pitch outside the running track as hard-surface.'
     if source_id in ('1500001706', '1500002363', '1500001698', '1500001699', '1500001652') and source_area < 4000:
         return 'court', 'Small iB1000 FOF surfaces are styled as hard football courts; surface finish is an authored approximation.'
     return 'field', 'iB1000 FOF source geometry retained; field finish is an authored approximation.'
 
 
+def sport_fitting_rectangle(poly, source_id):
+    rectangle = poly.minimum_rotated_rectangle
+    if poly.area / rectangle.area <= .9:
+        return None
+    kent_court = source_id == '1500001941'
+    inset = rectangle.buffer(-(.5 if kent_court else .2), join_style='mitre')
+    if not poly.covers(inset):
+        return None
+    if kent_court:
+        return inset
+    if source_id in KOWLOON_CITY_SPORTS and not poly.covers(rectangle):
+        close_fit = rectangle.buffer(-.02, join_style='mitre')
+        return close_fit if poly.covers(close_fit) else inset
+    return rectangle
+
+
+def trim_reservoir_paving(layout):
+    site_id = '1503005701'
+    garden = next(garden for garden in layout['gardens'] if garden['site'] == site_id)
+    entrance = union_all([Polygon(rings[0], rings[1:]) for rings in garden['access']])
+    paths = [Polygon(rings[0], rings[1:]) for rings in garden['paths']]
+    # The far court-side strips are too small and disconnected from the retained paths and entry.
+    detached = [path for path in paths if path.area < 80 and path.disjoint(entrance)]
+    if not detached:
+        return
+    removed = union_all(detached)
+    garden['paths'] = [rings for rings, path in zip(garden['paths'], paths) if path not in detached]
+    garden['samples'] = [sample for sample in garden['samples'] if not removed.covers(Point(sample))]
+    garden['paving_area_m2'] = round(union_all([entrance, *(path for path in paths if path not in detached)]).area, 2)
+
+    xmin, zmin, xmax, zmax = removed.bounds
+    layout['paving'] = [triangle for triangle in layout['paving']
+                        if not (xmin <= triangle[0][0] <= xmax and zmin <= triangle[0][1] <= zmax
+                                and removed.covers(Polygon(triangle).representative_point()))]
+    layout['fixtures'] = [fixture for fixture in layout['fixtures']
+                          if not (fixture['site'] == site_id and fixture['asset'] == 'bench' and
+                                  removed.distance(Point(fixture['position'])) <= fixture['radius'] + 1.8)]
+    site = next(site for site in layout['sites'] if site['id'] == site_id)
+    site['fixtures'] = sum(fixture['site'] == site_id for fixture in layout['fixtures'])
+
+
 def build(source):
-    raw = validate_source_fragments(source)
+    raw = combined_source(source)
     inputs, lots, roads, prop_roads, land, street_targets, carriageways, ground, west_regions, \
         pavement_patches, paving_margin = safe_site_polygons(include_southwest_landmarks=False)
     district_roads = json.loads((ROOT / 'Data/nathan-road.json').read_text())
@@ -1212,6 +1323,7 @@ def build(source):
     path_component_rejections = []
     global_fixture_points = []
     source_sport_ids = set()
+    clearance_by_region = {}
     for uid, name in SITES.items():
         site = sites[uid]
         site_regions[uid] = site_road_scope(uid, site, site_regions[uid], district_roads)
@@ -1223,7 +1335,10 @@ def build(source):
         near_landmarks = site.distance(southwest_lots) <= 256 + paving_margin
         site_lots = all_lots if near_landmarks else lots
         site_building_clearance = full_building_clearance if near_landmarks else building_clearance
-        safe = make_valid(site.difference(union_all([site_building_clearance, site_roads])))
+        clearance_key = (near_landmarks, id(site_roads))
+        if clearance_key not in clearance_by_region:
+            clearance_by_region[clearance_key] = union_all([site_building_clearance, site_roads])
+        safe = make_valid(site.difference(clearance_by_region[clearance_key]))
         minimum_safe_area = 50 if uid in SIT_OUT_SITE_IDS else 100
         if safe.is_empty or safe.area < minimum_safe_area:
             raise ValueError('Building and road clearance removed the usable area: ' + uid)
@@ -1263,17 +1378,9 @@ def build(source):
                                      rings=geometry_rings(part), triangles=polygon_triangles(part),
                                      sample=[sample.x, sample.y]))
             # The Blender script receives only intact, source-contained rectangles.
-            if clipped.symmetric_difference(poly.intersection(site)).area < .01 and site.covers(poly) and safe.covers(poly):
-                rectangle = poly.minimum_rotated_rectangle
-                fitting_inset = .5 if source_id == '1500001941' else .2
-                if poly.area / rectangle.area > .9 and props['USAGETYPE'] != 'RAT' and poly.covers(rectangle.buffer(-fitting_inset, join_style='mitre')):
-                    # Kent Road Garden's BAC outline has clipped corners that make its minimum
-                    # rectangle extend outside the surveyed surface. Trim this fitting to the
-                    # largest known fully-contained inset; leave the source surface untouched.
-                    fitting = (rectangle.buffer(-fitting_inset, join_style='mitre')
-                               if source_id == '1500001941' else rectangle)
-                    if source_id == '1500001941' and (fitting.is_empty or not poly.covers(fitting)):
-                        raise ValueError('Sport fitting is not contained in its source polygon: ' + source_id)
+            if props['USAGETYPE'] != 'RAT' and clipped.symmetric_difference(poly.intersection(site)).area < .01 and site.covers(poly) and safe.covers(poly):
+                fitting = sport_fitting_rectangle(poly, source_id)
+                if fitting is not None:
                     coords = list(fitting.exterior.coords)[:-1]
                     if math.dist(coords[0], coords[1]) > math.dist(coords[1], coords[2]):
                         coords = coords[1:] + coords[:1]
@@ -1365,8 +1472,10 @@ def build(source):
                                   yaw=0, radius=radius, scale=scale))
             global_fixture_points.append((point, radius))
         if uid in COMPACT_PLAZA_SITE_IDS:
-            # Cornwall Street/Ede Road Garden is too narrow for an inset loop. Treat its safe
-            # ground as a small plaza and place furniture only where a full walking ring fits.
+            # Fit furniture only where the paved ground can still support a walking ring.
+            # Dorset's street buffers overlap the plot. The site clearance already reserves
+            # 3.5 m beyond each surface carriageway, enough for compact seating here.
+            compact_road_clearance = site_roads if uid == '1502005648' else site_prop_roads
             candidates = []
             for part in geometry_polygons(paths):
                 boundary = LineString(part.exterior.coords)
@@ -1391,7 +1500,7 @@ def build(source):
                         continue
                     if any(point.distance(Point(sample)) < minimum_distance for sample in path_samples):
                         continue
-                    if access.distance(point) < 2.15 or site_prop_roads.distance(point) < radius:
+                    if access.distance(point) < 2.15 or compact_road_clearance.distance(point) < radius:
                         continue
                     separation = 4 if asset == 'bench' else 2
                     if any(point.distance(existing) < radius + existing_radius + separation
@@ -1439,10 +1548,11 @@ def build(source):
         'references': [HOI_SHAM_REFERENCE, TO_KWA_WAN_REFERENCE, FOOTBALL_REFERENCE,
                        KGV_FOOTBALL_REFERENCE, SYCAMORE_FOOTBALL_REFERENCE,
                        TUNG_CHAU_REFERENCE, MAPLE_STREET_REFERENCE,
-                       TAI_HANG_TUNG_PLAN_REFERENCE],
+                       TAI_HANG_TUNG_PLAN_REFERENCE, PERTH_FOOTBALL_REFERENCE],
         'hard_football_ids': ['1500001702', '1500001703', '1500001706', '1500002363',
                              '1500001698', '1500001699', '1500001652', '1500001948', '1500001949',
-                             '1500001977', '1500002075', '1500002078', '1500002094', '1500002093'],
+                             '1500001977', '1500002075', '1500002078', '1500002094', '1500002093',
+                             '1500002030', '1500002066'],
         'turf_football_ids': ['1500001881', '1500001883', '1500001874'],
         'gateball_ids': sorted(GATEBALL_IDS)
     }
@@ -1456,12 +1566,12 @@ def build(source):
                     tile_manifest_sha256=source_metadata['tile_manifest_sha256'],
                     source_manifests=source_metadata['source_manifests'], source_tiles=source_metadata['tiles'],
                     source_feature_count=len(raw['features']),
-                    source_site_fragment_count=sum(len(tiles) for tiles in EXPECTED_SITE_FRAGMENTS.values()),
-                    source_sport_fragment_count=sum(len(tiles) for tiles in EXPECTED_SPORT_FRAGMENTS.values()),
+                    source_site_fragment_count=sum(len(tiles) for tiles in EXPECTED_SITE_FRAGMENTS.values()) + len(KOWLOON_CITY_SITES),
+                    source_sport_fragment_count=sum(len(tiles) for tiles in EXPECTED_SPORT_FRAGMENTS.values()) + len(KOWLOON_CITY_SPORTS),
                     known_wip_annotations=raw['metadata']['known_wip_annotations'],
                     western_path_component_rejections=path_component_rejections,
                     source_classification=classification,
-                    note='Fifty-nine source-bounded Kowloon and western New Territories open spaces. Salisbury Garden and Tsim Sha Tsui Promenade are scoped to current shared ground support. Source sports are clipped clear of current building layouts and roads. Paths, access, paving, planting, benches, planters and surface finish are authored approximations; source dates do not establish current access or venue status.')
+                    note='Source-bounded Kowloon and western New Territories open spaces. The Kowloon City records come from CEDD’s iB1000 service. Salisbury Garden and Tsim Sha Tsui Promenade are scoped to current shared ground support. Source sports are clipped clear of current building layouts and roads. Paths, access, paving, planting, benches, planters and surface finish are authored approximations; source dates do not establish current access or venue status.')
     output = {'metadata': metadata, 'bounds': [min_x, min_z, max_x - min_x, max_z - min_z],
               'sites': sites_out, 'surfaces': surfaces, 'paving': paving, 'fixtures': fixtures,
               'sports': sports, 'gardens': gardens, 'play_areas': []}
@@ -1472,14 +1582,17 @@ def build(source):
         road_hard=west_regions['west-kowloon'][0],
         street_targets=west_regions['west-kowloon'][3],
         district_roads=district_roads, inputs_sha256=inputs)
+    trim_reservoir_paving(output)
     return encoded(output)
 
 
 def validate_layout(source, target):
     from import_southwest_public_spaces import SITE_NAMES, validate_southwest_public_spaces
 
-    raw = validate_source_fragments(source)
+    raw = combined_source(source)
     data = json.loads(target)
+    if data['metadata'].get('source_manifests') != raw['metadata']['source_manifests']:
+        raise AssertionError('Derived open spaces do not match their supplemental survey provenance')
     layout_sports = {str(surface.get('source_id')) for surface in data.get('surfaces', [])}
     if layout_sports != EXPECTED_SPORTS:
         raise AssertionError(f'Derived surfaces differ from reviewed source IDs; missing={sorted(EXPECTED_SPORTS-layout_sports)}; unexpected={sorted(layout_sports-EXPECTED_SPORTS)}')
@@ -1579,8 +1692,8 @@ def validate_layout(source, target):
     _, lots, _, _, _, _, _, ground, west_regions, _, _ = safe_site_polygons()
     roads, _, _, street_targets, _ = west_regions['west-kowloon']
     validate_southwest_public_spaces(data, ROOT / 'Data/southwest-public-spaces-source.geojson', ground, lots, roads, street_targets)
-    site_fragments = sum(len(tiles) for tiles in EXPECTED_SITE_FRAGMENTS.values())
-    sport_fragments = sum(len(tiles) for tiles in EXPECTED_SPORT_FRAGMENTS.values())
+    site_fragments = sum(len(tiles) for tiles in EXPECTED_SITE_FRAGMENTS.values()) + len(KOWLOON_CITY_SITES)
+    sport_fragments = sum(len(tiles) for tiles in EXPECTED_SPORT_FRAGMENTS.values()) + len(KOWLOON_CITY_SPORTS)
     print(f'ANTILA_EAST_OPEN_SPACE_DATA_OK: {len(data["sites"])} government sites; '
           f'{site_fragments} Site fragments; {len(EXPECTED_SPORTS)} source sports across {sport_fragments} sheet fragments; '
           f'{len(data["surfaces"])} rendered surfaces; {len(data["sports"])} intact rectangle fittings; '
@@ -1646,7 +1759,8 @@ def refresh(cache=None, manifest=None, source_path=SOURCE, target_path=TARGET):
         current_metadata=json.loads(layout)['metadata']
         previous_metadata=json.loads(previous).get('metadata',{})
         if previous_metadata.get('source_sha256')==current_metadata['source_sha256'] and \
-                previous_metadata.get('inputs_sha256')==current_metadata['inputs_sha256']:
+                previous_metadata.get('inputs_sha256')==current_metadata['inputs_sha256'] and \
+                previous_metadata.get('source_manifests')==current_metadata['source_manifests']:
             layout=preserve_unchanged_park_layouts(layout,previous)
     validate_layout(source, layout)
     outputs = ([(source_path, source)] if cache is not None else []) + [(target_path, layout)]

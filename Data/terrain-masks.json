@@ -10,7 +10,7 @@
     "height": 8076,
     "format": "Rgb8",
     "mipLevels": 14,
-    "sha256": "BECA875BF49F2CAC88A1C47833ABD1FCF33A3A1AEF97C6E7DA01F808BAF19AF0"
+    "sha256": "7270EFA3D376EB7ECB98BE041C892FEB70B345CCC5332B9F2FC09AC69233CBB3"
   },
   "surface_mask": {
     "bounds": [
@@ -29,13 +29,13 @@
     "bounds": [
       -13880,
       -11280,
-      17110,
+      18860,
       13430
     ],
-    "width": 9246,
-    "height": 7258,
+    "width": 9707,
+    "height": 6912,
     "format": "Rgb8",
     "mipLevels": 14,
-    "sha256": "AB5550A292B8A8AFD1B10156D0E9E8A57B27C3209EE35701C5F29CFB13F59CFB"
+    "sha256": "88E398E24A0482CEEFF5DA7CF7330B85916364B2B245D497FCDC5B99FE48319E"
   }
 }

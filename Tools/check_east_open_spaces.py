@@ -1,4 +1,4 @@
-"""Offline geometry and rejected-refresh checks. Pass CACHE_DIR MANIFEST_JSON."""
+"""Check recreation data with --bundled or pass CACHE_DIR MANIFEST_JSON."""
 import hashlib
 import io
 import json
@@ -50,7 +50,7 @@ KOWLOON_TONG_SITE_NAMES={
 KOWLOON_TONG_COURT_SITES={
     '1500001910':'1503005539', '1500001941':'1503005553', '1500001955':'1503005688',
 }
-CORNWALL_PARK_SITE_ID='1503005508'
+CLEARANCE_REBUILT_SITE_IDS={'1503005508','1502005648'}
 BENCH_RELAYOUT_SITE_IDS={
     '1503000199','1503000381','1503000390','1503000414','1503005076',
     '1503005535','1503005714','1503005718','1503005853','1503005863',
@@ -67,10 +67,11 @@ GROUND_CLIPPED_ACCESS_SITE_ID='1910071209'
 
 def check(cache,manifest_path,preservation_baseline=None):
     check_touching_paving()
-    for path in (importer.SOURCE,importer.TARGET):
+    check_supplemental_fixture_refresh()
+    for path in (importer.SOURCE,importer.KOWLOON_CITY_SOURCE,importer.TARGET):
         assert path.is_file(),'Missing eastern recreation data: '+str(path)
     source=importer.SOURCE.read_bytes();target=importer.TARGET.read_bytes()
-    raw=json.loads(source);data=json.loads(target)
+    raw=importer.combined_source(source);data=json.loads(target)
     site_ids={site['id'] for site in data['sites']}
     source_site_ids={str(feature.get('properties',{}).get('SITEID'))
         for feature in raw['features'] if feature.get('properties',{}).get('layer')=='Site'}
@@ -78,7 +79,11 @@ def check(cache,manifest_path,preservation_baseline=None):
         for feature in raw['features'] if feature.get('properties',{}).get('layer')=='BuiltStructurePolygon'}
     assert len(WESTERN_SITE_IDS)==40 and WESTERN_SITE_IDS<=source_site_ids and WESTERN_SITE_IDS<=site_ids,'Western source sites missing from the integrated source/layout: '+repr(sorted(WESTERN_SITE_IDS-(source_site_ids&site_ids)))
     assert len(NEW_SPORT_IDS)==81 and NEW_SPORT_IDS<=sport_ids,'Western source sports missing from the integrated source: '+repr(sorted(NEW_SPORT_IDS-sport_ids))
-    assert site_ids==importer.EXPECTED_SITE_IDS|{'1503005422','1910058892'} and len(sport_ids)==152,'Combined inventory must contain 57 source sites plus two supplemental southwest spaces, and 152 unique sports IDs'
+    assert site_ids==importer.EXPECTED_SITE_IDS|{'1503005422','1910058892'} and len(sport_ids)==161,'Expected 62 surveyed sites plus two supplemental southwest spaces, and 161 unique sports IDs'
+    survey_sports={(surface['source_id'],surface['site'],surface['usage']) for surface in data['surfaces']
+                    if surface['source_id'] in importer.KOWLOON_CITY_SPORTS}
+    assert survey_sports=={(uid,site,usage) for uid,(site,usage) in importer.KOWLOON_CITY_SPORTS.items()},\
+        'A Kowloon City sport outline is missing or assigned to the wrong site'
     assert {uid:site['name'] for uid,site in ((s['id'],s) for s in data['sites']) if uid in KOWLOON_TONG_SITE_NAMES}==KOWLOON_TONG_SITE_NAMES,\
         'A reviewed Kowloon Tong site is missing or mislabeled'
     court_sites={surface['source_id']:surface['site'] for surface in data['surfaces']
@@ -88,9 +93,11 @@ def check(cache,manifest_path,preservation_baseline=None):
                     if fitting['source_id'] in KOWLOON_TONG_COURT_SITES}
     assert {uid:fitting['site'] for uid,fitting in court_fittings.items()}==KOWLOON_TONG_COURT_SITES,\
         'A Kowloon Tong basketball court is missing its fitted recreation model'
-    for source_id,fitting in court_fittings.items():
-        if source_id!='1500001941':
-            continue
+    cedd_fittings={fitting['source_id']:fitting for fitting in data['sports']
+                   if fitting['source_id'] in importer.KOWLOON_CITY_SPORTS}
+    assert {'1500002030','1500004996'}<=cedd_fittings.keys(),'Ho Man Tin Park lost its two source-backed fittings'
+    checked_fittings={'1500001941':court_fittings['1500001941']} | cedd_fittings
+    for source_id,fitting in checked_fittings.items():
         cx,cz=fitting['center'];fx,fz=fitting['forward'];rx,rz=fz,-fx
         half_width=fitting['width']/2;half_length=fitting['length']/2
         rectangle=importer.Polygon([
@@ -103,8 +110,9 @@ def check(cache,manifest_path,preservation_baseline=None):
             importer.Polygon(surface['rings'][0],surface['rings'][1:])
             for surface in data['surfaces'] if surface['source_id']==source_id
         ])
-        assert rectangle.difference(source_surface).area<=.01,\
-            'A Kowloon Tong fitted court extends outside its surveyed surface: '+source_id
+        tolerance=.01 if source_id=='1500001941' else 1e-6
+        assert rectangle.difference(source_surface).area<=tolerance,\
+            'A fitted court extends outside its surveyed surface: '+source_id
     kent=court_fittings['1500001941']
     assert abs(kent['width']-14.018553)<.001 and abs(kent['length']-25.379270)<.001,\
         'Kent Road Garden fitting lost its source-contained 0.5m inscribed rectangle'
@@ -125,8 +133,8 @@ def check(cache,manifest_path,preservation_baseline=None):
         importer.Point(f['position']).buffer(f['radius']).intersects(tung_chau_shell)
         for f in data['fixtures'] if f['site']=='1503005112'),\
         'Tung Chau Street Park fixture circle enters building 214665 outer shell'
-    assert len(raw['features'])==284 and data['metadata']['source_feature_count']==284,'Expected 284 exact Site and sport source fragments'
-    assert data['metadata']['source_site_fragment_count']==115 and data['metadata']['source_sport_fragment_count']==169,'Source fragment counts changed'
+    assert len(raw['features'])==298 and data['metadata']['source_feature_count']==298,'Expected 298 exact Site and sport source records'
+    assert data['metadata']['source_site_fragment_count']==120 and data['metadata']['source_sport_fragment_count']==178,'Source record counts changed'
     if preservation_baseline is not None:
         check_preservation(Path(preservation_baseline),raw,data)
     for uid,point in [('1503005881',(1989.2677387146189,-2149.3834432934027)),
@@ -151,11 +159,15 @@ def check(cache,manifest_path,preservation_baseline=None):
     assert all(not importer.Point(f['position']).buffer(f['radius']).intersects(tracks)
         for f in data['fixtures']),'Authored furniture or planting enters the running-track infield'
     assert data['metadata']['source_sha256']==hashlib.sha256(source).hexdigest()
+    assert data['metadata']['source_manifests']==raw['metadata']['source_manifests'],'Stale supplemental survey provenance'
     for name,digest in data['metadata']['inputs_sha256'].items():
         assert hashlib.sha256((importer.ROOT/name).read_bytes()).hexdigest()==digest,'Stale clearance input: '+name
     manifest=json.loads(manifest_path.read_bytes())
     manifest_bytes=manifest_path.read_bytes()
-    assert raw['metadata']['tile_manifest_sha256']==hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    assert raw['metadata']['tile_manifest_sha256']==hashlib.sha256(manifest_bytes).hexdigest()
+    if cache is None:
+        print(f'ANTILA_EAST_OPEN_SPACE_BUNDLED_OK: {len(site_ids)} sites; {len(sport_ids)} sports; geometry and input hashes verified')
+        return
     rejected=[]
     saved_source_rejections=0
     with tempfile.TemporaryDirectory(prefix='antila-east-check-') as directory:
@@ -309,7 +321,45 @@ def check(cache,manifest_path,preservation_baseline=None):
             reject('missing_derived_sport_id_1500001703',manifest,'Derived surfaces differ from reviewed source IDs')
         run(manifest)
         assert saved_source.read_bytes()==source and saved_target.read_bytes()==target,'Complete rebuild is not deterministic'
-    print(f'ANTILA_EAST_OPEN_SPACE_REFRESH_OK: {len(site_ids)} sites across {data["metadata"]["source_site_fragment_count"]} Site fragments; {len(sport_ids)} source sports across {data["metadata"]["source_sport_fragment_count"]} sheet fragments; complete deterministic rebuild; {len(rejected)+saved_source_rejections} rejected cases ({len(rejected)} ZIP refreshes, {saved_source_rejections} direct saved-source rebuilds); outputs preserved')
+    print(f'ANTILA_EAST_OPEN_SPACE_REFRESH_OK: {len(site_ids)} sites across {data["metadata"]["source_site_fragment_count"]} Site records; {len(sport_ids)} source sports across {data["metadata"]["source_sport_fragment_count"]} survey records; complete deterministic rebuild; {len(rejected)+saved_source_rejections} rejected cases ({len(rejected)} ZIP refreshes, {saved_source_rejections} direct saved-source rebuilds); outputs preserved')
+
+
+def check_supplemental_fixture_refresh():
+    uid = '1503005679'
+    ring = [[0,0],[12,0],[12,12],[0,12]]
+    manifest = {'path':'Data/kowloon-city-open-spaces-source.geojson','sha256':'1'*64}
+
+    def layout(supplemental_manifest, fixture_position):
+        return importer.encoded({
+            'metadata':{'source_sha256':'2'*64,'inputs_sha256':{'Data/cross-harbour.json':'3'*64},
+                        'source_manifests':[supplemental_manifest]},
+            'sites':[{'id':uid,'name':'Ho Man Tin Park','bounds':[0,0,12,12],
+                      'source_area_m2':144,'fixtures':1}],
+            'gardens':[{'site':uid,'rings':[[ring]],'paths':[[ring]],'access':[],
+                        'samples':[[6,6]]}],
+            'fixtures':[{'site':uid,'asset':'bench','position':fixture_position}],
+            'surfaces':[],'sports':[],'paving':[]})
+
+    old_position = [2,2]
+    new_position = [9,9]
+    with tempfile.TemporaryDirectory(prefix='antila-supplemental-fixture-check-') as directory:
+        source_path = Path(directory)/'source.geojson'
+        source_path.write_bytes(b'fixture refresh uses a mocked geodata build')
+        target_path = Path(directory)/'layout.json'
+        for current_manifest, expected_position in (
+                (manifest, old_position),
+                (manifest | {'sha256':'4'*64}, new_position),
+                (manifest | {'path':'Data/reviewed-resurvey.geojson'}, new_position)):
+            target_path.write_bytes(layout(manifest, old_position))
+            with patch.object(importer,'build',return_value=layout(current_manifest,new_position)), \
+                    patch.object(importer,'validate_source_fragments'), patch.object(importer,'validate_layout'), \
+                    patch.object(shared,'TARGET',target_path):
+                importer.refresh(source_path=source_path,target_path=target_path)
+            refreshed = json.loads(target_path.read_bytes())
+            assert refreshed['metadata']['source_manifests']==[current_manifest]
+            assert refreshed['fixtures'][0]['position']==expected_position, \
+                'Fixture reuse must require an unchanged supplemental source manifest'
+    print('ANTILA_SUPPLEMENTAL_FIXTURE_REFRESH_OK: identical provenance preserves fixtures; changed source regenerates them')
 
 
 def check_touching_paving():
@@ -399,9 +449,9 @@ def check_preservation(baseline_dir,raw,data):
         for key in ('id','name','source_area_m2','bounds'):
             assert current[key]==baseline[key],'Existing site geometry or identity changed: '+uid
         count_delta=current['fixtures']-baseline['fixtures']
-        if uid==CORNWALL_PARK_SITE_ID:
+        if uid in CLEARANCE_REBUILT_SITE_IDS:
             assert current['fixtures']==sum(f['site']==uid for f in data['fixtures']),\
-                'Cornwall Street Park site fixture count differs from its regenerated furniture'
+                'Site fixture count differs from regenerated furniture: '+uid
         else:
             assert uid in BENCH_RELAYOUT_SITE_IDS or count_delta==0,'Existing fixture count changed: '+uid
             assert count_delta in (0,BENCH_COUNT_DELTAS.get(uid,0)),'Unexpected legacy bench count change: '+uid
@@ -416,10 +466,8 @@ def check_preservation(baseline_dir,raw,data):
         current=new_gardens[uid]
         assert garden_geometry(baseline,'rings').symmetric_difference(garden_geometry(current,'rings')).area<=.01,\
             'Existing site boundary changed: '+uid
-        if uid==CORNWALL_PARK_SITE_ID:
-            # Cornwall Street Squash & Table Tennis Centre was restored in the current
-            # building layout. Rebuild this park's path and entrance against its new 4m
-            # building clearance; the regional connectivity check validates the new geometry.
+        if uid in CLEARANCE_REBUILT_SITE_IDS:
+            # Rebuilt paths and entrances are validated against current clearance by check().
             continue
         for field in ('rings','paths'):
             assert garden_geometry(baseline,field).symmetric_difference(garden_geometry(current,field)).area<=.01,\
@@ -452,21 +500,21 @@ def check_preservation(baseline_dir,raw,data):
             assert current['samples']==baseline['samples'],'Existing path connectivity probes changed: '+uid
             assert current['paving_area_m2']==baseline['paving_area_m2'],'Existing path paving volume changed: '+uid
     old_volume=sum(garden['paving_area_m2'] for uid,garden in old_gardens.items()
-                   if uid!=CORNWALL_PARK_SITE_ID)
+                   if uid not in CLEARANCE_REBUILT_SITE_IDS)
     new_volume=sum(new_gardens[uid]['paving_area_m2'] for uid in old_gardens
-                   if uid!=CORNWALL_PARK_SITE_ID)
+                   if uid not in CLEARANCE_REBUILT_SITE_IDS)
     assert abs((old_volume-new_volume)-lost_access_area)<.02,'Historical paving volume changed beyond the supported access clip'
 
     old_fixtures={uid:[fixture for fixture in old_layout['fixtures'] if fixture['site']==uid] for uid in old_site_ids}
     new_fixtures={uid:[fixture for fixture in data['fixtures'] if fixture['site']==uid] for uid in old_site_ids}
     for uid in old_site_ids:
         previous=old_fixtures[uid];current=new_fixtures[uid]
-        if uid==CORNWALL_PARK_SITE_ID:
+        if uid in CLEARANCE_REBUILT_SITE_IDS:
             _,lots,*_=importer.safe_site_polygons(include_southwest_landmarks=False)
             clearance=lots.buffer(4)
             assert all(clearance.intersection(importer.Point(fixture['position']).buffer(fixture['radius'])).area<=.01
                        for fixture in current),\
-                'Regenerated Cornwall Street Park fixture enters current building clearance'
+                'Regenerated fixture enters current building clearance: '+uid
             continue
         if uid not in BENCH_RELAYOUT_SITE_IDS:
             assert current==previous,'Existing authored fixtures changed: '+uid
@@ -496,5 +544,9 @@ def check_preservation(baseline_dir,raw,data):
 
 
 if __name__=='__main__':
-    if len(sys.argv) not in (3,4):raise SystemExit(__doc__+' Optional: PRESERVATION_BASELINE_DIR')
-    check(Path(sys.argv[1]),Path(sys.argv[2]),Path(sys.argv[3]) if len(sys.argv)==4 else None)
+    if sys.argv[1:]==['--bundled']:
+        check(None,importer.ROOT/'Data/kowloon-open-spaces-tile-manifest.json')
+    elif len(sys.argv) in (3,4):
+        check(Path(sys.argv[1]),Path(sys.argv[2]),Path(sys.argv[3]) if len(sys.argv)==4 else None)
+    else:
+        raise SystemExit(__doc__+' Optional: PRESERVATION_BASELINE_DIR')

@@ -36,7 +36,7 @@ Regenerating the shared building pipeline also updates clipped components in ear
 
 ## Regeneration
 
-Use `.venv-geodata/bin/python Tools/import_shoreline.py --east-kowloon --download`, then `Tools/import_tunnel.py <official-CENTERLINE.kmz> --hk1980` in that environment. `Tools/import_buildings.py --east-kowloon --download` refreshes the building extract. Rebuild all eight Kowloon layouts to reconcile shared heights. Run `Tools/model_tunnel.py` and `Tools/model_government_buildings.py` with `EAST_KOWLOON=True` through Blender MCP; rebuild each older region whose layout changes. Runtime remains fully offline.
+The October 21 snapshot used `Tools/import_shoreline.py --east-kowloon --download` and imported its HK1980 archive with `Tools/import_tunnel.py /path/to/CENTERLINE.kmz --hk1980`. The current map uses the November WGS84 archive. [Current regeneration workflow](KOWLOON_CITY_DISTRICT_REVIEW.md#repeat-the-audit)
 
 ## Verification
 

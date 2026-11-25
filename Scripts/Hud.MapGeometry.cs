@@ -160,6 +160,17 @@ public partial class Hud
     public void CheckMapGeometry()
     {
         void Check(bool ok,string message){if(!ok)throw new Exception(message);}
+        if(Game.HasKaiTakDrive)
+            foreach(var route in Game.Routes)
+            {
+                var (districts,stops)=ExpandedMapLabels(route);
+                for(int i=MapDistricts.Length;i<districts.Length;i++)
+                {
+                    var label=districts[i];
+                    Check(ExpandedMapArea.Encloses(label) && !districts.Where((_,index)=>index!=i).Any(d=>d.Grow(3).Intersects(label)) &&
+                        !stops.Any(s=>s.Grow(3).Intersects(label)),"New Kai Tak map label must stay inside the map and clear of existing labels: "+label);
+                }
+            }
         var straight=Enumerable.Range(0,1001).Select(i=>new Vector2(i,0)).ToArray();
         var straightKept=SimplifyMapLine(straight,MapSimplificationTolerance);
         Check(straightKept.Length==2 && straightKept[0]==0 && straightKept[^1]==straight.Length-1,"Dense straight map line must keep only its endpoints");

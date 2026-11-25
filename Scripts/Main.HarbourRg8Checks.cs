@@ -43,22 +43,30 @@ public partial class Main
         string SourceReadbackFormat,int SourceReadbackMipLevels,string SourceMipSha256,int CandidateWidth,int CandidateHeight,
         string CandidateReadbackFormat,int CandidateMipLevels,int ThresholdNumerator,int ThresholdDenominator,
         long ComparedPixels,int FailedPixels,HarbourRg8CheckCase[] Cases,string[] Captures);
-    private static readonly HarbourRg8CheckProbe[] HarbourRg8CheckProbes=
+    private static HarbourRg8CheckProbe[] HarbourRg8CheckProbes(Rect2 bounds,int width,int height)
     {
-        new("full-map",new(.5f,.5f),1),
-        new("positive-red",new(.40931213f,.13481675f),8f/9246,0),
-        new("positive-green",new(.42748216f,.0057178284f),8f/9246,1),
-        new("zero-blue-channel",new(.5f,.5f),8f/9246),
-        new("occupied-page-seam",new(.027687648f,.27452466f),8f/9246),
-        new("empty-page-seam",new(.013843824f,.008886745f),8f/9246),
-        new("empty-page",new(.00697599f,.008886745f),8f/9246,-1,true),
-        new("page-x-boundary",new(.013843824f,.5f),8f/9246),
-        new("page-y-boundary",new(.5f,.017635712f),8f/9246),
-        new("outer-left",new(0,.5f),8f/9246),
-        new("outer-right",new(1,.5f),8f/9246),
-        new("outer-top",new(.5f,0),8f/9246),
-        new("outer-bottom",new(.5f,1),8f/9246)
-    };
+        Vector2 WorldUv(float x,float z)=>(new Vector2(x,z)-bounds.Position)/bounds.Size;
+        float span=8f/width;
+        var occupied=WorldUv(-13406.2643f,-7593.1338f);
+        occupied.X=Mathf.Round(occupied.X*width/128)*128/width;
+        // Keep positive samples on the same road and paving as the harbour extents change.
+        return new HarbourRg8CheckProbe[]
+        {
+            new("full-map",new(.5f,.5f),1),
+            new("positive-red",WorldUv(-6876.6695f,-9469.4110f),span,0),
+            new("positive-green",WorldUv(-6565.7802f,-11203.2096f),span,1),
+            new("zero-blue-channel",new(.5f,.5f),span),
+            new("occupied-page-seam",occupied,span),
+            new("empty-page-seam",new(128f/width,64.5f/height),span),
+            new("empty-page",new(64.5f/width,64.5f/height),span,-1,true),
+            new("page-x-boundary",new(128f/width,.5f),span),
+            new("page-y-boundary",new(.5f,128f/height),span),
+            new("outer-left",new(0,.5f),span),
+            new("outer-right",new(1,.5f),span),
+            new("outer-top",new(.5f,0),span),
+            new("outer-bottom",new(.5f,1),span)
+        };
+    }
 
     private void RunHarbourRg8Check()=>_ = RunHarbourRg8CheckAsync();
 
@@ -87,9 +95,13 @@ public partial class Main
             ? recorded : throw new Exception("Harbour mask metadata is missing");
         Check(metadata.Bounds.Length==4 && metadata.Bounds.All(float.IsFinite) && metadata.Bounds[2]>0 && metadata.Bounds[3]>0,
             "Harbour source manifest bounds are invalid");
-        Check(metadata.Width==9246 && metadata.Height==7258 && metadata.MipLevels==14 && metadata.Format=="Rgb8",
+        int longestEdge=Math.Max(metadata.Width,metadata.Height);
+        Check(metadata.Width>0 && metadata.Height>0 && longestEdge<=HarbourRg8MaxTextureEdge &&
+            (long)metadata.Width*metadata.Height*3<=192L*1024*1024 &&
+            metadata.MipLevels==1+System.Numerics.BitOperations.Log2((uint)longestEdge) && metadata.Format=="Rgb8",
             $"Harbour source manifest is {metadata.Width}x{metadata.Height} {metadata.Format} with {metadata.MipLevels} mip levels");
         var bounds=new Rect2(metadata.Bounds[0],metadata.Bounds[1],metadata.Bounds[2],metadata.Bounds[3]);
+        var probes=HarbourRg8CheckProbes(bounds,metadata.Width,metadata.Height);
         var source=GD.Load<Texture2D>(TerrainMaskAssetPath+"harbour_mask.png")
             ??throw new Exception("Imported harbour_mask.png is missing; import the canonical terrain mask first");
         Check(source is CompressedTexture2D,"Native reference must be the imported CompressedTexture2D harbour_mask.png");
@@ -114,7 +126,7 @@ public partial class Main
             int y=Math.Clamp(Mathf.FloorToInt(uv.Y*sourceImage.GetHeight()),0,sourceImage.GetHeight()-1);
             return sourceImage.GetPixel(x,y);
         }
-        foreach(var probe in HarbourRg8CheckProbes)
+        foreach(var probe in probes)
         {
             var pixel=SourceAt(probe.Uv);
             Check(pixel.B<.001f,$"Imported harbour source violates the zero-blue contract at {probe.Name}: {pixel}");
@@ -209,7 +221,7 @@ public partial class Main
                 }
                 return windowFailures;
             }
-            foreach(var probe in HarbourRg8CheckProbes)
+            foreach(var probe in probes)
             {
                 if(probe.Name is "full-map" or "positive-red" or "positive-green")await Capture(probe.Name,probe);
                 material.SetShaderParameter("output_mode",1);material.SetShaderParameter("forced_lod",0f);
@@ -227,10 +239,10 @@ public partial class Main
             for(int mip=0;mip<metadata.MipLevels;mip++)lods.Add(mip);
             for(int mip=0;mip<metadata.MipLevels-1;mip++)lods.Add(mip+.5f);
             for(int mip=1;mip<metadata.MipLevels;mip++){lods.Add(mip-.01f);lods.Add(mip+.01f);}
-            foreach(var probe in HarbourRg8CheckProbes)
+            foreach(var probe in probes)
             foreach(float lod in lods.Append(-1f))await Compare(probe.Name,lod,probe.Uv,probe.Span,Vector2.One);
 
-            var naturalCenter=HarbourRg8CheckProbes.Single(p=>p.Name=="positive-red").Uv;
+            var naturalCenter=probes.Single(p=>p.Name=="positive-red").Uv;
             foreach(float lod in new[]{.5f,1.5f,3.5f})
             {
                 float xSpan=HarbourRg8CheckViewSize*Mathf.Pow(2,lod)/metadata.Width;

@@ -2,6 +2,8 @@
 
 Prepared through Blender MCP on 12 September 2026 using free models from [Renderpeople](https://renderpeople.com/free-3d-people/). These are licensed scans, not imagegen outputs or original Antila character sculpts.
 
+A checkout uses a procedural figure for each licensed passenger GLB that is absent. Importing the licensed models displays the scans at stops and in the streetscape.
+
 | Game asset | Source model | Source version |
 | --- | --- | --- |
 | `Assets/Models/passenger_mei.glb` | `rp_mei_posed_001` | 30k OBJ, supplied 2k diffuse texture |

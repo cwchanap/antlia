@@ -8,12 +8,12 @@
     },
     {
       "path": "res://Assets/Models/cheung-sha-wan-buildings.glb",
-      "sha256": "d89cf7a9036c9df501a46cd3bce12869700a2c5048d95b765722ad7b04c88b50",
+      "sha256": "fe5a140f35e736a54a9cacb75ee79d0849ae7279bb0bed90a9288cfaa908f04a",
       "proxy": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-proxy.glb"
     },
     {
       "path": "res://Assets/Models/hung-hom-buildings.glb",
-      "sha256": "b6fb6373c75fd64dd1e6d05e95b2cc6ef5838e88c6b4257ab48a31c0666e69e1",
+      "sha256": "cd218b1d8036e1b1936aeaea89d8f3038f6300165e0a8c5d1fb5693d084e3fe9",
       "proxy": "res://Assets/Models/BuildingChunks/hung-hom-buildings-proxy.glb"
     },
     {
@@ -22,13 +22,18 @@
       "proxy": "res://Assets/Models/BuildingChunks/island-buildings-proxy.glb"
     },
     {
+      "path": "res://Assets/Models/kai-tak-buildings.glb",
+      "sha256": "910f8bfb2522383c544a4e0f3937b8cda972d9205b99176165c9e914e4e0ab1a",
+      "proxy": "res://Assets/Models/BuildingChunks/kai-tak-buildings-proxy.glb"
+    },
+    {
       "path": "res://Assets/Models/kowloon-buildings.glb",
       "sha256": "7caffe9118cc0128f447c90b0c617ce00d22cd7b3e36bdae9d4fe7c486078905",
       "proxy": "res://Assets/Models/BuildingChunks/kowloon-buildings-proxy.glb"
     },
     {
       "path": "res://Assets/Models/kowloon-city-buildings.glb",
-      "sha256": "790c5cf7c23e467f7ee986e5745ebade83f70031e085c4a4eb7a1c58cacbe406",
+      "sha256": "82848163be065e1313d8f2bcee2f9fe9c1f9cf05fade34af5a8b278d3a6a26d5",
       "proxy": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-proxy.glb"
     },
     {
@@ -63,27 +68,27 @@
     },
     {
       "path": "res://Assets/Models/mong-kok-buildings.glb",
-      "sha256": "488e7aacae169082af45a82a76418931ad62288b592524099072e633222c7e4a",
+      "sha256": "be92da78e2fa98a28c25f3cb65c7a113ea200b1867c42573a23033bd731a0456",
       "proxy": "res://Assets/Models/BuildingChunks/mong-kok-buildings-proxy.glb"
     },
     {
       "path": "res://Assets/Models/sham-shui-po-east-buildings.glb",
-      "sha256": "bdecfc272cd0f4fb2fbfe9fbb13756663565f9ad581f489a5dbc3f91aa6c07eb",
+      "sha256": "d8de95ac2b1fcb2c573f0e4eba2774cf6126643a678568838e8f212f68613137",
       "proxy": "res://Assets/Models/BuildingChunks/sham-shui-po-east-buildings-proxy.glb"
     },
     {
       "path": "res://Assets/Models/sham-shui-po-west-buildings.glb",
-      "sha256": "f71a0a899d2653da6955315fb67e398038adbf3034b5a3106fbaa1bc6580f471",
+      "sha256": "cc459da0e148b8ba9ae8aa3fa0fd154cdb9501daf797d2d6d69aac7ee69faf60",
       "proxy": "res://Assets/Models/BuildingChunks/sham-shui-po-west-buildings-proxy.glb"
     },
     {
       "path": "res://Assets/Models/tai-kok-tsui-buildings.glb",
-      "sha256": "d2a73ec1b1406bba7d57c0beb973eab44178fa0ce105d67defbe32792ff01257",
+      "sha256": "5d846b1a3917b25b6ec134c662ca10cf02ffd108653535fe15b2794637d28ae1",
       "proxy": "res://Assets/Models/BuildingChunks/tai-kok-tsui-buildings-proxy.glb"
     },
     {
       "path": "res://Assets/Models/to-kwa-wan-buildings.glb",
-      "sha256": "016041bb70f89073ab3777bd1d591f9b8ab6a1fb0a70b9fb47c7c0a6eeabc4f7",
+      "sha256": "a8c26ae2cde3185b3391b6b031e2753e91c881f5f5d839d694d75ba6eeea030d",
       "proxy": "res://Assets/Models/BuildingChunks/to-kwa-wan-buildings-proxy.glb"
     },
     {
@@ -108,12 +113,12 @@
     },
     {
       "path": "res://Assets/Models/wong-tai-sin-buildings.glb",
-      "sha256": "d4b12b1ee80abc4925a7091d082b0c9159f78b0800845b74fa5fd6384c4270b6",
+      "sha256": "a22bf8a98dd31f53e6b602ba44f1b7a084cea93f00e066a61dc7a89af78fa307",
       "proxy": "res://Assets/Models/BuildingChunks/wong-tai-sin-buildings-proxy.glb"
     },
     {
       "path": "res://Assets/Models/yau-ma-tei-buildings.glb",
-      "sha256": "5f5fe025cd6371c3cfcd4d703e6c0d710798c8761f2da83760b46d07b9655e2e",
+      "sha256": "57fea6a1b7005732407193b44d0c7ef2235f4bab50327dcb415fc676d293e490",
       "proxy": "res://Assets/Models/BuildingChunks/yau-ma-tei-buildings-proxy.glb"
     }
   ],
@@ -2999,9 +3004,9 @@
       "collision_vertices": 257
     },
     {
-      "id": "cheung-sha-wan-buildings-District_-10_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-10_-38.001.glb",
-      "proxy_name": "Proxy_-10_-38.001",
+      "id": "cheung-sha-wan-buildings-District_-10_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-10_-38.glb",
+      "proxy_name": "Proxy_-10_-38",
       "source": "cheung-sha-wan-buildings",
       "min": [
         -1286.7880887985232,
@@ -3053,9 +3058,9 @@
       "collision_vertices": 378
     },
     {
-      "id": "cheung-sha-wan-buildings-District_-11_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-11_-38.001.glb",
-      "proxy_name": "Proxy_-11_-38.001",
+      "id": "cheung-sha-wan-buildings-District_-11_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-11_-38.glb",
+      "proxy_name": "Proxy_-11_-38",
       "source": "cheung-sha-wan-buildings",
       "min": [
         -1473.660598754883,
@@ -3143,9 +3148,9 @@
       "collision_vertices": 22
     },
     {
-      "id": "cheung-sha-wan-buildings-District_-12_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-12_-38.001.glb",
-      "proxy_name": "Proxy_-12_-38.001",
+      "id": "cheung-sha-wan-buildings-District_-12_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-12_-38.glb",
+      "proxy_name": "Proxy_-12_-38",
       "source": "cheung-sha-wan-buildings",
       "min": [
         -1567.1686515808108,
@@ -3233,9 +3238,9 @@
       "collision_vertices": 58
     },
     {
-      "id": "cheung-sha-wan-buildings-District_-13_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-13_-38.001.glb",
-      "proxy_name": "Proxy_-13_-38.001",
+      "id": "cheung-sha-wan-buildings-District_-13_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-13_-38.glb",
+      "proxy_name": "Proxy_-13_-38",
       "source": "cheung-sha-wan-buildings",
       "min": [
         -1670.779323577881,
@@ -3323,9 +3328,9 @@
       "collision_vertices": 464
     },
     {
-      "id": "cheung-sha-wan-buildings-District_-14_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-14_-38.001.glb",
-      "proxy_name": "Proxy_-14_-38.001",
+      "id": "cheung-sha-wan-buildings-District_-14_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-14_-38.glb",
+      "proxy_name": "Proxy_-14_-38",
       "source": "cheung-sha-wan-buildings",
       "min": [
         -1821.1318702697756,
@@ -3431,9 +3436,9 @@
       "collision_vertices": 1780
     },
     {
-      "id": "cheung-sha-wan-buildings-District_-15_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-15_-38.001.glb",
-      "proxy_name": "Proxy_-15_-38.001",
+      "id": "cheung-sha-wan-buildings-District_-15_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-15_-38.glb",
+      "proxy_name": "Proxy_-15_-38",
       "source": "cheung-sha-wan-buildings",
       "min": [
         -1940.4333896636965,
@@ -3575,9 +3580,9 @@
       "collision_vertices": 29
     },
     {
-      "id": "cheung-sha-wan-buildings-District_-16_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-16_-38.001.glb",
-      "proxy_name": "Proxy_-16_-38.001",
+      "id": "cheung-sha-wan-buildings-District_-16_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-16_-38.glb",
+      "proxy_name": "Proxy_-16_-38",
       "source": "cheung-sha-wan-buildings",
       "min": [
         -2051.423716783524,
@@ -3827,9 +3832,9 @@
       "collision_vertices": 22
     },
     {
-      "id": "cheung-sha-wan-buildings-District_-18_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-18_-38.001.glb",
-      "proxy_name": "Proxy_-18_-38.001",
+      "id": "cheung-sha-wan-buildings-District_-18_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-18_-38.glb",
+      "proxy_name": "Proxy_-18_-38",
       "source": "cheung-sha-wan-buildings",
       "min": [
         -2305.8102813959126,
@@ -3971,9 +3976,9 @@
       "collision_vertices": 36
     },
     {
-      "id": "cheung-sha-wan-buildings-District_-1_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-1_-38.001.glb",
-      "proxy_name": "Proxy_-1_-38.001",
+      "id": "cheung-sha-wan-buildings-District_-1_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-1_-38.glb",
+      "proxy_name": "Proxy_-1_-38",
       "source": "cheung-sha-wan-buildings",
       "min": [
         -64.01681518554689,
@@ -4061,9 +4066,9 @@
       "collision_vertices": 1591
     },
     {
-      "id": "cheung-sha-wan-buildings-District_-2_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-2_-38.001.glb",
-      "proxy_name": "Proxy_-2_-38.001",
+      "id": "cheung-sha-wan-buildings-District_-2_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-2_-38.glb",
+      "proxy_name": "Proxy_-2_-38",
       "source": "cheung-sha-wan-buildings",
       "min": [
         -233.41614532470706,
@@ -4151,9 +4156,9 @@
       "collision_vertices": 1340
     },
     {
-      "id": "cheung-sha-wan-buildings-District_-3_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-3_-38.001.glb",
-      "proxy_name": "Proxy_-3_-38.001",
+      "id": "cheung-sha-wan-buildings-District_-3_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-3_-38.glb",
+      "proxy_name": "Proxy_-3_-38",
       "source": "cheung-sha-wan-buildings",
       "min": [
         -358.1388263702393,
@@ -4583,9 +4588,9 @@
       "collision_vertices": 221
     },
     {
-      "id": "cheung-sha-wan-buildings-District_-8_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-8_-38.001.glb",
-      "proxy_name": "Proxy_-8_-38.001",
+      "id": "cheung-sha-wan-buildings-District_-8_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-8_-38.glb",
+      "proxy_name": "Proxy_-8_-38",
       "source": "cheung-sha-wan-buildings",
       "min": [
         -927.8618850708009,
@@ -4727,9 +4732,9 @@
       "collision_vertices": 834
     },
     {
-      "id": "cheung-sha-wan-buildings-District_-9_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-9_-38.001.glb",
-      "proxy_name": "Proxy_-9_-38.001",
+      "id": "cheung-sha-wan-buildings-District_-9_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_-9_-38.glb",
+      "proxy_name": "Proxy_-9_-38",
       "source": "cheung-sha-wan-buildings",
       "min": [
         -1178.4261837005618,
@@ -4797,150 +4802,6 @@
       ],
       "visual_vertices": 3121,
       "collision_vertices": 673
-    },
-    {
-      "id": "cheung-sha-wan-buildings-District_1_-38",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_1_-38.glb",
-      "proxy_name": "Proxy_1_-38",
-      "source": "cheung-sha-wan-buildings",
-      "min": [
-        125.67921352386473,
-        -5e-324,
-        -4845.617139816285
-      ],
-      "max": [
-        205.36928558349612,
-        38.90000152587891,
-        -4799.999999999999
-      ],
-      "visual_vertices": 2093,
-      "collision_vertices": 361
-    },
-    {
-      "id": "cheung-sha-wan-buildings-District_2_-38",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_2_-38.glb",
-      "proxy_name": "Proxy_2_-38",
-      "source": "cheung-sha-wan-buildings",
-      "min": [
-        252.48634743690488,
-        -5e-324,
-        -4868.271613121034
-      ],
-      "max": [
-        395.17651367187506,
-        16.000000000000004,
-        -4799.999999999999
-      ],
-      "visual_vertices": 1297,
-      "collision_vertices": 285
-    },
-    {
-      "id": "cheung-sha-wan-buildings-District_3_-38",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_3_-38.glb",
-      "proxy_name": "Proxy_3_-38",
-      "source": "cheung-sha-wan-buildings",
-      "min": [
-        375.18667602539057,
-        -5e-324,
-        -4867.833834409715
-      ],
-      "max": [
-        521.122299194336,
-        10.550000190734865,
-        -4799.999999999999
-      ],
-      "visual_vertices": 2643,
-      "collision_vertices": 747
-    },
-    {
-      "id": "cheung-sha-wan-buildings-District_4_-38",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_4_-38.glb",
-      "proxy_name": "Proxy_4_-38",
-      "source": "cheung-sha-wan-buildings",
-      "min": [
-        503.00951576232904,
-        -5e-324,
-        -4824.336467742921
-      ],
-      "max": [
-        532.9178390502931,
-        8.149999618530275,
-        -4799.999999999999
-      ],
-      "visual_vertices": 723,
-      "collision_vertices": 247
-    },
-    {
-      "id": "cheung-sha-wan-buildings-District_4_-39",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_4_-39.glb",
-      "proxy_name": "Proxy_4_-39",
-      "source": "cheung-sha-wan-buildings",
-      "min": [
-        524.6817436218261,
-        -5e-324,
-        -4994.595318317414
-      ],
-      "max": [
-        550.0000000000001,
-        15.250000000000002,
-        -4912.652221679687
-      ],
-      "visual_vertices": 1231,
-      "collision_vertices": 351
-    },
-    {
-      "id": "cheung-sha-wan-buildings-District_4_-40",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_4_-40.glb",
-      "proxy_name": "Proxy_4_-40",
-      "source": "cheung-sha-wan-buildings",
-      "min": [
-        506.40443944931025,
-        -5e-324,
-        -5119.853627756239
-      ],
-      "max": [
-        550.0000000000001,
-        57.95000076293946,
-        -5031.952163696288
-      ],
-      "visual_vertices": 2660,
-      "collision_vertices": 572
-    },
-    {
-      "id": "cheung-sha-wan-buildings-District_4_-41",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_4_-41.glb",
-      "proxy_name": "Proxy_4_-41",
-      "source": "cheung-sha-wan-buildings",
-      "min": [
-        533.2124252319335,
-        -5e-324,
-        -5226.270261764527
-      ],
-      "max": [
-        550.0000000000001,
-        35.25000000000001,
-        -5112.012451171874
-      ],
-      "visual_vertices": 996,
-      "collision_vertices": 268
-    },
-    {
-      "id": "cheung-sha-wan-buildings-District_4_-42",
-      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_4_-42.glb",
-      "proxy_name": "Proxy_4_-42",
-      "source": "cheung-sha-wan-buildings",
-      "min": [
-        502.0860681533813,
-        -5e-324,
-        -5352.174491882325
-      ],
-      "max": [
-        550.0000000000001,
-        31.04999923706055,
-        -5228.725769042968
-      ],
-      "visual_vertices": 1551,
-      "collision_vertices": 227
     },
     {
       "id": "cheung-sha-wan-buildings-District_0_-39",
@@ -5033,6 +4894,24 @@
       "collision_vertices": 64
     },
     {
+      "id": "cheung-sha-wan-buildings-District_1_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_1_-38.glb",
+      "proxy_name": "Proxy_1_-38",
+      "source": "cheung-sha-wan-buildings",
+      "min": [
+        125.67921352386473,
+        -5e-324,
+        -4845.617139816285
+      ],
+      "max": [
+        205.36928558349612,
+        38.90000152587891,
+        -4799.999999999999
+      ],
+      "visual_vertices": 2093,
+      "collision_vertices": 361
+    },
+    {
       "id": "cheung-sha-wan-buildings-District_1_-39",
       "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_1_-39.glb",
       "proxy_name": "Proxy_1_-39",
@@ -5105,6 +4984,24 @@
       "collision_vertices": 262
     },
     {
+      "id": "cheung-sha-wan-buildings-District_2_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_2_-38.glb",
+      "proxy_name": "Proxy_2_-38",
+      "source": "cheung-sha-wan-buildings",
+      "min": [
+        252.48634743690488,
+        -5e-324,
+        -4868.271613121034
+      ],
+      "max": [
+        395.17651367187506,
+        16.000000000000004,
+        -4799.999999999999
+      ],
+      "visual_vertices": 1297,
+      "collision_vertices": 285
+    },
+    {
       "id": "cheung-sha-wan-buildings-District_2_-39",
       "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_2_-39.glb",
       "proxy_name": "Proxy_2_-39",
@@ -5137,8 +5034,8 @@
         25.60000038146973,
         -4990.790817260741
       ],
-      "visual_vertices": 4353,
-      "collision_vertices": 1101
+      "visual_vertices": 4112,
+      "collision_vertices": 940
     },
     {
       "id": "cheung-sha-wan-buildings-District_2_-41",
@@ -5173,8 +5070,8 @@
         76.50000000000001,
         -5236.126953124999
       ],
-      "visual_vertices": 24016,
-      "collision_vertices": 3384
+      "visual_vertices": 24237,
+      "collision_vertices": 3405
     },
     {
       "id": "cheung-sha-wan-buildings-District_2_-43",
@@ -5195,6 +5092,24 @@
       "collision_vertices": 811
     },
     {
+      "id": "cheung-sha-wan-buildings-District_3_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_3_-38.glb",
+      "proxy_name": "Proxy_3_-38",
+      "source": "cheung-sha-wan-buildings",
+      "min": [
+        375.18667602539057,
+        -5e-324,
+        -4867.833834409715
+      ],
+      "max": [
+        521.122299194336,
+        10.550000190734865,
+        -4799.999999999999
+      ],
+      "visual_vertices": 2643,
+      "collision_vertices": 747
+    },
+    {
       "id": "cheung-sha-wan-buildings-District_3_-39",
       "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_3_-39.glb",
       "proxy_name": "Proxy_3_-39",
@@ -5209,8 +5124,8 @@
         15.500000000000002,
         -4858.757583618163
       ],
-      "visual_vertices": 8328,
-      "collision_vertices": 2716
+      "visual_vertices": 8373,
+      "collision_vertices": 2737
     },
     {
       "id": "cheung-sha-wan-buildings-District_3_-40",
@@ -5263,8 +5178,8 @@
         75.34999847412111,
         -5253.3730239868155
       ],
-      "visual_vertices": 4924,
-      "collision_vertices": 896
+      "visual_vertices": 5097,
+      "collision_vertices": 917
     },
     {
       "id": "cheung-sha-wan-buildings-District_3_-43",
@@ -5279,10 +5194,100 @@
       "max": [
         522.0853881835939,
         41.70000076293946,
-        -5404.6641540527335
+        -5404.798667907714
       ],
-      "visual_vertices": 11722,
-      "collision_vertices": 1930
+      "visual_vertices": 11772,
+      "collision_vertices": 1944
+    },
+    {
+      "id": "cheung-sha-wan-buildings-District_4_-38",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_4_-38.glb",
+      "proxy_name": "Proxy_4_-38",
+      "source": "cheung-sha-wan-buildings",
+      "min": [
+        503.00951576232904,
+        -5e-324,
+        -4824.336467742921
+      ],
+      "max": [
+        532.9178390502931,
+        8.149999618530275,
+        -4799.999999999999
+      ],
+      "visual_vertices": 723,
+      "collision_vertices": 247
+    },
+    {
+      "id": "cheung-sha-wan-buildings-District_4_-39",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_4_-39.glb",
+      "proxy_name": "Proxy_4_-39",
+      "source": "cheung-sha-wan-buildings",
+      "min": [
+        524.6817436218261,
+        -5e-324,
+        -4994.595318317414
+      ],
+      "max": [
+        550.0000000000001,
+        15.250000000000002,
+        -4912.652221679687
+      ],
+      "visual_vertices": 1231,
+      "collision_vertices": 351
+    },
+    {
+      "id": "cheung-sha-wan-buildings-District_4_-40",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_4_-40.glb",
+      "proxy_name": "Proxy_4_-40",
+      "source": "cheung-sha-wan-buildings",
+      "min": [
+        506.40443944931025,
+        -5e-324,
+        -5119.853627756239
+      ],
+      "max": [
+        550.0000000000001,
+        57.95000076293946,
+        -5031.952163696288
+      ],
+      "visual_vertices": 2660,
+      "collision_vertices": 572
+    },
+    {
+      "id": "cheung-sha-wan-buildings-District_4_-41",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_4_-41.glb",
+      "proxy_name": "Proxy_4_-41",
+      "source": "cheung-sha-wan-buildings",
+      "min": [
+        533.2124252319335,
+        -5e-324,
+        -5226.270261764527
+      ],
+      "max": [
+        550.0000000000001,
+        35.25000000000001,
+        -5112.012451171874
+      ],
+      "visual_vertices": 996,
+      "collision_vertices": 268
+    },
+    {
+      "id": "cheung-sha-wan-buildings-District_4_-42",
+      "path": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-District_4_-42.glb",
+      "proxy_name": "Proxy_4_-42",
+      "source": "cheung-sha-wan-buildings",
+      "min": [
+        502.0860681533813,
+        -5e-324,
+        -5352.174491882325
+      ],
+      "max": [
+        550.0000000000001,
+        31.04999923706055,
+        -5228.725769042968
+      ],
+      "visual_vertices": 1551,
+      "collision_vertices": 227
     },
     {
       "id": "cheung-sha-wan-buildings-District_4_-43",
@@ -10269,6 +10274,888 @@
       ],
       "visual_vertices": 6955,
       "collision_vertices": 411
+    },
+    {
+      "id": "kai-tak-buildings-District_26_-16",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_26_-16.glb",
+      "proxy_name": "Proxy_26_-16",
+      "source": "kai-tak-buildings",
+      "min": [
+        3327.718361407518,
+        -5e-324,
+        -2084.1179924011235
+      ],
+      "max": [
+        3461.5007171630864,
+        117.25000000000001,
+        -1982.4048385620115
+      ],
+      "visual_vertices": 8658,
+      "collision_vertices": 1042
+    },
+    {
+      "id": "kai-tak-buildings-District_26_-17",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_26_-17.glb",
+      "proxy_name": "Proxy_26_-17",
+      "source": "kai-tak-buildings",
+      "min": [
+        3324.426618814468,
+        -5e-324,
+        -2156.094631195069
+      ],
+      "max": [
+        3463.2817993164067,
+        118.40000152587892,
+        -2043.0794677734373
+      ],
+      "visual_vertices": 13722,
+      "collision_vertices": 1150
+    },
+    {
+      "id": "kai-tak-buildings-District_26_-18",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_26_-18.glb",
+      "proxy_name": "Proxy_26_-18",
+      "source": "kai-tak-buildings",
+      "min": [
+        3346.231536865234,
+        -5e-324,
+        -2280.778987884522
+      ],
+      "max": [
+        3450.914489746094,
+        107.00000000000001,
+        -2178.1162261962886
+      ],
+      "visual_vertices": 5797,
+      "collision_vertices": 405
+    },
+    {
+      "id": "kai-tak-buildings-District_26_-21",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_26_-21.glb",
+      "proxy_name": "Proxy_26_-21",
+      "source": "kai-tak-buildings",
+      "min": [
+        3445.7587127685542,
+        -5e-324,
+        -2666.8169212341313
+      ],
+      "max": [
+        3456.504501342774,
+        25.000000000000004,
+        -2572.1669311523433
+      ],
+      "visual_vertices": 294,
+      "collision_vertices": 58
+    },
+    {
+      "id": "kai-tak-buildings-District_26_-22",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_26_-22.glb",
+      "proxy_name": "Proxy_26_-22",
+      "source": "kai-tak-buildings",
+      "min": [
+        3340.4610824584956,
+        -5e-324,
+        -2777.453590393067
+      ],
+      "max": [
+        3465.267013549805,
+        16.60000038146973,
+        -2693.76838684082
+      ],
+      "visual_vertices": 814,
+      "collision_vertices": 178
+    },
+    {
+      "id": "kai-tak-buildings-District_26_-23",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_26_-23.glb",
+      "proxy_name": "Proxy_26_-23",
+      "source": "kai-tak-buildings",
+      "min": [
+        3393.6669921874995,
+        -5e-324,
+        -2837.6778030395512
+      ],
+      "max": [
+        3398.135734558106,
+        4.6500000953674325,
+        -2833.20083618164
+      ],
+      "visual_vertices": 54,
+      "collision_vertices": 22
+    },
+    {
+      "id": "kai-tak-buildings-District_26_-29",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_26_-29.glb",
+      "proxy_name": "Proxy_26_-29",
+      "source": "kai-tak-buildings",
+      "min": [
+        3291.3409614562984,
+        -5e-324,
+        -3642.487571716309
+      ],
+      "max": [
+        3364.767772674561,
+        9.949999809265138,
+        -3547.136535644531
+      ],
+      "visual_vertices": 404,
+      "collision_vertices": 36
+    },
+    {
+      "id": "kai-tak-buildings-District_27_-15",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_27_-15.glb",
+      "proxy_name": "Proxy_27_-15",
+      "source": "kai-tak-buildings",
+      "min": [
+        3500.9994850158687,
+        -5e-324,
+        -1902.186260223389
+      ],
+      "max": [
+        3598.2128906250005,
+        90.55000305175783,
+        -1813.6127929687498
+      ],
+      "visual_vertices": 11174,
+      "collision_vertices": 1566
+    },
+    {
+      "id": "kai-tak-buildings-District_27_-16",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_27_-16.glb",
+      "proxy_name": "Proxy_27_-16",
+      "source": "kai-tak-buildings",
+      "min": [
+        3439.907436370849,
+        -5e-324,
+        -2043.6761188507082
+      ],
+      "max": [
+        3546.362037658692,
+        13.350000381469728,
+        -1872.4300384521482
+      ],
+      "visual_vertices": 6542,
+      "collision_vertices": 2310
+    },
+    {
+      "id": "kai-tak-buildings-District_27_-17",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_27_-17.glb",
+      "proxy_name": "Proxy_27_-17",
+      "source": "kai-tak-buildings",
+      "min": [
+        3447.4039735794063,
+        -5e-324,
+        -2173.018119335175
+      ],
+      "max": [
+        3589.4433135986333,
+        116.6999969482422,
+        -2033.4499053955076
+      ],
+      "visual_vertices": 22644,
+      "collision_vertices": 1912
+    },
+    {
+      "id": "kai-tak-buildings-District_27_-18",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_27_-18.glb",
+      "proxy_name": "Proxy_27_-18",
+      "source": "kai-tak-buildings",
+      "min": [
+        3451.630195140838,
+        -5e-324,
+        -2193.116188049317
+      ],
+      "max": [
+        3485.972715377808,
+        6.6500000953674325,
+        -2164.228408813476
+      ],
+      "visual_vertices": 214,
+      "collision_vertices": 78
+    },
+    {
+      "id": "kai-tak-buildings-District_27_-20",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_27_-20.glb",
+      "proxy_name": "Proxy_27_-20",
+      "source": "kai-tak-buildings",
+      "min": [
+        3471.1700038909908,
+        -5e-324,
+        -2564.2779741287236
+      ],
+      "max": [
+        3560.9684906005864,
+        25.000000000000004,
+        -2506.122005462646
+      ],
+      "visual_vertices": 866,
+      "collision_vertices": 122
+    },
+    {
+      "id": "kai-tak-buildings-District_27_-21",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_27_-21.glb",
+      "proxy_name": "Proxy_27_-21",
+      "source": "kai-tak-buildings",
+      "min": [
+        3450.1542429924007,
+        -5e-324,
+        -2621.1188964843755
+      ],
+      "max": [
+        3557.5389175415044,
+        70.55000305175783,
+        -2510.6083221435542
+      ],
+      "visual_vertices": 4104,
+      "collision_vertices": 268
+    },
+    {
+      "id": "kai-tak-buildings-District_27_-22",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_27_-22.glb",
+      "proxy_name": "Proxy_27_-22",
+      "source": "kai-tak-buildings",
+      "min": [
+        3439.0332756042476,
+        -5e-324,
+        -2800.1090316772465
+      ],
+      "max": [
+        3579.732360839844,
+        69.84999847412111,
+        -2669.8239746093745
+      ],
+      "visual_vertices": 2557,
+      "collision_vertices": 269
+    },
+    {
+      "id": "kai-tak-buildings-District_28_-14",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_28_-14.glb",
+      "proxy_name": "Proxy_28_-14",
+      "source": "kai-tak-buildings",
+      "min": [
+        3581.840663671493,
+        -5e-324,
+        -1793.908738255501
+      ],
+      "max": [
+        3657.8449554443364,
+        91.6999969482422,
+        -1752.2523956298826
+      ],
+      "visual_vertices": 3996,
+      "collision_vertices": 836
+    },
+    {
+      "id": "kai-tak-buildings-District_28_-15",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_28_-15.glb",
+      "proxy_name": "Proxy_28_-15",
+      "source": "kai-tak-buildings",
+      "min": [
+        3555.5260295867915,
+        -5e-324,
+        -1927.8842592239382
+      ],
+      "max": [
+        3716.0390319824223,
+        91.6999969482422,
+        -1782.8160095214841
+      ],
+      "visual_vertices": 36089,
+      "collision_vertices": 5901
+    },
+    {
+      "id": "kai-tak-buildings-District_28_-16",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_28_-16.glb",
+      "proxy_name": "Proxy_28_-16",
+      "source": "kai-tak-buildings",
+      "min": [
+        3574.333570480346,
+        -5e-324,
+        -2043.8198661804201
+      ],
+      "max": [
+        3702.789527893067,
+        107.00000000000001,
+        -1909.5908203124998
+      ],
+      "visual_vertices": 14494,
+      "collision_vertices": 1722
+    },
+    {
+      "id": "kai-tak-buildings-District_28_-19",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_28_-19.glb",
+      "proxy_name": "Proxy_28_-19",
+      "source": "kai-tak-buildings",
+      "min": [
+        3642.592739105224,
+        -5e-324,
+        -2427.6299591064458
+      ],
+      "max": [
+        3751.72689819336,
+        60.45000076293946,
+        -2318.7611846923824
+      ],
+      "visual_vertices": 2118,
+      "collision_vertices": 22
+    },
+    {
+      "id": "kai-tak-buildings-District_28_-20",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_28_-20.glb",
+      "proxy_name": "Proxy_28_-20",
+      "source": "kai-tak-buildings",
+      "min": [
+        3535.0645790100093,
+        -5e-324,
+        -2534.8413028717046
+      ],
+      "max": [
+        3694.5820007324223,
+        70.15000152587892,
+        -2419.7053375244136
+      ],
+      "visual_vertices": 3872,
+      "collision_vertices": 172
+    },
+    {
+      "id": "kai-tak-buildings-District_28_-21",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_28_-21.glb",
+      "proxy_name": "Proxy_28_-21",
+      "source": "kai-tak-buildings",
+      "min": [
+        3563.3234291076656,
+        -5e-324,
+        -2673.2225122451787
+      ],
+      "max": [
+        3626.3585281372075,
+        12.449999809265138,
+        -2609.0890426635738
+      ],
+      "visual_vertices": 594,
+      "collision_vertices": 162
+    },
+    {
+      "id": "kai-tak-buildings-District_29_-14",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_29_-14.glb",
+      "proxy_name": "Proxy_29_-14",
+      "source": "kai-tak-buildings",
+      "min": [
+        3787.4190292358394,
+        -5e-324,
+        -1806.439883232117
+      ],
+      "max": [
+        3834.3925781250005,
+        97.9499969482422,
+        -1771.4243583679197
+      ],
+      "visual_vertices": 3701,
+      "collision_vertices": 277
+    },
+    {
+      "id": "kai-tak-buildings-District_29_-15",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_29_-15.glb",
+      "proxy_name": "Proxy_29_-15",
+      "source": "kai-tak-buildings",
+      "min": [
+        3707.0334134101863,
+        -5e-324,
+        -1923.6502821445467
+      ],
+      "max": [
+        3847.0107116699223,
+        99.09999847412111,
+        -1798.4558258056638
+      ],
+      "visual_vertices": 12567,
+      "collision_vertices": 1351
+    },
+    {
+      "id": "kai-tak-buildings-District_29_-16",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_29_-16.glb",
+      "proxy_name": "Proxy_29_-16",
+      "source": "kai-tak-buildings",
+      "min": [
+        3742.753234863281,
+        -5e-324,
+        -1959.5906982421877
+      ],
+      "max": [
+        3752.964294433594,
+        3.5499999523162846,
+        -1947.1616210937498
+      ],
+      "visual_vertices": 70,
+      "collision_vertices": 22
+    },
+    {
+      "id": "kai-tak-buildings-District_29_-18",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_29_-18.glb",
+      "proxy_name": "Proxy_29_-18",
+      "source": "kai-tak-buildings",
+      "min": [
+        3733.3300933837886,
+        -5e-324,
+        -2337.521217346192
+      ],
+      "max": [
+        3885.9199981689458,
+        64.50000000000001,
+        -2201.3315277099605
+      ],
+      "visual_vertices": 4664,
+      "collision_vertices": 288
+    },
+    {
+      "id": "kai-tak-buildings-District_29_-19",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_29_-19.glb",
+      "proxy_name": "Proxy_29_-19",
+      "source": "kai-tak-buildings",
+      "min": [
+        3711.8549367338414,
+        -5e-324,
+        -2321.590324401856
+      ],
+      "max": [
+        3721.146238327027,
+        5.849999904632569,
+        -2312.268142700195
+      ],
+      "visual_vertices": 219,
+      "collision_vertices": 99
+    },
+    {
+      "id": "kai-tak-buildings-District_30_-12",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_30_-12.glb",
+      "proxy_name": "Proxy_30_-12",
+      "source": "kai-tak-buildings",
+      "min": [
+        3929.5369949340816,
+        -5e-324,
+        -1535.5714096426966
+      ],
+      "max": [
+        3959.95719909668,
+        5.050000190734864,
+        -1508.8055286407468
+      ],
+      "visual_vertices": 386,
+      "collision_vertices": 170
+    },
+    {
+      "id": "kai-tak-buildings-District_30_-14",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_30_-14.glb",
+      "proxy_name": "Proxy_30_-14",
+      "source": "kai-tak-buildings",
+      "min": [
+        3834.9340662956233,
+        -5e-324,
+        -1802.350919723511
+      ],
+      "max": [
+        3890.65166091919,
+        97.9499969482422,
+        -1773.065382003784
+      ],
+      "visual_vertices": 3743,
+      "collision_vertices": 395
+    },
+    {
+      "id": "kai-tak-buildings-District_30_-15",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_30_-15.glb",
+      "proxy_name": "Proxy_30_-15",
+      "source": "kai-tak-buildings",
+      "min": [
+        3861.0543041229243,
+        -5e-324,
+        -1813.6781005859377
+      ],
+      "max": [
+        3889.64368057251,
+        4.750000000000001,
+        -1788.6268157958982
+      ],
+      "visual_vertices": 635,
+      "collision_vertices": 275
+    },
+    {
+      "id": "kai-tak-buildings-District_30_-17",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_30_-17.glb",
+      "proxy_name": "Proxy_30_-17",
+      "source": "kai-tak-buildings",
+      "min": [
+        3855.743144035339,
+        -5e-324,
+        -2162.5484933853154
+      ],
+      "max": [
+        3901.4908370971684,
+        7.6500000953674325,
+        -2137.009757995605
+      ],
+      "visual_vertices": 290,
+      "collision_vertices": 86
+    },
+    {
+      "id": "kai-tak-buildings-District_30_-18",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_30_-18.glb",
+      "proxy_name": "Proxy_30_-18",
+      "source": "kai-tak-buildings",
+      "min": [
+        3827.456662178039,
+        -5e-324,
+        -2247.4193229675298
+      ],
+      "max": [
+        3889.7232322692876,
+        18.950000762939457,
+        -2217.580642700195
+      ],
+      "visual_vertices": 327,
+      "collision_vertices": 51
+    },
+    {
+      "id": "kai-tak-buildings-District_31_-11",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_31_-11.glb",
+      "proxy_name": "Proxy_31_-11",
+      "source": "kai-tak-buildings",
+      "min": [
+        4053.2865600585933,
+        -5e-324,
+        -1409.6325984001162
+      ],
+      "max": [
+        4100.688446044923,
+        30.85000038146973,
+        -1337.951820373535
+      ],
+      "visual_vertices": 1286,
+      "collision_vertices": 150
+    },
+    {
+      "id": "kai-tak-buildings-District_31_-12",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_31_-12.glb",
+      "proxy_name": "Proxy_31_-12",
+      "source": "kai-tak-buildings",
+      "min": [
+        4057.0720214843745,
+        -5e-324,
+        -1518.3783340454104
+      ],
+      "max": [
+        4103.813827514649,
+        14.300000190734865,
+        -1447.2748641967771
+      ],
+      "visual_vertices": 690,
+      "collision_vertices": 166
+    },
+    {
+      "id": "kai-tak-buildings-District_32_-10",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_32_-10.glb",
+      "proxy_name": "Proxy_32_-10",
+      "source": "kai-tak-buildings",
+      "min": [
+        4156.114707946776,
+        -5e-324,
+        -1288.4446983337405
+      ],
+      "max": [
+        4227.852706909181,
+        31.79999923706055,
+        -1236.7281112670896
+      ],
+      "visual_vertices": 1656,
+      "collision_vertices": 220
+    },
+    {
+      "id": "kai-tak-buildings-District_32_-11",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_32_-11.glb",
+      "proxy_name": "Proxy_32_-11",
+      "source": "kai-tak-buildings",
+      "min": [
+        3840.1640472412105,
+        -5e-324,
+        -1580.1767425537112
+      ],
+      "max": [
+        4480.805145263673,
+        31.700000762939457,
+        -983.0027770996093
+      ],
+      "visual_vertices": 34046,
+      "collision_vertices": 5570
+    },
+    {
+      "id": "kai-tak-buildings-District_32_-12",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_32_-12.glb",
+      "proxy_name": "Proxy_32_-12",
+      "source": "kai-tak-buildings",
+      "min": [
+        4087.5749959945674,
+        -5e-324,
+        -1538.8655140399935
+      ],
+      "max": [
+        4227.805541992188,
+        14.500000000000002,
+        -1396.5877380371091
+      ],
+      "visual_vertices": 6546,
+      "collision_vertices": 1510
+    },
+    {
+      "id": "kai-tak-buildings-District_32_-13",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_32_-13.glb",
+      "proxy_name": "Proxy_32_-13",
+      "source": "kai-tak-buildings",
+      "min": [
+        4106.634921073913,
+        -5e-324,
+        -1572.048522949219
+      ],
+      "max": [
+        4223.264190673829,
+        4.849999904632569,
+        -1530.2636566162107
+      ],
+      "visual_vertices": 557,
+      "collision_vertices": 161
+    },
+    {
+      "id": "kai-tak-buildings-District_33_-10",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_33_-10.glb",
+      "proxy_name": "Proxy_33_-10",
+      "source": "kai-tak-buildings",
+      "min": [
+        4239.780896186828,
+        -5e-324,
+        -1285.4775605201723
+      ],
+      "max": [
+        4353.862136840821,
+        30.649999618530277,
+        -1149.0335388183591
+      ],
+      "visual_vertices": 2675,
+      "collision_vertices": 547
+    },
+    {
+      "id": "kai-tak-buildings-District_33_-11",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_33_-11.glb",
+      "proxy_name": "Proxy_33_-11",
+      "source": "kai-tak-buildings",
+      "min": [
+        4209.202620506286,
+        -5e-324,
+        -1433.6972541809084
+      ],
+      "max": [
+        4367.610519409181,
+        15.050000190734865,
+        -1266.8143310546873
+      ],
+      "visual_vertices": 6753,
+      "collision_vertices": 1473
+    },
+    {
+      "id": "kai-tak-buildings-District_33_-12",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_33_-12.glb",
+      "proxy_name": "Proxy_33_-12",
+      "source": "kai-tak-buildings",
+      "min": [
+        4208.3898696899405,
+        -5e-324,
+        -1539.3624944686892
+      ],
+      "max": [
+        4352.855072021485,
+        14.300000190734865,
+        -1400.652160644531
+      ],
+      "visual_vertices": 2245,
+      "collision_vertices": 553
+    },
+    {
+      "id": "kai-tak-buildings-District_33_-13",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_33_-13.glb",
+      "proxy_name": "Proxy_33_-13",
+      "source": "kai-tak-buildings",
+      "min": [
+        4212.9750747680655,
+        -5e-324,
+        -1643.619073867798
+      ],
+      "max": [
+        4257.452823638917,
+        7.1500000953674325,
+        -1587.657646179199
+      ],
+      "visual_vertices": 435,
+      "collision_vertices": 131
+    },
+    {
+      "id": "kai-tak-buildings-District_33_-9",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_33_-9.glb",
+      "proxy_name": "Proxy_33_-9",
+      "source": "kai-tak-buildings",
+      "min": [
+        4259.723754882812,
+        -5e-324,
+        -1165.0685682296755
+      ],
+      "max": [
+        4288.875106811524,
+        30.450000762939457,
+        -1136.2385902404783
+      ],
+      "visual_vertices": 710,
+      "collision_vertices": 106
+    },
+    {
+      "id": "kai-tak-buildings-District_34_-10",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_34_-10.glb",
+      "proxy_name": "Proxy_34_-10",
+      "source": "kai-tak-buildings",
+      "min": [
+        4343.369442939757,
+        -5e-324,
+        -1286.5590019226076
+      ],
+      "max": [
+        4490.7223205566415,
+        14.699999809265138,
+        -1140.1836853027341
+      ],
+      "visual_vertices": 6636,
+      "collision_vertices": 1472
+    },
+    {
+      "id": "kai-tak-buildings-District_34_-11",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_34_-11.glb",
+      "proxy_name": "Proxy_34_-11",
+      "source": "kai-tak-buildings",
+      "min": [
+        4344.5756487846365,
+        -5e-324,
+        -1413.1139879226687
+      ],
+      "max": [
+        4423.694313049317,
+        7.449999809265138,
+        -1275.4610290527341
+      ],
+      "visual_vertices": 1060,
+      "collision_vertices": 304
+    },
+    {
+      "id": "kai-tak-buildings-District_34_-12",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_34_-12.glb",
+      "proxy_name": "Proxy_34_-12",
+      "source": "kai-tak-buildings",
+      "min": [
+        4378.627824783324,
+        -5e-324,
+        -1430.6109390258791
+      ],
+      "max": [
+        4394.295680999757,
+        6.949999809265138,
+        -1412.8504104614256
+      ],
+      "visual_vertices": 142,
+      "collision_vertices": 50
+    },
+    {
+      "id": "kai-tak-buildings-District_34_-8",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_34_-8.glb",
+      "proxy_name": "Proxy_34_-8",
+      "source": "kai-tak-buildings",
+      "min": [
+        4436.795089721679,
+        -5e-324,
+        -1031.5500898361208
+      ],
+      "max": [
+        4505.77687072754,
+        8.449999809265138,
+        -966.9947929382323
+      ],
+      "visual_vertices": 734,
+      "collision_vertices": 190
+    },
+    {
+      "id": "kai-tak-buildings-District_34_-9",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_34_-9.glb",
+      "proxy_name": "Proxy_34_-9",
+      "source": "kai-tak-buildings",
+      "min": [
+        4364.070957183837,
+        -5e-324,
+        -1155.063765048981
+      ],
+      "max": [
+        4485.640350341798,
+        30.649999618530277,
+        -1025.5652770996091
+      ],
+      "visual_vertices": 4214,
+      "collision_vertices": 950
+    },
+    {
+      "id": "kai-tak-buildings-District_35_-10",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_35_-10.glb",
+      "proxy_name": "Proxy_35_-10",
+      "source": "kai-tak-buildings",
+      "min": [
+        4483.028766870498,
+        -5e-324,
+        -1184.261039733887
+      ],
+      "max": [
+        4489.0733976364145,
+        3.9500000476837163,
+        -1178.2746658325193
+      ],
+      "visual_vertices": 62,
+      "collision_vertices": 22
+    },
+    {
+      "id": "kai-tak-buildings-District_35_-9",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_35_-9.glb",
+      "proxy_name": "Proxy_35_-9",
+      "source": "kai-tak-buildings",
+      "min": [
+        4474.163384914397,
+        -5e-324,
+        -1156.3712310791018
+      ],
+      "max": [
+        4600.476394653321,
+        14.399999618530275,
+        -1042.4438476562498
+      ],
+      "visual_vertices": 2899,
+      "collision_vertices": 675
+    },
+    {
+      "id": "kai-tak-buildings-District_36_-9",
+      "path": "res://Assets/Models/BuildingChunks/kai-tak-buildings-District_36_-9.glb",
+      "proxy_name": "Proxy_36_-9",
+      "source": "kai-tak-buildings",
+      "min": [
+        4609.372624993323,
+        -5e-324,
+        -1091.0671615600588
+      ],
+      "max": [
+        4626.27730369568,
+        5.550000190734864,
+        -1077.9659118652341
+      ],
+      "visual_vertices": 165,
+      "collision_vertices": 65
     },
     {
       "id": "kowloon-buildings-District_-1_-1",
@@ -15570,15 +16457,15 @@
       "min": [
         3118.322616577148,
         -5e-324,
-        -3417.2535781860356
+        -3359.058990478516
       ],
       "max": [
-        3150.0000000000005,
-        56.049999237060554,
+        3162.0427703857426,
+        10.149999618530275,
         -3304.670715332031
       ],
-      "visual_vertices": 1884,
-      "collision_vertices": 212
+      "visual_vertices": 360,
+      "collision_vertices": 64
     },
     {
       "id": "kowloon-city-buildings-District_24_-28",
@@ -15591,12 +16478,12 @@
         -3583.6075350344186
       ],
       "max": [
-        3150.0000000000005,
+        3157.869895935059,
         10.149999618530275,
         -3526.7976913452144
       ],
-      "visual_vertices": 621,
-      "collision_vertices": 153
+      "visual_vertices": 618,
+      "collision_vertices": 146
     },
     {
       "id": "kowloon-city-buildings-District_24_-29",
@@ -15606,15 +16493,15 @@
       "min": [
         3068.412901639938,
         -5e-324,
-        -3691.7427234649663
+        -3746.9229393005376
       ],
       "max": [
-        3150.0000000000005,
+        3256.66732788086,
         115.34999847412111,
         -3578.4555511474605
       ],
-      "visual_vertices": 10455,
-      "collision_vertices": 1047
+      "visual_vertices": 12914,
+      "collision_vertices": 1378
     },
     {
       "id": "kowloon-city-buildings-District_24_-30",
@@ -15624,15 +16511,15 @@
       "min": [
         3067.74397611618,
         -5e-324,
-        -3849.3009767532353
+        -3854.748639106751
       ],
       "max": [
-        3150.0000000000005,
-        21.700000762939457,
+        3212.6193695068364,
+        113.65000152587892,
         -3700.8507843017574
       ],
-      "visual_vertices": 2853,
-      "collision_vertices": 465
+      "visual_vertices": 15719,
+      "collision_vertices": 1559
     },
     {
       "id": "kowloon-city-buildings-District_24_-31",
@@ -15642,15 +16529,15 @@
       "min": [
         3012.1584815979,
         -5e-324,
-        -3967.1171498894696
+        -3962.5706381797795
       ],
       "max": [
-        3150.0000000000005,
-        114.34999847412111,
+        3175.857902526856,
+        114.80000305175783,
         -3797.2145996093745
       ],
-      "visual_vertices": 38240,
-      "collision_vertices": 3072
+      "visual_vertices": 42715,
+      "collision_vertices": 3483
     },
     {
       "id": "kowloon-city-buildings-District_24_-32",
@@ -15663,12 +16550,12 @@
         -4153.1833000183115
       ],
       "max": [
-        3150.0000000000005,
+        3227.8576354980473,
         114.34999847412111,
-        -3994.4273910522456
+        -3944.8491516113277
       ],
-      "visual_vertices": 3652,
-      "collision_vertices": 972
+      "visual_vertices": 14485,
+      "collision_vertices": 1629
     },
     {
       "id": "kowloon-city-buildings-District_24_-33",
@@ -15678,15 +16565,15 @@
       "min": [
         3070.7582147121425,
         -5e-324,
-        -4225.896503329278
+        -4241.912902832032
       ],
       "max": [
-        3145.3225784301762,
-        100.75000000000001,
-        -4096.389289855956
+        3233.0437011718755,
+        115.50000000000001,
+        -4082.0748748779292
       ],
-      "visual_vertices": 11566,
-      "collision_vertices": 1386
+      "visual_vertices": 34200,
+      "collision_vertices": 3600
     },
     {
       "id": "kowloon-city-buildings-District_24_-34",
@@ -15696,15 +16583,33 @@
       "min": [
         3110.15417098999,
         -5e-324,
-        -4268.960975646974
+        -4313.3630599975595
       ],
       "max": [
-        3150.0000000000005,
+        3203.117782592774,
         115.59999847412111,
         -4220.043395996093
       ],
-      "visual_vertices": 11330,
-      "collision_vertices": 918
+      "visual_vertices": 25847,
+      "collision_vertices": 2439
+    },
+    {
+      "id": "kowloon-city-buildings-District_24_-35",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_24_-35.glb",
+      "proxy_name": "Proxy_24_-35",
+      "source": "kowloon-city-buildings",
+      "min": [
+        3180.6881484985347,
+        -5e-324,
+        -4432.3918685913095
+      ],
+      "max": [
+        3185.0403594970708,
+        13.750000000000002,
+        -4428.012290954589
+      ],
+      "visual_vertices": 86,
+      "collision_vertices": 22
     },
     {
       "id": "kowloon-city-buildings-District_24_-36",
@@ -15717,12 +16622,12 @@
         -4608.16389656067
       ],
       "max": [
-        3150.0000000000005,
+        3169.258224487305,
         83.34999847412111,
         -4513.876388549804
       ],
-      "visual_vertices": 6626,
-      "collision_vertices": 706
+      "visual_vertices": 7809,
+      "collision_vertices": 845
     },
     {
       "id": "kowloon-city-buildings-District_24_-37",
@@ -15735,12 +16640,138 @@
         -4739.73309826851
       ],
       "max": [
-        3150.0000000000005,
-        65.55000305175783,
+        3187.379142761231,
+        66.00000000000001,
         -4593.416442871093
       ],
-      "visual_vertices": 12007,
-      "collision_vertices": 1851
+      "visual_vertices": 18168,
+      "collision_vertices": 2524
+    },
+    {
+      "id": "kowloon-city-buildings-District_25_-27",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_25_-27.glb",
+      "proxy_name": "Proxy_25_-27",
+      "source": "kowloon-city-buildings",
+      "min": [
+        3126.7834930419917,
+        -5e-324,
+        -3540.954627990723
+      ],
+      "max": [
+        3298.6159362792973,
+        56.049999237060554,
+        -3341.0518112182613
+      ],
+      "visual_vertices": 6346,
+      "collision_vertices": 554
+    },
+    {
+      "id": "kowloon-city-buildings-District_25_-30",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_25_-30.glb",
+      "proxy_name": "Proxy_25_-30",
+      "source": "kowloon-city-buildings",
+      "min": [
+        3202.5998842716212,
+        -5e-324,
+        -3860.9948558807378
+      ],
+      "max": [
+        3324.2855300903325,
+        114.90000152587892,
+        -3694.6543273925777
+      ],
+      "visual_vertices": 26707,
+      "collision_vertices": 2379
+    },
+    {
+      "id": "kowloon-city-buildings-District_25_-31",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_25_-31.glb",
+      "proxy_name": "Proxy_25_-31",
+      "source": "kowloon-city-buildings",
+      "min": [
+        3205.177192687988,
+        -5e-324,
+        -3929.224491119385
+      ],
+      "max": [
+        3303.71957397461,
+        113.75000000000001,
+        -3848.8865432739253
+      ],
+      "visual_vertices": 14355,
+      "collision_vertices": 1319
+    },
+    {
+      "id": "kowloon-city-buildings-District_25_-32",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_25_-32.glb",
+      "proxy_name": "Proxy_25_-32",
+      "source": "kowloon-city-buildings",
+      "min": [
+        3100.601135253906,
+        -5e-324,
+        -4130.6516914367685
+      ],
+      "max": [
+        3328.5942382812505,
+        100.4499969482422,
+        -3949.384872436523
+      ],
+      "visual_vertices": 18593,
+      "collision_vertices": 2729
+    },
+    {
+      "id": "kowloon-city-buildings-District_25_-33",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_25_-33.glb",
+      "proxy_name": "Proxy_25_-33",
+      "source": "kowloon-city-buildings",
+      "min": [
+        3169.8855819702144,
+        -5e-324,
+        -4236.307550430299
+      ],
+      "max": [
+        3321.1650238037114,
+        114.4499969482422,
+        -4123.804542541503
+      ],
+      "visual_vertices": 14284,
+      "collision_vertices": 1476
+    },
+    {
+      "id": "kowloon-city-buildings-District_25_-34",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_25_-34.glb",
+      "proxy_name": "Proxy_25_-34",
+      "source": "kowloon-city-buildings",
+      "min": [
+        3186.2714118957515,
+        -5e-324,
+        -4349.984251499177
+      ],
+      "max": [
+        3317.69271850586,
+        21.85000038146973,
+        -4228.493789672851
+      ],
+      "visual_vertices": 4212,
+      "collision_vertices": 800
+    },
+    {
+      "id": "kowloon-city-buildings-District_25_-35",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_25_-35.glb",
+      "proxy_name": "Proxy_25_-35",
+      "source": "kowloon-city-buildings",
+      "min": [
+        3229.156242370605,
+        -5e-324,
+        -4388.109634399415
+      ],
+      "max": [
+        3289.521018981934,
+        10.750000000000002,
+        -4345.015090942382
+      ],
+      "visual_vertices": 533,
+      "collision_vertices": 113
     },
     {
       "id": "kowloon-city-buildings-District_5_-26",
@@ -15761,9 +16792,9 @@
       "collision_vertices": 836
     },
     {
-      "id": "kowloon-city-buildings-District_5_-27.001",
-      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_5_-27.001.glb",
-      "proxy_name": "Proxy_5_-27.001",
+      "id": "kowloon-city-buildings-District_5_-27",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_5_-27.glb",
+      "proxy_name": "Proxy_5_-27",
       "source": "kowloon-city-buildings",
       "min": [
         649.9999999999999,
@@ -15869,9 +16900,9 @@
       "collision_vertices": 1649
     },
     {
-      "id": "kowloon-city-buildings-District_5_-33.001",
-      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_5_-33.001.glb",
-      "proxy_name": "Proxy_5_-33.001",
+      "id": "kowloon-city-buildings-District_5_-33",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_5_-33.glb",
+      "proxy_name": "Proxy_5_-33",
       "source": "kowloon-city-buildings",
       "min": [
         679.0424232482909,
@@ -15887,9 +16918,9 @@
       "collision_vertices": 754
     },
     {
-      "id": "kowloon-city-buildings-District_5_-34.001",
-      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_5_-34.001.glb",
-      "proxy_name": "Proxy_5_-34.001",
+      "id": "kowloon-city-buildings-District_5_-34",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_5_-34.glb",
+      "proxy_name": "Proxy_5_-34",
       "source": "kowloon-city-buildings",
       "min": [
         649.9903440475463,
@@ -15905,9 +16936,9 @@
       "collision_vertices": 1658
     },
     {
-      "id": "kowloon-city-buildings-District_5_-35.001",
-      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_5_-35.001.glb",
-      "proxy_name": "Proxy_5_-35.001",
+      "id": "kowloon-city-buildings-District_5_-35",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_5_-35.glb",
+      "proxy_name": "Proxy_5_-35",
       "source": "kowloon-city-buildings",
       "min": [
         649.9999999999999,
@@ -15923,9 +16954,9 @@
       "collision_vertices": 1237
     },
     {
-      "id": "kowloon-city-buildings-District_5_-36.001",
-      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_5_-36.001.glb",
-      "proxy_name": "Proxy_5_-36.001",
+      "id": "kowloon-city-buildings-District_5_-36",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_5_-36.glb",
+      "proxy_name": "Proxy_5_-36",
       "source": "kowloon-city-buildings",
       "min": [
         649.9999999999999,
@@ -15941,9 +16972,9 @@
       "collision_vertices": 1018
     },
     {
-      "id": "kowloon-city-buildings-District_5_-37.001",
-      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_5_-37.001.glb",
-      "proxy_name": "Proxy_5_-37.001",
+      "id": "kowloon-city-buildings-District_5_-37",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_5_-37.glb",
+      "proxy_name": "Proxy_5_-37",
       "source": "kowloon-city-buildings",
       "min": [
         649.9999999999999,
@@ -32749,8 +33780,8 @@
         76.6999969482422,
         -2688.471672058105
       ],
-      "visual_vertices": 14328,
-      "collision_vertices": 2892
+      "visual_vertices": 14533,
+      "collision_vertices": 2913
     },
     {
       "id": "mong-kok-buildings-District_0_-23",
@@ -32875,8 +33906,8 @@
         84.05000305175783,
         -2432.5319213867183
       ],
-      "visual_vertices": 10531,
-      "collision_vertices": 1563
+      "visual_vertices": 11396,
+      "collision_vertices": 1696
     },
     {
       "id": "mong-kok-buildings-District_1_-21",
@@ -32884,17 +33915,17 @@
       "proxy_name": "Proxy_1_-21",
       "source": "mong-kok-buildings",
       "min": [
-        135.2998957633972,
+        137.66225337982175,
         -5e-324,
         -2709.880897521973
       ],
       "max": [
-        271.8467102050782,
+        261.33686828613287,
         93.25000000000001,
         -2550.3290863037105
       ],
-      "visual_vertices": 26395,
-      "collision_vertices": 3935
+      "visual_vertices": 26601,
+      "collision_vertices": 3873
     },
     {
       "id": "mong-kok-buildings-District_1_-22",
@@ -32902,17 +33933,17 @@
       "proxy_name": "Proxy_1_-22",
       "source": "mong-kok-buildings",
       "min": [
-        108.60304832458495,
+        110.76501274108885,
         -5e-324,
-        -2798.399301528931
+        -2797.761102676392
       ],
       "max": [
-        260.30822753906256,
+        259.8567962646485,
         93.84999847412111,
         -2682.3586730957027
       ],
-      "visual_vertices": 29552,
-      "collision_vertices": 4352
+      "visual_vertices": 30718,
+      "collision_vertices": 4446
     },
     {
       "id": "mong-kok-buildings-District_1_-23",
@@ -32929,8 +33960,8 @@
         16.899999618530277,
         -2818.363403320312
       ],
-      "visual_vertices": 2499,
-      "collision_vertices": 771
+      "visual_vertices": 2681,
+      "collision_vertices": 785
     },
     {
       "id": "mong-kok-buildings-District_1_-24",
@@ -32997,12 +34028,12 @@
         -2312.4216165542607
       ],
       "max": [
-        360.62033081054693,
+        358.11650085449224,
         41.8499984741211,
         -2220.575592041015
       ],
-      "visual_vertices": 7330,
-      "collision_vertices": 1382
+      "visual_vertices": 7456,
+      "collision_vertices": 1368
     },
     {
       "id": "mong-kok-buildings-District_2_-19",
@@ -33019,8 +34050,8 @@
         48.5999984741211,
         -2298.6642303466792
       ],
-      "visual_vertices": 9053,
-      "collision_vertices": 1557
+      "visual_vertices": 9256,
+      "collision_vertices": 1564
     },
     {
       "id": "mong-kok-buildings-District_2_-20",
@@ -33037,8 +34068,8 @@
         104.84999847412111,
         -2422.177871704101
       ],
-      "visual_vertices": 23038,
-      "collision_vertices": 3182
+      "visual_vertices": 22891,
+      "collision_vertices": 3147
     },
     {
       "id": "mong-kok-buildings-District_2_-21",
@@ -33046,17 +34077,17 @@
       "proxy_name": "Proxy_2_-21",
       "source": "mong-kok-buildings",
       "min": [
-        245.75391197204587,
+        250.20452594757077,
         -5e-324,
-        -2693.2664775848393
+        -2691.5341632366185
       ],
       "max": [
         386.99580383300787,
         70.84999847412111,
         -2549.0693511962886
       ],
-      "visual_vertices": 13764,
-      "collision_vertices": 2636
+      "visual_vertices": 16083,
+      "collision_vertices": 2915
     },
     {
       "id": "mong-kok-buildings-District_2_-22",
@@ -33073,8 +34104,8 @@
         92.30000305175783,
         -2674.6068725585933
       ],
-      "visual_vertices": 25523,
-      "collision_vertices": 3343
+      "visual_vertices": 27147,
+      "collision_vertices": 3551
     },
     {
       "id": "mong-kok-buildings-District_2_-23",
@@ -33087,12 +34118,12 @@
         -2958.4982995986943
       ],
       "max": [
-        389.50436401367193,
+        389.43473815917974,
         18.750000000000004,
         -2809.5155639648433
       ],
-      "visual_vertices": 4013,
-      "collision_vertices": 969
+      "visual_vertices": 4801,
+      "collision_vertices": 1053
     },
     {
       "id": "mong-kok-buildings-District_2_-24",
@@ -33109,7 +34140,7 @@
         13.050000190734865,
         -2929.9987335205074
       ],
-      "visual_vertices": 2077,
+      "visual_vertices": 2157,
       "collision_vertices": 653
     },
     {
@@ -33127,8 +34158,8 @@
         19.54999923706055,
         -3075.317405700683
       ],
-      "visual_vertices": 4041,
-      "collision_vertices": 1041
+      "visual_vertices": 4120,
+      "collision_vertices": 1048
     },
     {
       "id": "mong-kok-buildings-District_2_-26",
@@ -33177,12 +34208,12 @@
         -2316.362510681153
       ],
       "max": [
-        515.4889068603517,
+        511.8180465698243,
         64.15000152587892,
         -2192.4547195434566
       ],
-      "visual_vertices": 9949,
-      "collision_vertices": 1437
+      "visual_vertices": 10167,
+      "collision_vertices": 1479
     },
     {
       "id": "mong-kok-buildings-District_3_-19",
@@ -33190,17 +34221,17 @@
       "proxy_name": "Proxy_3_-19",
       "source": "mong-kok-buildings",
       "min": [
-        374.5055541992187,
+        375.91092872619623,
         -5e-324,
         -2447.206915855408
       ],
       "max": [
-        515.6058807373048,
+        512.4860229492189,
         168.05000305175784,
         -2289.4812469482417
       ],
-      "visual_vertices": 18460,
-      "collision_vertices": 2136
+      "visual_vertices": 19025,
+      "collision_vertices": 2113
     },
     {
       "id": "mong-kok-buildings-District_3_-20",
@@ -33217,7 +34248,7 @@
         42.20000076293946,
         -2427.42073059082
       ],
-      "visual_vertices": 5578,
+      "visual_vertices": 5658,
       "collision_vertices": 994
     },
     {
@@ -33226,17 +34257,17 @@
       "proxy_name": "Proxy_3_-21",
       "source": "mong-kok-buildings",
       "min": [
-        370.3348779678344,
+        370.9606094360351,
         -5e-324,
         -2698.3409862518315
       ],
       "max": [
-        514.5660247802736,
+        513.166473388672,
         74.15000152587892,
-        -2569.9527969360347
+        -2571.0314788818355
       ],
-      "visual_vertices": 9004,
-      "collision_vertices": 1332
+      "visual_vertices": 9485,
+      "collision_vertices": 1437
     },
     {
       "id": "mong-kok-buildings-District_3_-22",
@@ -33244,7 +34275,7 @@
       "proxy_name": "Proxy_3_-22",
       "source": "mong-kok-buildings",
       "min": [
-        365.7603492736816,
+        365.8034648895263,
         -5e-324,
         -2828.8547267913823
       ],
@@ -33253,7 +34284,7 @@
         81.90000152587892,
         -2686.933715820312
       ],
-      "visual_vertices": 19352,
+      "visual_vertices": 19392,
       "collision_vertices": 2080
     },
     {
@@ -33262,17 +34293,17 @@
       "proxy_name": "Proxy_3_-23",
       "source": "mong-kok-buildings",
       "min": [
-        371.2666931152343,
+        372.47375488281244,
         -5e-324,
-        -2962.92692565918
+        -2962.427673339844
       ],
       "max": [
         523.3825225830079,
         88.50000000000001,
         -2798.2727050781245
       ],
-      "visual_vertices": 19377,
-      "collision_vertices": 2449
+      "visual_vertices": 19801,
+      "collision_vertices": 2477
     },
     {
       "id": "mong-kok-buildings-District_3_-24",
@@ -33285,12 +34316,12 @@
         -3077.3994951248173
       ],
       "max": [
-        522.6179199218751,
+        522.2650451660157,
         12.750000000000002,
-        -2948.9997558593745
+        -2949.9547729492183
       ],
-      "visual_vertices": 4361,
-      "collision_vertices": 1317
+      "visual_vertices": 4471,
+      "collision_vertices": 1331
     },
     {
       "id": "mong-kok-buildings-District_3_-25",
@@ -33307,8 +34338,8 @@
         12.850000381469728,
         -3064.7841186523433
       ],
-      "visual_vertices": 7046,
-      "collision_vertices": 2186
+      "visual_vertices": 7005,
+      "collision_vertices": 2129
     },
     {
       "id": "mong-kok-buildings-District_3_-26",
@@ -33325,8 +34356,8 @@
         25.79999923706055,
         -3197.5485687255855
       ],
-      "visual_vertices": 8667,
-      "collision_vertices": 2239
+      "visual_vertices": 9015,
+      "collision_vertices": 2211
     },
     {
       "id": "mong-kok-buildings-District_3_-27",
@@ -33352,7 +34383,7 @@
       "proxy_name": "Proxy_4_-18",
       "source": "mong-kok-buildings",
       "min": [
-        503.4817581176757,
+        503.519471168518,
         -5e-324,
         -2302.432150125504
       ],
@@ -33361,8 +34392,8 @@
         67.09999847412111,
         -2102.8718261718745
       ],
-      "visual_vertices": 15198,
-      "collision_vertices": 2958
+      "visual_vertices": 16586,
+      "collision_vertices": 3210
     },
     {
       "id": "mong-kok-buildings-District_4_-19",
@@ -33379,8 +34410,8 @@
         73.4499969482422,
         -2277.090240478515
       ],
-      "visual_vertices": 13586,
-      "collision_vertices": 2054
+      "visual_vertices": 13928,
+      "collision_vertices": 2160
     },
     {
       "id": "mong-kok-buildings-District_4_-20",
@@ -33390,15 +34421,15 @@
       "min": [
         502.9426584243774,
         -5e-324,
-        -2538.608882904053
+        -2538.5355205535893
       ],
       "max": [
         610.358238220215,
         47.15000152587891,
         -2429.932998657226
       ],
-      "visual_vertices": 4305,
-      "collision_vertices": 685
+      "visual_vertices": 4320,
+      "collision_vertices": 692
     },
     {
       "id": "mong-kok-buildings-District_4_-21",
@@ -33408,15 +34439,15 @@
       "min": [
         474.2793922424316,
         -5e-324,
-        -2698.1861763000493
+        -2695.907740592957
       ],
       "max": [
         650.0000000000001,
         76.34999847412111,
         -2569.492782592773
       ],
-      "visual_vertices": 23005,
-      "collision_vertices": 4505
+      "visual_vertices": 19585,
+      "collision_vertices": 2929
     },
     {
       "id": "mong-kok-buildings-District_4_-22",
@@ -33433,8 +34464,8 @@
         63.3499984741211,
         -2666.443466186523
       ],
-      "visual_vertices": 21089,
-      "collision_vertices": 3193
+      "visual_vertices": 21096,
+      "collision_vertices": 3192
     },
     {
       "id": "mong-kok-buildings-District_4_-23",
@@ -33460,17 +34491,17 @@
       "proxy_name": "Proxy_4_-24",
       "source": "mong-kok-buildings",
       "min": [
-        513.1880271434783,
+        510.88362109661097,
         -5e-324,
-        -3064.2594857215886
+        -3063.806790351868
       ],
       "max": [
         650.0000000000001,
         39.65000152587891,
         -2971.6502761840816
       ],
-      "visual_vertices": 3095,
-      "collision_vertices": 823
+      "visual_vertices": 3510,
+      "collision_vertices": 866
     },
     {
       "id": "mong-kok-buildings-District_4_-25",
@@ -33487,8 +34518,8 @@
         108.34999847412111,
         -3065.919525146484
       ],
-      "visual_vertices": 11993,
-      "collision_vertices": 1981
+      "visual_vertices": 12050,
+      "collision_vertices": 1890
     },
     {
       "id": "mong-kok-buildings-District_4_-26",
@@ -33505,8 +34536,8 @@
         105.30000305175783,
         -3199.1645812988277
       ],
-      "visual_vertices": 9534,
-      "collision_vertices": 1458
+      "visual_vertices": 10089,
+      "collision_vertices": 1549
     },
     {
       "id": "mong-kok-buildings-District_4_-27",
@@ -33527,9 +34558,9 @@
       "collision_vertices": 362
     },
     {
-      "id": "mong-kok-buildings-District_5_-18.001",
-      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-18.001.glb",
-      "proxy_name": "Proxy_5_-18.001",
+      "id": "mong-kok-buildings-District_5_-18",
+      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-18.glb",
+      "proxy_name": "Proxy_5_-18",
       "source": "mong-kok-buildings",
       "min": [
         633.4561958312987,
@@ -33545,9 +34576,9 @@
       "collision_vertices": 106
     },
     {
-      "id": "mong-kok-buildings-District_5_-19.001",
-      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-19.001.glb",
-      "proxy_name": "Proxy_5_-19.001",
+      "id": "mong-kok-buildings-District_5_-19",
+      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-19.glb",
+      "proxy_name": "Proxy_5_-19",
       "source": "mong-kok-buildings",
       "min": [
         640.4302157759665,
@@ -33563,9 +34594,9 @@
       "collision_vertices": 244
     },
     {
-      "id": "mong-kok-buildings-District_5_-21.001",
-      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-21.001.glb",
-      "proxy_name": "Proxy_5_-21.001",
+      "id": "mong-kok-buildings-District_5_-21",
+      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-21.glb",
+      "proxy_name": "Proxy_5_-21",
       "source": "mong-kok-buildings",
       "min": [
         625.2598457336425,
@@ -33581,9 +34612,9 @@
       "collision_vertices": 71
     },
     {
-      "id": "mong-kok-buildings-District_5_-22.001",
-      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-22.001.glb",
-      "proxy_name": "Proxy_5_-22.001",
+      "id": "mong-kok-buildings-District_5_-22",
+      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-22.glb",
+      "proxy_name": "Proxy_5_-22",
       "source": "mong-kok-buildings",
       "min": [
         634.8537497520446,
@@ -33591,17 +34622,17 @@
         -2806.3317871093755
       ],
       "max": [
-        650.0000000000001,
+        650.1471719741822,
         54.00000000000001,
-        -2692.0192108154292
+        -2692.1969375610347
       ],
-      "visual_vertices": 1366,
+      "visual_vertices": 1442,
       "collision_vertices": 122
     },
     {
-      "id": "mong-kok-buildings-District_5_-23.001",
-      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-23.001.glb",
-      "proxy_name": "Proxy_5_-23.001",
+      "id": "mong-kok-buildings-District_5_-23",
+      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-23.glb",
+      "proxy_name": "Proxy_5_-23",
       "source": "mong-kok-buildings",
       "min": [
         630.3133649826049,
@@ -33617,9 +34648,9 @@
       "collision_vertices": 114
     },
     {
-      "id": "mong-kok-buildings-District_5_-24.001",
-      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-24.001.glb",
-      "proxy_name": "Proxy_5_-24.001",
+      "id": "mong-kok-buildings-District_5_-24",
+      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-24.glb",
+      "proxy_name": "Proxy_5_-24",
       "source": "mong-kok-buildings",
       "min": [
         647.1927747726439,
@@ -33635,9 +34666,9 @@
       "collision_vertices": 22
     },
     {
-      "id": "mong-kok-buildings-District_5_-25.001",
-      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-25.001.glb",
-      "proxy_name": "Proxy_5_-25.001",
+      "id": "mong-kok-buildings-District_5_-25",
+      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-25.glb",
+      "proxy_name": "Proxy_5_-25",
       "source": "mong-kok-buildings",
       "min": [
         632.0019106864928,
@@ -33653,9 +34684,9 @@
       "collision_vertices": 383
     },
     {
-      "id": "mong-kok-buildings-District_5_-26.001",
-      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-26.001.glb",
-      "proxy_name": "Proxy_5_-26.001",
+      "id": "mong-kok-buildings-District_5_-26",
+      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-26.glb",
+      "proxy_name": "Proxy_5_-26",
       "source": "mong-kok-buildings",
       "min": [
         635.7784090042113,
@@ -33671,9 +34702,9 @@
       "collision_vertices": 257
     },
     {
-      "id": "mong-kok-buildings-District_5_-27.001",
-      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-27.001.glb",
-      "proxy_name": "Proxy_5_-27.001",
+      "id": "mong-kok-buildings-District_5_-27",
+      "path": "res://Assets/Models/BuildingChunks/mong-kok-buildings-District_5_-27.glb",
+      "proxy_name": "Proxy_5_-27",
       "source": "mong-kok-buildings",
       "min": [
         643.4454820156096,
@@ -35575,8 +36606,8 @@
         87.25000000000001,
         -4724.811569213866
       ],
-      "visual_vertices": 5313,
-      "collision_vertices": 577
+      "visual_vertices": 5864,
+      "collision_vertices": 636
     },
     {
       "id": "sham-shui-po-east-buildings-District_1_-27",
@@ -36378,15 +37409,15 @@
       "min": [
         511.19434857368464,
         -5e-324,
-        -4471.050610542298
+        -4468.736523628236
       ],
       "max": [
         646.1629486083986,
         14.000000000000002,
         -4348.474060058593
       ],
-      "visual_vertices": 7516,
-      "collision_vertices": 2084
+      "visual_vertices": 7679,
+      "collision_vertices": 2147
     },
     {
       "id": "sham-shui-po-east-buildings-District_4_-36",
@@ -40133,9 +41164,9 @@
       "collision_vertices": 1010
     },
     {
-      "id": "tai-kok-tsui-buildings-District_-8_-18.001",
-      "path": "res://Assets/Models/BuildingChunks/tai-kok-tsui-buildings-District_-8_-18.001.glb",
-      "proxy_name": "Proxy_-8_-18.001",
+      "id": "tai-kok-tsui-buildings-District_-8_-18",
+      "path": "res://Assets/Models/BuildingChunks/tai-kok-tsui-buildings-District_-8_-18.glb",
+      "proxy_name": "Proxy_-8_-18",
       "source": "tai-kok-tsui-buildings",
       "min": [
         -1014.8641147613527,
@@ -40151,9 +41182,9 @@
       "collision_vertices": 3093
     },
     {
-      "id": "tai-kok-tsui-buildings-District_-8_-19.001",
-      "path": "res://Assets/Models/BuildingChunks/tai-kok-tsui-buildings-District_-8_-19.001.glb",
-      "proxy_name": "Proxy_-8_-19.001",
+      "id": "tai-kok-tsui-buildings-District_-8_-19",
+      "path": "res://Assets/Models/BuildingChunks/tai-kok-tsui-buildings-District_-8_-19.glb",
+      "proxy_name": "Proxy_-8_-19",
       "source": "tai-kok-tsui-buildings",
       "min": [
         -1035.9654083251955,
@@ -40205,9 +41236,9 @@
       "collision_vertices": 774
     },
     {
-      "id": "tai-kok-tsui-buildings-District_-8_-22.001",
-      "path": "res://Assets/Models/BuildingChunks/tai-kok-tsui-buildings-District_-8_-22.001.glb",
-      "proxy_name": "Proxy_-8_-22.001",
+      "id": "tai-kok-tsui-buildings-District_-8_-22",
+      "path": "res://Assets/Models/BuildingChunks/tai-kok-tsui-buildings-District_-8_-22.glb",
+      "proxy_name": "Proxy_-8_-22",
       "source": "tai-kok-tsui-buildings",
       "min": [
         -1044.4537410736086,
@@ -40223,9 +41254,9 @@
       "collision_vertices": 4456
     },
     {
-      "id": "tai-kok-tsui-buildings-District_-8_-23.001",
-      "path": "res://Assets/Models/BuildingChunks/tai-kok-tsui-buildings-District_-8_-23.001.glb",
-      "proxy_name": "Proxy_-8_-23.001",
+      "id": "tai-kok-tsui-buildings-District_-8_-23",
+      "path": "res://Assets/Models/BuildingChunks/tai-kok-tsui-buildings-District_-8_-23.glb",
+      "proxy_name": "Proxy_-8_-23",
       "source": "tai-kok-tsui-buildings",
       "min": [
         -1032.908928871155,
@@ -40241,9 +41272,9 @@
       "collision_vertices": 2541
     },
     {
-      "id": "tai-kok-tsui-buildings-District_-8_-24.001",
-      "path": "res://Assets/Models/BuildingChunks/tai-kok-tsui-buildings-District_-8_-24.001.glb",
-      "proxy_name": "Proxy_-8_-24.001",
+      "id": "tai-kok-tsui-buildings-District_-8_-24",
+      "path": "res://Assets/Models/BuildingChunks/tai-kok-tsui-buildings-District_-8_-24.glb",
+      "proxy_name": "Proxy_-8_-24",
       "source": "tai-kok-tsui-buildings",
       "min": [
         -1054.8605575561526,
@@ -40259,9 +41290,9 @@
       "collision_vertices": 1463
     },
     {
-      "id": "tai-kok-tsui-buildings-District_-8_-25.001",
-      "path": "res://Assets/Models/BuildingChunks/tai-kok-tsui-buildings-District_-8_-25.001.glb",
-      "proxy_name": "Proxy_-8_-25.001",
+      "id": "tai-kok-tsui-buildings-District_-8_-25",
+      "path": "res://Assets/Models/BuildingChunks/tai-kok-tsui-buildings-District_-8_-25.glb",
+      "proxy_name": "Proxy_-8_-25",
       "source": "tai-kok-tsui-buildings",
       "min": [
         -1038.7519330978396,
@@ -41567,10 +42598,10 @@
       "max": [
         2170.4338989257817,
         22.899999618530277,
-        -2339.2107925415035
+        -2339.8422698974605
       ],
-      "visual_vertices": 1611,
-      "collision_vertices": 315
+      "visual_vertices": 2003,
+      "collision_vertices": 371
     },
     {
       "id": "to-kwa-wan-buildings-District_16_-20",
@@ -42041,24 +43072,6 @@
       "collision_vertices": 199
     },
     {
-      "id": "to-kwa-wan-buildings-District_23_-21",
-      "path": "res://Assets/Models/BuildingChunks/to-kwa-wan-buildings-District_23_-21.glb",
-      "proxy_name": "Proxy_23_-21",
-      "source": "to-kwa-wan-buildings",
-      "min": [
-        3046.444328308105,
-        -5e-324,
-        -2578.1973266601567
-      ],
-      "max": [
-        3066.3894500732426,
-        4.050000190734864,
-        -2557.94905090332
-      ],
-      "visual_vertices": 86,
-      "collision_vertices": 22
-    },
-    {
       "id": "to-kwa-wan-buildings-District_23_-24",
       "path": "res://Assets/Models/BuildingChunks/to-kwa-wan-buildings-District_23_-24.glb",
       "proxy_name": "Proxy_23_-24",
@@ -42084,15 +43097,15 @@
       "min": [
         3136.229286193847,
         -5e-324,
-        -2219.601829528809
+        -2273.6440486907964
       ],
       "max": [
-        3150.0000000000005,
-        3.0499999523162846,
-        -2197.069961547851
+        3223.9243164062505,
+        106.90000152587892,
+        -2182.795677185058
       ],
-      "visual_vertices": 157,
-      "collision_vertices": 57
+      "visual_vertices": 5057,
+      "collision_vertices": 769
     },
     {
       "id": "to-kwa-wan-buildings-District_24_-19",
@@ -42102,15 +43115,15 @@
       "min": [
         3131.937522888183,
         -5e-324,
-        -2415.9320983886723
+        -2428.047190189362
       ],
       "max": [
-        3150.0000000000005,
-        6.050000190734864,
-        -2397.321956634521
+        3197.9850082397465,
+        89.05000305175783,
+        -2359.53059387207
       ],
-      "visual_vertices": 209,
-      "collision_vertices": 85
+      "visual_vertices": 4342,
+      "collision_vertices": 586
     },
     {
       "id": "to-kwa-wan-buildings-District_24_-20",
@@ -42118,17 +43131,17 @@
       "proxy_name": "Proxy_24_-20",
       "source": "to-kwa-wan-buildings",
       "min": [
-        3063.9043664932246,
+        3126.1793670654292,
         -5e-324,
-        -2553.393215656281
+        -2468.500610351563
       ],
       "max": [
-        3150.0000000000005,
+        3150.2986145019536,
         89.75000000000001,
         -2411.4435272216792
       ],
-      "visual_vertices": 4318,
-      "collision_vertices": 430
+      "visual_vertices": 4071,
+      "collision_vertices": 379
     },
     {
       "id": "to-kwa-wan-buildings-District_24_-23",
@@ -42141,11 +43154,11 @@
         -2972.171176910401
       ],
       "max": [
-        3150.0000000000005,
+        3176.9438018798833,
         10.149999618530275,
         -2882.983951568603
       ],
-      "visual_vertices": 860,
+      "visual_vertices": 948,
       "collision_vertices": 116
     },
     {
@@ -42159,12 +43172,120 @@
         -3007.4257507324223
       ],
       "max": [
-        3150.0000000000005,
+        3165.23365020752,
         10.149999618530275,
         -2936.8598632812495
       ],
-      "visual_vertices": 670,
+      "visual_vertices": 694,
       "collision_vertices": 86
+    },
+    {
+      "id": "to-kwa-wan-buildings-District_24_-25",
+      "path": "res://Assets/Models/BuildingChunks/to-kwa-wan-buildings-District_24_-25.glb",
+      "proxy_name": "Proxy_24_-25",
+      "source": "to-kwa-wan-buildings",
+      "min": [
+        3193.504531860351,
+        -5e-324,
+        -3091.141510009766
+      ],
+      "max": [
+        3197.762245178223,
+        13.550000190734865,
+        -3086.791526794433
+      ],
+      "visual_vertices": 86,
+      "collision_vertices": 22
+    },
+    {
+      "id": "to-kwa-wan-buildings-District_25_-17",
+      "path": "res://Assets/Models/BuildingChunks/to-kwa-wan-buildings-District_25_-17.glb",
+      "proxy_name": "Proxy_25_-17",
+      "source": "to-kwa-wan-buildings",
+      "min": [
+        3205.5177431106563,
+        -5e-324,
+        -2200.9926548004155
+      ],
+      "max": [
+        3342.8461456298833,
+        106.59999847412111,
+        -2073.207283020019
+      ],
+      "visual_vertices": 10881,
+      "collision_vertices": 1485
+    },
+    {
+      "id": "to-kwa-wan-buildings-District_25_-18",
+      "path": "res://Assets/Models/BuildingChunks/to-kwa-wan-buildings-District_25_-18.glb",
+      "proxy_name": "Proxy_25_-18",
+      "source": "to-kwa-wan-buildings",
+      "min": [
+        3165.6628112792964,
+        -5e-324,
+        -2258.2758102416997
+      ],
+      "max": [
+        3298.168884277344,
+        105.75000000000001,
+        -2161.176834106445
+      ],
+      "visual_vertices": 13818,
+      "collision_vertices": 1562
+    },
+    {
+      "id": "to-kwa-wan-buildings-District_25_-19",
+      "path": "res://Assets/Models/BuildingChunks/to-kwa-wan-buildings-District_25_-19.glb",
+      "proxy_name": "Proxy_25_-19",
+      "source": "to-kwa-wan-buildings",
+      "min": [
+        3230.192085266113,
+        -5e-324,
+        -2402.922174453736
+      ],
+      "max": [
+        3346.2436828613286,
+        107.1999969482422,
+        -2279.7406616210933
+      ],
+      "visual_vertices": 6649,
+      "collision_vertices": 369
+    },
+    {
+      "id": "to-kwa-wan-buildings-District_25_-22",
+      "path": "res://Assets/Models/BuildingChunks/to-kwa-wan-buildings-District_25_-22.glb",
+      "proxy_name": "Proxy_25_-22",
+      "source": "to-kwa-wan-buildings",
+      "min": [
+        3229.3413982391353,
+        -5e-324,
+        -2836.655878067017
+      ],
+      "max": [
+        3281.6607208251958,
+        10.050000190734865,
+        -2754.634311676025
+      ],
+      "visual_vertices": 574,
+      "collision_vertices": 86
+    },
+    {
+      "id": "to-kwa-wan-buildings-District_25_-24",
+      "path": "res://Assets/Models/BuildingChunks/to-kwa-wan-buildings-District_25_-24.glb",
+      "proxy_name": "Proxy_25_-24",
+      "source": "to-kwa-wan-buildings",
+      "min": [
+        3201.9181915521617,
+        -5e-324,
+        -3065.3985438346867
+      ],
+      "max": [
+        3206.721690654755,
+        13.550000190734865,
+        -3060.568267822265
+      ],
+      "visual_vertices": 86,
+      "collision_vertices": 22
     },
     {
       "id": "to-kwa-wan-buildings-District_5_-16",
@@ -42271,8 +43392,8 @@
         31.10000038146973,
         -2576.3100433349605
       ],
-      "visual_vertices": 3457,
-      "collision_vertices": 625
+      "visual_vertices": 3502,
+      "collision_vertices": 646
     },
     {
       "id": "to-kwa-wan-buildings-District_5_-22",
@@ -54219,12 +55340,12 @@
         -5170.714443206788
       ],
       "max": [
-        3150.0000000000005,
+        3199.067794799805,
         32.3499984741211,
         -5001.230644226073
       ],
-      "visual_vertices": 2771,
-      "collision_vertices": 275
+      "visual_vertices": 3325,
+      "collision_vertices": 373
     },
     {
       "id": "wong-tai-sin-buildings-District_23_-41",
@@ -54417,12 +55538,12 @@
         -4871.618457317353
       ],
       "max": [
-        3150.0000000000005,
+        3176.5350570678715,
         10.449999809265138,
         -4765.360893249511
       ],
-      "visual_vertices": 494,
-      "collision_vertices": 94
+      "visual_vertices": 673,
+      "collision_vertices": 101
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-39",
@@ -54453,12 +55574,12 @@
         -5121.136412024499
       ],
       "max": [
-        3150.0000000000005,
-        140.6499938964844,
+        3159.282806396485,
+        141.80000305175784,
         -5081.220188140868
       ],
-      "visual_vertices": 6709,
-      "collision_vertices": 829
+      "visual_vertices": 8194,
+      "collision_vertices": 978
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-41",
@@ -54522,15 +55643,15 @@
       "min": [
         3059.4041557312007,
         -5e-324,
-        -5764.413589000703
+        -5764.70985031128
       ],
       "max": [
-        3150.0000000000005,
+        3160.791427612305,
         77.59999847412111,
         -5716.873931884765
       ],
-      "visual_vertices": 7923,
-      "collision_vertices": 1335
+      "visual_vertices": 8587,
+      "collision_vertices": 1483
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-46",
@@ -54543,12 +55664,12 @@
         -5875.2007637023935
       ],
       "max": [
-        3150.0000000000005,
+        3162.8129882812505,
         115.90000152587892,
-        -5770.242851257323
+        -5762.598686218261
       ],
-      "visual_vertices": 19655,
-      "collision_vertices": 1907
+      "visual_vertices": 20397,
+      "collision_vertices": 1985
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-47",
@@ -54561,12 +55682,12 @@
         -6013.216869354249
       ],
       "max": [
-        3150.0000000000005,
+        3167.629333496094,
         109.1999969482422,
-        -5889.057243347167
+        -5888.761245727538
       ],
-      "visual_vertices": 8028,
-      "collision_vertices": 1028
+      "visual_vertices": 8208,
+      "collision_vertices": 1064
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-48",
@@ -54579,12 +55700,12 @@
         -6134.967730522157
       ],
       "max": [
-        3150.0000000000005,
+        3169.6426239013676,
         114.90000152587892,
         -6006.079803466796
       ],
-      "visual_vertices": 9682,
-      "collision_vertices": 586
+      "visual_vertices": 10660,
+      "collision_vertices": 656
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-49",
@@ -54597,12 +55718,12 @@
         -6218.103519439698
       ],
       "max": [
-        3150.0000000000005,
+        3170.7660675048833,
         115.30000305175783,
         -6145.210891723632
       ],
-      "visual_vertices": 6513,
-      "collision_vertices": 233
+      "visual_vertices": 7205,
+      "collision_vertices": 261
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-50",
@@ -54623,9 +55744,9 @@
       "collision_vertices": 182
     },
     {
-      "id": "wong-tai-sin-buildings-District_4_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/wong-tai-sin-buildings-District_4_-38.001.glb",
-      "proxy_name": "Proxy_4_-38.001",
+      "id": "wong-tai-sin-buildings-District_4_-38",
+      "path": "res://Assets/Models/BuildingChunks/wong-tai-sin-buildings-District_4_-38.glb",
+      "proxy_name": "Proxy_4_-38",
       "source": "wong-tai-sin-buildings",
       "min": [
         555.376121520996,
@@ -54727,13 +55848,13 @@
         40.8499984741211,
         -5380.724143981933
       ],
-      "visual_vertices": 2807,
-      "collision_vertices": 503
+      "visual_vertices": 2798,
+      "collision_vertices": 482
     },
     {
-      "id": "wong-tai-sin-buildings-District_5_-38.001",
-      "path": "res://Assets/Models/BuildingChunks/wong-tai-sin-buildings-District_5_-38.001.glb",
-      "proxy_name": "Proxy_5_-38.001",
+      "id": "wong-tai-sin-buildings-District_5_-38",
+      "path": "res://Assets/Models/BuildingChunks/wong-tai-sin-buildings-District_5_-38.glb",
+      "proxy_name": "Proxy_5_-38",
       "source": "wong-tai-sin-buildings",
       "min": [
         637.0621581077575,
@@ -56959,7 +58080,7 @@
         12.350000381469728,
         -1965.9206771850584
       ],
-      "visual_vertices": 140,
+      "visual_vertices": 200,
       "collision_vertices": 44
     },
     {
@@ -56973,12 +58094,12 @@
         -2183.2161045074467
       ],
       "max": [
-        475.0602340698243,
+        474.35158538818365,
         70.1999969482422,
         -2044.6020355224607
       ],
-      "visual_vertices": 9200,
-      "collision_vertices": 1412
+      "visual_vertices": 10354,
+      "collision_vertices": 1586
     },
     {
       "id": "yau-ma-tei-buildings-District_4_-10",
@@ -57103,8 +58224,8 @@
         64.6999969482422,
         -1859.8126525878904
       ],
-      "visual_vertices": 5342,
-      "collision_vertices": 346
+      "visual_vertices": 5439,
+      "collision_vertices": 367
     },
     {
       "id": "yau-ma-tei-buildings-District_4_-17",
@@ -57121,13 +58242,13 @@
         63.25000000000001,
         -2042.7084503173826
       ],
-      "visual_vertices": 9375,
-      "collision_vertices": 943
+      "visual_vertices": 9595,
+      "collision_vertices": 971
     },
     {
-      "id": "yau-ma-tei-buildings-District_5_-11.001",
-      "path": "res://Assets/Models/BuildingChunks/yau-ma-tei-buildings-District_5_-11.001.glb",
-      "proxy_name": "Proxy_5_-11.001",
+      "id": "yau-ma-tei-buildings-District_5_-11",
+      "path": "res://Assets/Models/BuildingChunks/yau-ma-tei-buildings-District_5_-11.glb",
+      "proxy_name": "Proxy_5_-11",
       "source": "yau-ma-tei-buildings",
       "min": [
         639.8728184849023,
@@ -57143,9 +58264,9 @@
       "collision_vertices": 50
     },
     {
-      "id": "yau-ma-tei-buildings-District_5_-14.001",
-      "path": "res://Assets/Models/BuildingChunks/yau-ma-tei-buildings-District_5_-14.001.glb",
-      "proxy_name": "Proxy_5_-14.001",
+      "id": "yau-ma-tei-buildings-District_5_-14",
+      "path": "res://Assets/Models/BuildingChunks/yau-ma-tei-buildings-District_5_-14.glb",
+      "proxy_name": "Proxy_5_-14",
       "source": "yau-ma-tei-buildings",
       "min": [
         633.6797685623168,
@@ -57161,9 +58282,9 @@
       "collision_vertices": 22
     },
     {
-      "id": "yau-ma-tei-buildings-District_5_-17.001",
-      "path": "res://Assets/Models/BuildingChunks/yau-ma-tei-buildings-District_5_-17.001.glb",
-      "proxy_name": "Proxy_5_-17.001",
+      "id": "yau-ma-tei-buildings-District_5_-17",
+      "path": "res://Assets/Models/BuildingChunks/yau-ma-tei-buildings-District_5_-17.glb",
+      "proxy_name": "Proxy_5_-17",
       "source": "yau-ma-tei-buildings",
       "min": [
         646.4759263992308,

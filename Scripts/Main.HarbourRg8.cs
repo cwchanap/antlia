@@ -28,6 +28,7 @@ public partial class Main
            image.GetMipmapCount()+1!=source.MipLevels)
             throw new Exception($"Harbour mask binding differs from RGB manifest metadata: {texture.GetFormat()} {texture.GetWidth()}x{texture.GetHeight()}, {image.GetMipmapCount()+1} mips");
         CheckHarbourRg8RejectsBlueChannel();
+        CheckChiManStreetSurface(image);
         GD.Print($"ANTILA_HARBOUR_RG8_BINDING_OK: {source.Width}x{source.Height}, {source.MipLevels} mips");
     }
 

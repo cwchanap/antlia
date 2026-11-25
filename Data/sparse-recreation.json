@@ -9,19 +9,19 @@
   "width": 8192,
   "height": 8076,
   "mipLevels": 14,
-  "sourceSha256": "BECA875BF49F2CAC88A1C47833ABD1FCF33A3A1AEF97C6E7DA01F808BAF19AF0",
-  "sourceDataSha256": "9BBB06DFFDE85415624953C75209DDA992BF9B80B89B02C4BE71E4E5451A893B",
-  "authoredMipSha256": "BECA875BF49F2CAC88A1C47833ABD1FCF33A3A1AEF97C6E7DA01F808BAF19AF0",
+  "sourceSha256": "7270EFA3D376EB7ECB98BE041C892FEB70B345CCC5332B9F2FC09AC69233CBB3",
+  "sourceDataSha256": "DE4345495796F2E4885B88B5801C2B2AF93161E46689C480E0740B5CD186D777",
+  "authoredMipSha256": "7270EFA3D376EB7ECB98BE041C892FEB70B345CCC5332B9F2FC09AC69233CBB3",
   "atlasWidth": 4096,
   "atlasHeight": 2048,
-  "atlasColumns": 17,
+  "atlasColumns": 18,
   "atlasRows": 15,
   "lookupWidth": 64,
   "lookupHeight": 134,
-  "activePages": 247,
+  "activePages": 268,
   "texturePayloadBytes": 25257084,
-  "atlasSha256": "D4880E49F4210C649A162A781B0F6A36488E76E4B5E88CDF60CA972B07FCC7E2",
-  "lookupSha256": "AA7A53370346E8694799B4F52017DFD943B3741D40D778A8FB4A3E2F0A1FEF68",
+  "atlasSha256": "0C60303B9B1E20B82F76909EA6810A87B7B6CDF66C8835CF1B07CE1EEE42ED9E",
+  "lookupSha256": "CCD3D7A821D3E4AE4394A4C4B9D24A97FF30393B7F8C94BAEBF29C08390C9029",
   "lodRampSha256": "DD5E3D994AE6651773737D7E4E608C614AD849B5151A16921BD31B8CDBA425F8",
   "mips": [
     {
@@ -30,7 +30,7 @@
       "lookupOffset": 0,
       "pageColumns": 64,
       "pageRows": 64,
-      "activePages": 99
+      "activePages": 111
     },
     {
       "width": 4096,
@@ -38,7 +38,7 @@
       "lookupOffset": 64,
       "pageColumns": 32,
       "pageRows": 32,
-      "activePages": 65
+      "activePages": 70
     },
     {
       "width": 2048,
@@ -46,7 +46,7 @@
       "lookupOffset": 96,
       "pageColumns": 16,
       "pageRows": 16,
-      "activePages": 39
+      "activePages": 42
     },
     {
       "width": 1024,
@@ -54,7 +54,7 @@
       "lookupOffset": 112,
       "pageColumns": 8,
       "pageRows": 8,
-      "activePages": 23
+      "activePages": 24
     },
     {
       "width": 512,

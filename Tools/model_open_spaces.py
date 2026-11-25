@@ -6,10 +6,14 @@ import bpy
 import bmesh
 import json
 import math
+from os import environ
 from pathlib import Path
 from mathutils import Vector
 
-ROOT=Path(__file__).resolve().parents[1]
+project_override = globals().get('ANTILA_ROOT') or environ.get('ANTILA_ROOT')
+if not project_override and not globals().get('__file__'):
+    raise RuntimeError('Set ANTILA_ROOT to the checkout when running through Blender MCP.')
+ROOT = Path(project_override or Path(__file__).resolve().parents[1]).expanduser().resolve()
 MARKING_WIDTH=.11
 BASKETBALL_CIRCLE_RADIUS=1.8
 BASKETBALL_KEY_DEPTH=5.8
@@ -73,7 +77,7 @@ def build(region='mong-kok'):
         data=json.loads(data_path.read_text())
         basketball_markings,adjusted_basketball_ids=validate_basketball_markings(data['sports'])
         if region=='east-kowloon':
-            assert len(basketball_markings)==30 and len(adjusted_basketball_ids)==2,\
+            assert len(basketball_markings)==31 and set(adjusted_basketball_ids)=={'1910085685','1910085686'},\
                 'Reviewed east-Kowloon BAC inventory or dimension-adjusted count changed'
         checked_marking_vertices=0
         for court in data['sports']:

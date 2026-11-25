@@ -5,7 +5,7 @@ using System.Linq;
 
 public partial class Hud : Control
 {
-    private const string DataCredit="Maps / buildings / parks © HKSAR Govt · TD / LandsD iB1000 · 17 Nov 2026";
+    private const string DataCredit="Map data © HKSAR Govt · TD / LandsD / CEDD · 24 Nov 2026";
     public Main Game = null!;
     private readonly SystemFont _font = new() { FontNames = new[] { "Avenir Next", "Noto Sans", "sans-serif" } };
     private readonly Color _paper = new("f4edda"), _muted = new("afc0b8"), _mint = new("95dbc0");
@@ -95,12 +95,20 @@ public partial class Hud : Control
         ("WAN CHAI",new Vector3(150,0,1680),new Vector2(35,32)),
         ("CAUSEWAY BAY",new Vector3(1570,0,1680),new Vector2(65,32))};
 
+    private IEnumerable<(string Label,Vector3 At,Vector2 Offset)> DistrictLabels()
+    {
+        foreach(var district in MapDistricts)yield return district;
+        if(!Game.HasKaiTakDrive)yield break;
+        yield return ("KAI TAK",new Vector3(2600,0,-3130),new Vector2(146,-114));
+        yield return ("KAI TAK CRUISE TERMINAL",Game.KaiTakDriveEnd,new Vector2(55,-23));
+    }
+
     // Text boxes on the expanded map: district names, then a route's stop labels; the route check keeps them apart.
     public (Rect2[] Districts,Rect2[] Stops) ExpandedMapLabels(ServiceRoute route)
     {
         var (origin,scale)=MapTransform(true);
         Rect2 Box(Vector2 at,string text)=>new(at.X,at.Y-13,_font.GetStringSize(text,HorizontalAlignment.Left,-1,13).X,17);
-        return (MapDistricts.Select(d=>Box(origin+new Vector2(d.At.X,d.At.Z)*scale+d.Offset,d.Label)).ToArray(),
+        return (DistrictLabels().Select(d=>Box(origin+new Vector2(d.At.X,d.At.Z)*scale+d.Offset,d.Label)).ToArray(),
             route.Stops.Select((stop,i)=>Box(MapStopLabelAt(route.Stops.Count,i),$"{route.Number} · {stop.Name}")).ToArray());
     }
 
@@ -291,7 +299,7 @@ public partial class Hud : Control
         }
         if(expanded)
         {
-            foreach(var (label,at,offset) in MapDistricts)
+            foreach(var (label,at,offset) in DistrictLabels())
             {
                 var p=Point(at);var labelAt=p+offset;
                 float width=_font.GetStringSize(label,HorizontalAlignment.Left,-1,13).X;
@@ -301,7 +309,8 @@ public partial class Hud : Control
                 Text(label,labelAt.X,labelAt.Y,13,_muted);
             }
             Text($"Approx. {bounds.Size.X/1000:0.00} km east–west  ×  {bounds.Size.Y/1000:0.00} km north–south",112,759,16,_paper);
-            Text("T Tunnel • I Island • J Central • K Nathan • L West • N Lai Chi Kok • B Kwai Chung • U Tsuen Wan • O Coast • P East • Y Wong Tai Sin (stopped)",112,784,13,_mint);
+            string kaiTak=Game.HasKaiTakDrive?" • F Kai Tak":"";
+            Text("T Tunnel • I Island • J Central • K Nathan • L West • N Lai Chi Kok • B Kwai Chung • U Tsuen Wan • O Coast • P East • Y Wong Tai Sin"+kaiTak+" (stopped)",112,784,13,_mint);
         }
         var bus=Point(Game.Bus.GlobalPosition);
         DrawCircle(bus,9,_panel);

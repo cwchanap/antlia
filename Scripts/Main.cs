@@ -29,7 +29,7 @@ public partial class Main : Node3D
     private readonly List<Vector3> _parkPath = new(){new(-80,0,-430),new(-145,0,-520),new(-180,0,-660),new(-328,0,-720),new(-328,0,-835),new(-100,0,-880)};
     private readonly Dictionary<string, StandardMaterial3D> _materials = new();
     private readonly Dictionary<Vector3,BoxMesh> _boxMeshes = new();
-    private readonly Dictionary<string, PackedScene> _assetScenes = new();
+    private readonly Dictionary<string, PackedScene?> _assetScenes = new();
     private static bool _harbourLaunchConsumed;
     private readonly SystemFont _font = new() { FontNames = new[] { "PingFang HK", "Noto Sans CJK TC", "sans-serif" } };
     private Node3D _steeringWheel = null!;
@@ -54,6 +54,9 @@ public partial class Main : Node3D
         RegisterInput();
         SelfTest |= OS.GetCmdlineUserArgs().Contains("--streaming-check");
         SelfTest |= OS.GetCmdlineUserArgs().Contains("--map-buffer-check");
+        SelfTest |= args.Contains("--kai-tak-check");
+        SelfTest |= args.Contains("--east-open-spaces-check");
+        SelfTest |= args.Contains("--kowloon-city-north-check");
         Map = new RoadMap();
         if(OS.GetCmdlineUserArgs().Contains("--surface-check")){CallDeferred(MethodName.RunChecks);return;}
         PrepareParkEntrances();
@@ -94,6 +97,7 @@ public partial class Main : Node3D
         { _harbourLaunchConsumed=true;StartHarbourDrive(); }
         if(OS.GetCmdlineUserArgs().Contains("--east-kowloon-review"))CallDeferred(MethodName.CaptureEastKowloon);
         if(OS.GetCmdlineUserArgs().Contains("--harbour-review"))CallDeferred(MethodName.CaptureHarbour);
+        if(args.Contains("--kai-tak-review"))CallDeferred(MethodName.CaptureKaiTak);
         if (SelfTest) CallDeferred(MethodName.RunChecks);
         if (OS.GetCmdlineUserArgs().Contains("--capture")) CallDeferred(MethodName.CaptureViews);
         if (OS.GetCmdlineUserArgs().Contains("--audio-review")) CallDeferred(MethodName.ReviewAudio);
@@ -102,7 +106,7 @@ public partial class Main : Node3D
         if (OS.GetCmdlineUserArgs().Contains("--building-review") || OS.GetCmdlineUserArgs().Contains("--footpath-review") || OS.GetCmdlineUserArgs().Contains("--road-review")) CallDeferred(MethodName.ReviewScenery);
         // A restart replays the chosen route; a fresh launch opens route select unless a check or capture drives it.
         if(_pendingRoute>=0)BeginRoute(_pendingRoute);
-        else if(!SelfTest && !OS.GetCmdlineUserArgs().Any(a=>a is "--harbour" or "--harbour-review" or "--east-kowloon-review" or "--capture" or "--audio-review" or "--signal-capture" or "--building-review" or "--footpath-review" or "--road-review"))ShowRouteSelect();
+        else if(!SelfTest && !args.Any(a=>a is "--kai-tak-review" or "--harbour" or "--harbour-review" or "--east-kowloon-review" or "--capture" or "--audio-review" or "--signal-capture" or "--building-review" or "--footpath-review" or "--road-review"))ShowRouteSelect();
         GD.Print($"ANTILA_READY: government map loaded; {Routes.Count} routes, {Routes.Sum(r=>r.Stops.Count)} stops; Blender GLBs; C# driving");
     }
 
@@ -112,6 +116,7 @@ public partial class Main : Node3D
             ("accelerate", Key.W), ("brake", Key.S), ("steer_left", Key.A), ("steer_right", Key.D),
             ("handbrake", Key.Space), ("doors", Key.E), ("camera", Key.C), ("reverse", Key.Q),
             ("tunnel", Key.T), ("island", Key.I), ("central", Key.J), ("kowloon", Key.K), ("west", Key.L), ("northwest", Key.N), ("kwai_chung", Key.B), ("tsuen_wan", Key.U), ("west_coast", Key.O), ("east_kowloon", Key.P), ("wong_tai_sin", Key.Y), ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V),
+            ("kai_tak", Key.F),
             ("routes", Key.Tab), ("confirm", Key.Enter), ("menu_up", Key.Up), ("menu_down", Key.Down) })
         {
             if (InputMap.HasAction(name)) continue;
@@ -148,11 +153,35 @@ public partial class Main : Node3D
         return box;
     }
 
-    private Node3D Asset(string name, Vector3 at, float heading = 0, Vector3? scale = null)
+    private Node3D InstantiateAsset(string name)
     {
         // Retain scene wrappers while instancing repeatedly; avoid a stale Godot/.NET GC handle.
-        if(!_assetScenes.TryGetValue(name,out var scene))_assetScenes[name]=scene=GD.Load<PackedScene>($"res://Assets/Models/{name}.glb");
-        var n = scene.Instantiate<Node3D>();
+        if(!_assetScenes.TryGetValue(name,out var scene))
+        {
+            string path=$"res://Assets/Models/{name}.glb";
+            _assetScenes[name]=scene=ResourceLoader.Exists(path)?GD.Load<PackedScene>(path):null;
+        }
+        if(scene!=null)return scene.Instantiate<Node3D>();
+        string? jacket=name switch {"passenger_mei"=>"965e49","passenger_dennis"=>"52786b","passenger_family"=>"b08953","passenger_headphones"=>"465d79",_=>null};
+        if(jacket==null)throw new InvalidOperationException("Missing model: "+name);
+
+        // Licensed passenger GLBs are installed locally. Keep the same queue
+        // positions and clearance when running from a source checkout.
+        var figure=new Node3D();
+        Box(figure,new(0,1.21f,0),new(.34f,.55f,.23f),jacket);
+        Box(figure,new(0,1.61f,0),new(.21f,.25f,.21f),"bc9276");
+        foreach(float side in new[]{-1f,1f})
+        {
+            Box(figure,new(side*.09f,.48f,0),new(.13f,.81f,.16f),"384a51");
+            Box(figure,new(side*.09f,.05f,-.035f),new(.15f,.10f,.25f),"302c2a");
+            Box(figure,new(side*.22f,1.15f,0),new(.10f,.44f,.12f),jacket);
+        }
+        return figure;
+    }
+
+    private Node3D Asset(string name, Vector3 at, float heading = 0, Vector3? scale = null)
+    {
+        var n = InstantiateAsset(name);
         if(name=="shelter")
             foreach(var mesh in n.FindChildren("*","MeshInstance3D",true,false).Cast<MeshInstance3D>())
                 foreach(var material in Enumerable.Range(0,mesh.Mesh.GetSurfaceCount()).Select(mesh.Mesh.SurfaceGetMaterial).OfType<StandardMaterial3D>().Where(m=>m.ResourceName.Contains("shelter tinted glass")))
@@ -374,7 +403,7 @@ public partial class Main : Node3D
         _terrain.SetShaderParameter("surface_mask",texture);_harbourPaint.SetShaderParameter("district_mask",texture);
         var harbourRoads=HarbourRoads.Where(r=>!r.Tunnel).SelectMany(r=>Enumerable.Range(1,r.Points.Count-1)
             .Where(i=>Mathf.Max(r.Points[i-1].Y,r.Points[i].Y)<.05f)
-            .Select(i=>(new Vector2(r.Points[i-1].X,r.Points[i-1].Z),new Vector2(r.Points[i].X,r.Points[i].Z),6f)));
+            .Select(i=>(new Vector2(r.Points[i-1].X,r.Points[i-1].Z),new Vector2(r.Points[i].X,r.Points[i].Z),r.Elevated?6f:r.Width/2)));
         _terrain.SetShaderParameter("harbour_mask",TerrainMask("harbour_mask",HarbourBounds,
             ()=>Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),pads.Concat(_harbourPaving),HarbourBounds,harbourRoads,2)));
         _terrain.SetShaderParameter("harbour_origin",HarbourBounds.Position);_terrain.SetShaderParameter("harbour_size",HarbourBounds.Size);
@@ -476,6 +505,7 @@ public partial class Main : Node3D
         if(e.IsActionPressed("tsuen_wan")){StartHarbourDrive(10);return;}
         if(e.IsActionPressed("east_kowloon")){StartHarbourDrive(12);return;}
         if(e.IsActionPressed("wong_tai_sin")){StartHarbourDrive(13);return;}
+        if(HasKaiTakDrive && e.IsActionPressed("kai_tak")){StartHarbourDrive(KaiTakDriveIndex);return;}
         if(e.IsActionPressed("west_coast")){StartHarbourDrive(11);return;}
         if(e.IsActionPressed("routes") && !MapOpen)
         {
@@ -805,12 +835,24 @@ public partial class Main : Node3D
             void Check(bool ok,string message) { if(!ok)throw new Exception(message); }
             if(OS.GetCmdlineUserArgs().Contains("--map-buffer-check")){Hud.CheckMapGeometry();await CheckMapBufferBudget();QuitGame();return;}
             await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+            if(OS.GetCmdlineUserArgs().Contains("--kowloon-city-north-check")){CheckKowloonCityNorth();QuitGame();return;}
             if(OS.GetCmdlineUserArgs().Contains("--self-test"))CheckHarbourRuntimeData();
             CheckSurfaceMasks();
             CheckSharedBoxMeshes();
             if(OS.GetCmdlineUserArgs().Contains("--surface-check")){QuitGame();return;}
             CheckHarbourRg8Binding();
+            if(OS.GetCmdlineUserArgs().Contains("--east-open-spaces-check"))
+            {
+                CheckEasternOpenSpaces();
+                QuitGame();return;
+            }
             Hud.CheckMapGeometry();
+            if(OS.GetCmdlineUserArgs().Contains("--kai-tak-check"))
+            {
+                await CheckKaiTak();
+                await CheckHarbourDrives(kaiTakOnly:true);
+                QuitGame();return;
+            }
             CheckHarbourSceneryFiltering();
             if(OS.GetCmdlineUserArgs().Contains("--self-test"))await CheckBuildingStreaming();
             if(OS.GetCmdlineUserArgs().Contains("--streaming-check")){await CheckBuildingStreaming();QuitGame();return;}
@@ -888,9 +930,11 @@ public partial class Main : Node3D
             initial=Bus.Position;
             for(int i=0;i<30;i++)await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
             Check(Bus.Position.Z>initial.Z+1,"physical reverse travel");
-            Bus.ResetAt(EastBoundaryProbe-Vector3.Right*15,-Mathf.Pi/2);
+            var outerWall=FindEastBoundaryProbe();
+            Bus.ResetAt(outerWall-Vector3.Right*15,-Mathf.Pi/2);
+            int wallContacts=Bus.Collisions;
             for(int i=0;i<85;i++)await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
-            Check(Bus.Collisions>0 && Bus.Position.X<EastBoundaryProbe.X-2,$"outer barrier must block the bus: contacts={Bus.Collisions}, position={Bus.Position}");
+            Check(Bus.Collisions>wallContacts && Bus.Position.X<outerWall.X-2,$"outer barrier must block the bus: contacts={Bus.Collisions-wallContacts}, position={Bus.Position}");
             Bus.TestThrottle=0;Bus.TestBrake=0;
             await CheckSideStreet("HAIPHONG ROAD",350,true);
             await CheckSideStreet("GRANVILLE ROAD",503,false);

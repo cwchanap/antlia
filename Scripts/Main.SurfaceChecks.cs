@@ -6,7 +6,7 @@ public partial class Main
     private void CheckSurfaceMasks()
     {
         // A large two-dimensional extract must be bounded by bytes, not just the GPU's axis limit.
-        foreach(var size in new[]{new Vector2(17110,13430),new Vector2(8200,1),new Vector2(1,8200)})
+        foreach(var size in new[]{new Vector2(18860,13430),new Vector2(8200,1),new Vector2(1,8200)})
         {
             var bounds=size.X>100 && size.Y>100?new Rect2(-13880,-11280,size.X,size.Y):new Rect2(Vector2.Zero,size);
             using(var mask=Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),Array.Empty<Vector2[]>(),

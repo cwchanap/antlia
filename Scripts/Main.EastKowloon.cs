@@ -5,7 +5,64 @@ using System.Threading.Tasks;
 
 public partial class Main
 {
-    private static readonly Vector3 EastBoundaryProbe=new(3150,0,-2355.5f);
+    private void CheckKowloonCityNorth()
+    {
+        void Check(bool ok,string message){if(!ok)throw new Exception(message);}
+        var space=GetWorld3D().DirectSpaceState;
+        // The four main probes and the small eastern corner were outside the old ground cut.
+        foreach(var at in new[]{new Vector3(330,0,-6010),new Vector3(370,0,-6025),
+            new Vector3(455,0,-6020),new Vector3(475,0,-6010),new Vector3(548,0,-6001)})
+        {
+            using var ray=PhysicsRayQueryParameters3D.Create(at+Vector3.Up*.2f,at+Vector3.Down*.2f,1);
+            var hit=space.IntersectRay(ray);
+            Check(hit.Count>0 && (hit["collider"].AsGodotObject() as Node)?.GetParent()?.Name=="HarbourGround",
+                "Northern Kowloon City ground is missing at "+at);
+        }
+        foreach(float x in new[]{330f,455f,548f})
+        {
+            var seam=new Vector3(x,1,-6000);
+            using var query=new PhysicsShapeQueryParameters3D {
+                Shape=new BoxShape3D{Size=new(1.2f,1.2f,1.2f)},Transform=new(Basis.Identity,seam),CollisionMask=1};
+            Check(space.IntersectShape(query,1).Count==0,"Old north cut still has internal collision at "+seam);
+        }
+        foreach(float x in new[]{315f,420f,500f})
+        {
+            using var ray=PhysicsRayQueryParameters3D.Create(new(x,.6f,-6069),new(x,.6f,-6081),1);
+            var hit=space.IntersectRay(ray);
+            Check(hit.Count>0 && Mathf.Abs(hit["position"].AsVector3().Z+6075)<.5f &&
+                (hit["collider"].AsGodotObject() as Node)?.GetParent()?.Name=="KowloonBoundary",
+                "Northern Kowloon City outer wall is missing at X="+x);
+        }
+        foreach(var outside in new[]{new Vector3(350,0,-6080),new Vector3(244,0,-6040)})
+        {
+            using var ray=PhysicsRayQueryParameters3D.Create(outside+Vector3.Up*.2f,outside+Vector3.Down*.2f,1);
+            Check(space.IntersectRay(ray).Count==0,"Ground extends beyond the reviewed northern patch at "+outside);
+        }
+        GD.Print("ANTILA_KOWLOON_CITY_NORTH_OK: five ground, three former-seam clearance, three outer wall and two exterior probes");
+    }
+
+    private Vector3 FindEastBoundaryProbe()
+    {
+        var segments=_kowloonBoundary.SelectMany(line=>line.Zip(line.Skip(1)))
+            .Where(pair=>pair.First.X>2500 && Mathf.Abs(pair.First.X-pair.Second.X)<.01f && pair.First.DistanceTo(pair.Second)>24)
+            .OrderByDescending(pair=>pair.First.X).ThenBy(pair=>pair.First.DistanceSquaredTo(pair.Second));
+        foreach(var (a,b) in segments)
+        {
+            int samples=Math.Max(1,Mathf.CeilToInt(a.DistanceTo(b)/32));
+            for(int sample=0;sample<samples;sample++)
+            {
+                var midpoint=a.Lerp(b,(sample+.5f)/samples);
+                var point=new Vector3(midpoint.X,0,midpoint.Y);
+                var approach=new Rect2(point.X-22,point.Z-1.6f,20,3.2f);
+                if(_lots.Any(lot=>lot.Bounds.Intersects(approach)))continue;
+                var start=point-Vector3.Right*15;
+                using var ray=PhysicsRayQueryParameters3D.Create(start+Vector3.Up*.2f,start+Vector3.Down*.2f,1);
+                var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
+                if(hit.Count>0 && (hit["collider"].AsGodotObject() as Node)?.GetParent().Name=="HarbourGround")return point;
+            }
+        }
+        throw new Exception("No clear inward approach to an eastern map boundary segment");
+    }
 
     private void CheckEastMapFixes()
     {
@@ -16,11 +73,12 @@ public partial class Main
             Check(GetWorld3D().DirectSpaceState.IntersectShape(query,1).Count==0,"Former eastern district fence must not divide the expanded mainland");
         using(var ray=PhysicsRayQueryParameters3D.Create(seam+Vector3.Up*.2f,seam+Vector3.Down*.2f,1))
             Check(GetWorld3D().DirectSpaceState.IntersectRay(ray).Count>0,"Removing the internal fence must preserve mainland ground");
-        using(var ray=PhysicsRayQueryParameters3D.Create(EastBoundaryProbe+Vector3.Up*2,EastBoundaryProbe+Vector3.Down,1))
+        var outerWall=FindEastBoundaryProbe();
+        using(var ray=PhysicsRayQueryParameters3D.Create(outerWall+Vector3.Up*2,outerWall+Vector3.Down,1))
         {
             var hit=GetWorld3D().DirectSpaceState.IntersectRay(ray);
             Check(hit.Count>0 && hit["position"].AsVector3().Y>.9f &&
-                (hit["collider"].AsGodotObject() as Node)!.GetParent().Name=="KowloonBoundary","True outer map boundary must retain its collision wall at "+EastBoundaryProbe);
+                (hit["collider"].AsGodotObject() as Node)!.GetParent().Name=="KowloonBoundary","True outer map boundary must retain its collision wall at "+outerWall);
         }
         // Shoreline 1101166493 crosses x=700 at z=-314.12.
         var coast=new Vector3(700,0,-314.12f);

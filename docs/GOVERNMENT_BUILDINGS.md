@@ -1,11 +1,12 @@
 # Government building layout — 13 September 2026
 
+The [24 November district expansion and review](KOWLOON_CITY_DISTRICT_REVIEW.md) brings the layout to **40,576 derived parts in 3,232 render/collision chunk pairs**. The eastern layout contains 8,942 parts, including the Cruise Terminal. The Kai Tak source GLB has its own spatial chunk group. The North layout retains the surveyed SPCA footprint beside Chi Man Street.
 
 The [24 October Wong Tai Sin extension](WONG_TAI_SIN_EXPANSION.md) brought the total at that date to **39,946 derived parts in 3,135 render/collision chunk pairs**, including 8,528 eastern parts. Its northern asset contains 1,666 parts in 202 chunk pairs. Earlier counts below apply to their recorded snapshots.
 
 The four-district refresh restores the Kowloon Park Sports Centre (336429) and Administration Building (336430), moves the park path clear of the Sports Centre, and reclips the northern footprints beside the sourced Wylie Road and King’s Park Rise carriageways.
 
-The Tsim Sha Tsui waterfront adds 18 parts from 13 height-backed iB1000 building records, covering the Hong Kong Cultural Centre, Museum of Art, Space Museum and Former Kowloon–Canton Railway Clock Tower. The Kowloon Tong expansion adds 167 rendered parts from 144 previously absent source records, with one small Cornwall Street Park record removed by the required road clearance. The current total is **40,168 parts in 3,170 render/collision chunk pairs**.
+The Tsim Sha Tsui waterfront adds 18 parts from 13 height-backed iB1000 building records, covering the Hong Kong Cultural Centre, Museum of Art, Space Museum and Former Kowloon–Canton Railway Clock Tower. The Kowloon Tong expansion adds 167 rendered parts from 144 previously absent source records, with one small Cornwall Street Park record removed by the required road clearance. That snapshot contains **40,168 parts in 3,170 render/collision chunk pairs**.
 
 The [30 October building-streaming change](BUILDING_STREAMING.md) packages those pairs independently and loads detailed geometry/collision near the bus. Collision-derived skyline proxies remain visible at a distance. Loaded chunks share three texture families, release hidden render meshes after collision construction and dispose owned resources on eviction. The original source GLBs, government data and detailed geometry are retained; roof and clearance checks load their probe regions before testing.
 

@@ -43,11 +43,13 @@ The built-in imagegen tool generated `Assets/Textures/tunnel-tiles.png`. Exact p
 
 ## Regeneration and verification
 
+The current map uses the reviewed November WGS84 centreline archive and district import mode. After regenerating the coastline, import the road archive with the following command. Rebuild the harbour model, derived building and recreation assets, and terrain masks before running the engine checks below. [Current regeneration workflow](KOWLOON_CITY_DISTRICT_REVIEW.md#repeat-the-audit)
+
 ```sh
-.venv-geodata/bin/python Tools/import_tunnel.py /tmp/antila-centerline.kmz
-# Execute Tools/model_tunnel.py through Blender MCP.
-.venv-geodata/bin/python Tools/import_buildings.py
-# Execute Tools/model_government_buildings.py through Blender MCP.
+.venv-geodata/bin/python Tools/import_tunnel.py /path/to/CENTERLINE.kmz --kowloon-city-district
+```
+
+```sh
 ./run.command --headless -- --harbour-check
 ./run.command --headless -- --self-test
 ./run.command --disable-vsync -- --harbour-review
@@ -96,7 +98,7 @@ The [13 October Mei Foo / Kwai Chung expansion](KWAI_CHUNG_EXPANSION.md) adds 1,
 
 Normal play reads `Data/cross-harbour-runtime.json`. It retains every field and provenance value from canonical `Data/cross-harbour.json` except `surface_triangles`, `ground_triangles` and `water_triangles`. Those arrays are used by offline modelling and geodata checks; the game constructs collision from the existing GLB and reads baked terrain masks. The canonical file and the original source attribution remain intact. No additional Python or network dependency is introduced at runtime.
 
-The runtime JSON is generated from the canonical object, with no coordinate rounding, simplification or changes to road/route ordering. The current file is **5,685,005 bytes**, compared with **41,118,951 bytes** in the full file. Input size is not a measure of process RAM savings.
+The runtime JSON preserves coordinates and road and route ordering from the canonical object. The district edition uses **6,015,935 bytes** for the runtime file and **43,128,428 bytes** for the authoring file.
 
 ```sh
 python3 Tools/export_runtime_harbour.py          # regenerate the derivative only
