@@ -77,7 +77,9 @@ def build(region='mong-kok'):
         data=json.loads(data_path.read_text())
         basketball_markings,adjusted_basketball_ids=validate_basketball_markings(data['sports'])
         if region=='east-kowloon':
-            assert len(basketball_markings)==31 and set(adjusted_basketball_ids)=={'1910085685','1910085686'},\
+            source_paths={item['path'] for item in data.get('metadata',{}).get('source_manifests',[])}
+            expected_count=39 if 'Data/wong-tai-sin-district-open-spaces-source.geojson' in source_paths else 31
+            assert len(basketball_markings)==expected_count and set(adjusted_basketball_ids)=={'1910085685','1910085686'},\
                 'Reviewed east-Kowloon BAC inventory or dimension-adjusted count changed'
         checked_marking_vertices=0
         for court in data['sports']:

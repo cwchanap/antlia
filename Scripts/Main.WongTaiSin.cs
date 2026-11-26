@@ -5,6 +5,95 @@ using System.Threading.Tasks;
 
 public partial class Main
 {
+    private const int ChoiHungDriveIndex=16;
+    private const string ChoiHungDriveName="Choi Hung → Hammer Hill";
+    private const string WongTaiSinReliefPath="res://Data/wong-tai-sin-relief.json";
+    private bool _fullWongTaiSinDistrict;
+    public bool HasChoiHungDrive=>HasHarbourDrive(ChoiHungDriveIndex);
+    public Vector3 ChoiHungDriveStart=>_harbourRoutes[ChoiHungDriveIndex].Points[0];
+    private static bool HasWongTaiSinRelief=>FileAccess.FileExists(WongTaiSinReliefPath);
+
+    private static void RequireWongTaiSinRelief()
+    {
+        if(!HasWongTaiSinRelief)
+            throw new Exception($"Full Wong Tai Sin district requires {WongTaiSinReliefPath}. Run Tools/import_wong_tai_sin_relief.py before exporting the harbour model.");
+    }
+
+    private int CheckChoiHungDistrictDrive()
+    {
+        void Check(bool ok,string message){if(!ok)throw new Exception(message);}
+        Check(HasChoiHungDrive,"The district needs a Choi Hung to Hammer Hill drive");
+        var start=ChoiHungDriveStart;
+        int selected=RouteIndex,pending=_pendingRoute;
+        using var shortcut=new InputEventKey {Keycode=Key.I,PhysicalKeycode=Key.X,Pressed=true};
+        ShowRouteSelect();_UnhandledInput(shortcut);
+        Check(!Menu && HarbourDrive && Bus.Position.DistanceTo(start)<3 && !Hud.MapShowsService,
+            "Physical X must start Choi Hung from route select");
+        using var tab=new InputEventKey {Keycode=Key.Tab,PhysicalKeycode=Key.Tab,Pressed=true};
+        _UnhandledInput(tab);
+        Check(Menu && RouteIndex==selected && Hud.MapShowsService,"Tab from Choi Hung must return to the selected service");
+        BeginRoute(selected);_UnhandledInput(shortcut);
+        Check(HarbourDrive && Bus.Position.DistanceTo(start)<3 && _frontBlind!.Text=="NOT IN SERVICE",
+            "Physical X must start Choi Hung while stopped");
+        BeginRoute(selected);_pendingRoute=pending;
+        int support=CheckSourceDriveLanes(ChoiHungDriveIndex);
+        GD.Print($"ANTILA_CHOI_HUNG_READY_OK: physical X from menu and stopped driving; {_harbourRouteSources[ChoiHungDriveIndex].Length} signed sections; {support} lane-support probes");
+        return ChoiHungDriveIndex;
+    }
+
+    private async Task CheckWongTaiSinDistrictScenery()
+    {
+        RequireWongTaiSinRelief();
+        var space=GetWorld3D().DirectSpaceState;
+        if(_harbourRoadIndex.ContainsKey("TD_103871") && _harbourRoadIndex.ContainsKey("TD_103672"))
+        {
+            using var mask=((Texture2D)_terrain.GetShaderParameter("harbour_mask").AsGodotObject()).GetImage();
+            foreach(var at in new[]{new Vector3(3353.723f,0,-4768.874f),new Vector3(3364.130f,0,-4762.624f)})
+            {
+                using var upper=PhysicsRayQueryParameters3D.Create(at+Vector3.Up*9,at+Vector3.Up*5,1);
+                using var lower=PhysicsRayQueryParameters3D.Create(at+Vector3.Up*.3f,at+Vector3.Down*.3f,1);
+                var deck=space.IntersectRay(upper);var ground=space.IntersectRay(lower);
+                if(deck.Count==0 || Mathf.Abs(deck["position"].AsVector3().Y-7)>.15f ||
+                   ground.Count==0 || Mathf.Abs(ground["position"].AsVector3().Y)>.05f ||
+                   SampleHarbourSurface(mask,HarbourBounds,at).R<.9f)
+                    throw new Exception($"Hammer Hill lacks separate raised and surface carriageways at {at}");
+            }
+            GD.Print("ANTILA_HAMMER_HILL_GRADE_OK: both raised crossings retain paved lower carriageways");
+        }
+        var hillsideProbe=new Vector3(4026.6667f,0,-6410.6667f);
+        using var hillsideRay=PhysicsRayQueryParameters3D.Create(hillsideProbe+Vector3.Up*155,hillsideProbe+Vector3.Up*60,1);
+        using var belowHillside=PhysicsRayQueryParameters3D.Create(hillsideProbe+Vector3.Up*2,hillsideProbe+Vector3.Down*2,1);
+        var hillside=space.IntersectRay(hillsideRay);
+        if(hillside.Count==0 || Mathf.Abs(hillside["position"].AsVector3().Y-121.1651f)>.15f ||
+           (hillside["collider"].AsGodotObject() as Node)?.GetParent()?.Name!="HarbourGround" ||
+           space.IntersectRay(belowHillside).Count!=0)
+            throw new Exception("Tsz Wan Shan requires raised hillside collision and no hidden flat floor");
+        foreach(var p in new[]{new Vector3(3769.1706f,0,-6712.8057f),new Vector3(3769.1442f,0,-6712.8358f),
+            new Vector3(3350.1595f,0,-5949.979f)})
+        {
+            using var ray=PhysicsRayQueryParameters3D.Create(p+Vector3.Up*.15f,p+Vector3.Down*.15f,1);
+            var hit=space.IntersectRay(ray);
+            if(hit.Count==0 || Mathf.Abs(hit["position"].AsVector3().Y)>.025f)
+                throw new Exception($"Tsz Wan Shan needs continuous ground at {p}");
+        }
+        GD.Print($"ANTILA_TSZ_WAN_SHAN_RELIEF_OK: hillside collision at {hillside["position"].AsVector3().Y:0.00} m, with supported seam and nearby road");
+        if(FileAccess.FileExists("res://Data/ma-chai-hang-building-source.geojson"))
+        {
+            var at=new Vector3(1613.7103f,0,-5529.2389f);
+            bool previous=_buildingStreamingCheck;_buildingStreamingCheck=true;
+            try
+            {
+                if(PrepareBuildingProbe(at))await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+                using var ray=PhysicsRayQueryParameters3D.Create(at+Vector3.Up*16,at+Vector3.Up*5,1);
+                var roof=GetWorld3D().DirectSpaceState.IntersectRay(ray);
+                if(roof.Count==0 || Mathf.Abs(roof["position"].AsVector3().Y-10)>.1f)
+                    throw new Exception("Ma Chai Hang expanded surveyed footprint lacks its roof collider");
+            }
+            finally{EnsureBuildingsAt(Bus.Position);_buildingStreamingCheck=previous;}
+            GD.Print("ANTILA_MA_CHAI_HANG_ROOF_OK: 10 m roof collider on the expanded footprint");
+        }
+    }
+
     public void CheckWongTaiSinReady()
     {
         void Check(bool ok,string message){if(!ok)throw new Exception(message);}
@@ -31,7 +120,7 @@ public partial class Main
         Check(terminal.Name.Contains("WONG TAI SIN",StringComparison.OrdinalIgnoreCase),"Wong Tai Sin route must end on Wong Tai Sin Road");
 
         int lots=_lots.Count(l=>l.Center.X>550 && l.Center.X<3150 && l.Center.Z<=-4864);
-        Check(lots==(HasKaiTakDrive?1503:1509),$"Wong Tai Sin north-of-4,864 m building-center count changed: {lots} buildings");
+        Check(lots==(HasDiamondHillDrive?1528:HasKaiTakDrive?1503:1509),$"Wong Tai Sin north-of-4,864 m building-center count changed: {lots} buildings");
         Check(_harbourDistrictTrees[10]>0 && _harbourDistrictLamps[10]>0 && _harbourDistrictPeople[10]>0,
             $"Wong Tai Sin clearance-safe street detail missing: {_harbourDistrictTrees[10]} trees, {_harbourDistrictLamps[10]} lamps, {_harbourDistrictPeople[10]} passengers");
         Check(_islandDetails.Count(d=>d.Position.X>550 && d.Position.X<3150 && d.Position.Z<=-4864)>0,"Wong Tai Sin roadside scenery missing");
@@ -49,14 +138,16 @@ public partial class Main
                 $"Resident building visual and collision inventory differs for {chunk.Id}");
         }
 
-        var north=KowloonEastLand.Min(p=>p.Y);
-        var edge=Enumerable.Range(0,KowloonEastLand.Length)
-            .Select(i=>(A:KowloonEastLand[i],B:KowloonEastLand[(i+1)%KowloonEastLand.Length]))
-            .Where(s=>Mathf.Abs(s.A.Y-north)<.1f && Mathf.Abs(s.B.Y-north)<.1f)
-            .OrderByDescending(s=>s.A.DistanceTo(s.B)).FirstOrDefault();
-        Check(edge.A.DistanceTo(edge.B)>20,"Wong Tai Sin northern closure edge missing");
-        var boundary=(edge.A+edge.B)/2;using(var wall=PhysicsRayQueryParameters3D.Create(new(boundary.X,2,boundary.Y),new(boundary.X,-1,boundary.Y),1))
+        if(!HasDiamondHillDrive)
         {
+            var north=KowloonEastLand.Min(p=>p.Y);
+            var edge=Enumerable.Range(0,KowloonEastLand.Length)
+                .Select(i=>(A:KowloonEastLand[i],B:KowloonEastLand[(i+1)%KowloonEastLand.Length]))
+                .Where(s=>Mathf.Abs(s.A.Y-north)<.1f && Mathf.Abs(s.B.Y-north)<.1f)
+                .OrderByDescending(s=>s.A.DistanceTo(s.B)).FirstOrDefault();
+            Check(edge.A.DistanceTo(edge.B)>20,"Wong Tai Sin northern closure edge missing");
+            var boundary=(edge.A+edge.B)/2;
+            using var wall=PhysicsRayQueryParameters3D.Create(new(boundary.X,2,boundary.Y),new(boundary.X,-1,boundary.Y),1);
             var hit=GetWorld3D().DirectSpaceState.IntersectRay(wall);
             Check(hit.Count>0 && hit["position"].AsVector3().Y>.9f &&
                 (hit["collider"].AsGodotObject() as Node)?.GetParent().Name=="KowloonBoundary",

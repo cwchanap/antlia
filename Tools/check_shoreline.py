@@ -83,6 +83,10 @@ def check_kai_tak_refresh():
         coast=target/'east-kowloon-coast.json'
         raw.write_bytes(raw_bytes)
         coast.write_bytes(coast_bytes)
+        wong_tai_sin='wong_tai_sin_district_land' in json.loads(coast_bytes)['metadata']
+        if wong_tai_sin:
+            name='wong-tai-sin-district-boundary.geojson'
+            (target/name).write_bytes((data/name).read_bytes())
 
         def refresh(sea, mainland):
             def download(url, **kwargs):
@@ -117,6 +121,9 @@ def check_kai_tak_refresh():
 
         narrowed=shape(mainland_rows[0]['geometry']).intersection(box(114.196,22.300,114.209,22.325))
         reject(sea_rows,[mainland_rows[0]|{'geometry':mapping(narrowed)}],'northern fill')
+        if wong_tai_sin:
+            narrowed=shape(mainland_rows[0]['geometry']).intersection(box(113,22,115,22.352))
+            reject(sea_rows,[mainland_rows[0]|{'geometry':mapping(narrowed)}],'Wong Tai Sin district and inland margin')
 
         replace=Path.replace
         def fail_coast_publish(path, destination):
@@ -140,6 +147,8 @@ def check_kai_tak_refresh():
         assert updated_raw!=raw_bytes and coast.read_bytes()!=coast_bytes
         assert updated_coast['metadata']['source_sha256']==hashlib.sha256(updated_raw).hexdigest()
         assert updated_coast['land']==json.loads(coast_bytes)['land']
+        if wong_tai_sin:
+            assert updated_coast['metadata']['wong_tai_sin_district_land']['margin_m']==shore.WONG_TAI_SIN_MARGIN_M
     print('ANTILA_KAI_TAK_SHORELINE_REFRESH_OK: same-count rejection, north fill, rollback and linked publication')
 
 

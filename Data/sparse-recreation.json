@@ -3,111 +3,111 @@
   "sourceBounds": [
     -6529,
     -9276,
-    9648,
+    11051,
     9511
   ],
   "width": 8192,
-  "height": 8076,
+  "height": 7051,
   "mipLevels": 14,
-  "sourceSha256": "7270EFA3D376EB7ECB98BE041C892FEB70B345CCC5332B9F2FC09AC69233CBB3",
-  "sourceDataSha256": "DE4345495796F2E4885B88B5801C2B2AF93161E46689C480E0740B5CD186D777",
-  "authoredMipSha256": "7270EFA3D376EB7ECB98BE041C892FEB70B345CCC5332B9F2FC09AC69233CBB3",
+  "sourceSha256": "A8CB9DB876C6ACC3D880776AA2D5308DE290975792B42565999AD21521217F7F",
+  "sourceDataSha256": "7AF3B2AA297778B91682BB3DD27D0227C6299554444ADA551C3AB809F6A6F482",
+  "authoredMipSha256": "A8CB9DB876C6ACC3D880776AA2D5308DE290975792B42565999AD21521217F7F",
   "atlasWidth": 4096,
   "atlasHeight": 2048,
-  "atlasColumns": 18,
+  "atlasColumns": 20,
   "atlasRows": 15,
   "lookupWidth": 64,
-  "lookupHeight": 134,
-  "activePages": 268,
-  "texturePayloadBytes": 25257084,
-  "atlasSha256": "0C60303B9B1E20B82F76909EA6810A87B7B6CDF66C8835CF1B07CE1EEE42ED9E",
-  "lookupSha256": "CCD3D7A821D3E4AE4394A4C4B9D24A97FF30393B7F8C94BAEBF29C08390C9029",
+  "lookupHeight": 119,
+  "activePages": 292,
+  "texturePayloadBytes": 25254204,
+  "atlasSha256": "E5EC12EE6D35B91E13518C472D1E5D580F0941FF84C714CB7C578BBB586E8556",
+  "lookupSha256": "D0E64FF2AB9408A3694EA00BE852C11863D818DDF4C1BDDC26973F7B7939EB72",
   "lodRampSha256": "DD5E3D994AE6651773737D7E4E608C614AD849B5151A16921BD31B8CDBA425F8",
   "mips": [
     {
       "width": 8192,
-      "height": 8076,
+      "height": 7051,
       "lookupOffset": 0,
       "pageColumns": 64,
-      "pageRows": 64,
-      "activePages": 111
+      "pageRows": 56,
+      "activePages": 129
     },
     {
       "width": 4096,
-      "height": 4038,
-      "lookupOffset": 64,
+      "height": 3525,
+      "lookupOffset": 56,
       "pageColumns": 32,
-      "pageRows": 32,
-      "activePages": 70
+      "pageRows": 28,
+      "activePages": 80
     },
     {
       "width": 2048,
-      "height": 2019,
-      "lookupOffset": 96,
+      "height": 1762,
+      "lookupOffset": 84,
       "pageColumns": 16,
-      "pageRows": 16,
+      "pageRows": 14,
       "activePages": 42
     },
     {
       "width": 1024,
-      "height": 1009,
-      "lookupOffset": 112,
+      "height": 881,
+      "lookupOffset": 98,
       "pageColumns": 8,
-      "pageRows": 8,
-      "activePages": 24
+      "pageRows": 7,
+      "activePages": 21
     },
     {
       "width": 512,
-      "height": 504,
-      "lookupOffset": 120,
+      "height": 440,
+      "lookupOffset": 105,
       "pageColumns": 4,
       "pageRows": 4,
-      "activePages": 11
+      "activePages": 8
     },
     {
       "width": 256,
-      "height": 252,
-      "lookupOffset": 124,
+      "height": 220,
+      "lookupOffset": 109,
       "pageColumns": 2,
       "pageRows": 2,
       "activePages": 4
     },
     {
       "width": 128,
-      "height": 126,
-      "lookupOffset": 126,
+      "height": 110,
+      "lookupOffset": 111,
       "pageColumns": 1,
       "pageRows": 1,
       "activePages": 1
     },
     {
       "width": 64,
-      "height": 63,
-      "lookupOffset": 127,
+      "height": 55,
+      "lookupOffset": 112,
       "pageColumns": 1,
       "pageRows": 1,
       "activePages": 1
     },
     {
       "width": 32,
-      "height": 31,
-      "lookupOffset": 128,
+      "height": 27,
+      "lookupOffset": 113,
       "pageColumns": 1,
       "pageRows": 1,
       "activePages": 1
     },
     {
       "width": 16,
-      "height": 15,
-      "lookupOffset": 129,
+      "height": 13,
+      "lookupOffset": 114,
       "pageColumns": 1,
       "pageRows": 1,
       "activePages": 1
     },
     {
       "width": 8,
-      "height": 7,
-      "lookupOffset": 130,
+      "height": 6,
+      "lookupOffset": 115,
       "pageColumns": 1,
       "pageRows": 1,
       "activePages": 1
@@ -115,7 +115,7 @@
     {
       "width": 4,
       "height": 3,
-      "lookupOffset": 131,
+      "lookupOffset": 116,
       "pageColumns": 1,
       "pageRows": 1,
       "activePages": 1
@@ -123,18 +123,18 @@
     {
       "width": 2,
       "height": 1,
-      "lookupOffset": 132,
+      "lookupOffset": 117,
       "pageColumns": 1,
       "pageRows": 1,
-      "activePages": 0
+      "activePages": 1
     },
     {
       "width": 1,
       "height": 1,
-      "lookupOffset": 133,
+      "lookupOffset": 118,
       "pageColumns": 1,
       "pageRows": 1,
-      "activePages": 0
+      "activePages": 1
     }
   ]
 }

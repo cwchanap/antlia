@@ -238,7 +238,7 @@ public sealed class RoadMap
 
     public Image CreateSurfaceMask(Vector2[] park,IEnumerable<(Vector3 A,Vector3 B)> paths,IEnumerable<Vector2[]> lots,
         Rect2? region=null,IEnumerable<(Vector2 A,Vector2 B,float HalfWidth)>? roads=null,float resolution=3,
-        IEnumerable<(Vector2[] Polygon,int Channel)>? surfaces=null)
+        IEnumerable<(Vector2[] Polygon,int Channel)>? surfaces=null,IEnumerable<Vector2[][]>? pavingExclusions=null)
     {
         // RGB is map data: road, pavement, park. One surface avoids coplanar depth fighting.
         var bounds=region??Bounds;
@@ -257,25 +257,31 @@ public sealed class RoadMap
         float sx=width/bounds.Size.X,sy=height/bounds.Size.Y;
         var pixels=new byte[width*height*3];
         Vector2 Pixel(Vector2 p)=>(p-bounds.Position)*new Vector2(sx,sy);
-        void Polygon(Vector2[] polygon,int channel)
+        void Polygon(Vector2[] polygon,int channel,byte coverage=255,Vector2[][]? holes=null)
         {
             if(polygon.Length<3)return;
             var points=polygon.Select(Pixel).ToArray();
+            var inner=holes?.Select(ring=>ring.Select(Pixel).ToArray()).ToArray();
             int ymin=Math.Max(0,Mathf.FloorToInt(points.Min(p=>p.Y))),ymax=Math.Min(height-1,Mathf.CeilToInt(points.Max(p=>p.Y)));
             var crossings=new List<float>();
-            for(int y=ymin;y<=ymax;y++)
+            void AddCrossings(Vector2[] ring,float row)
             {
-                crossings.Clear();float row=y+.5f;
-                for(int i=0;i<points.Length;i++)
+                for(int i=0;i<ring.Length;i++)
                 {
-                    var a=points[i];var b=points[(i+1)%points.Length];
+                    var a=ring[i];var b=ring[(i+1)%ring.Length];
                     if((a.Y>row)==(b.Y>row))continue;
                     crossings.Add(a.X+(b.X-a.X)*(row-a.Y)/(b.Y-a.Y));
                 }
+            }
+            for(int y=ymin;y<=ymax;y++)
+            {
+                crossings.Clear();float row=y+.5f;
+                AddCrossings(points,row);
+                if(inner!=null)foreach(var ring in inner)AddCrossings(ring,row);
                 crossings.Sort();
                 for(int i=0;i+1<crossings.Count;i+=2)
                     for(int x=Math.Max(0,Mathf.CeilToInt(crossings[i]-.5f));x<=Math.Min(width-1,Mathf.FloorToInt(crossings[i+1]-.5f));x++)
-                        pixels[(y*width+x)*3+channel]=255;
+                        pixels[(y*width+x)*3+channel]=coverage;
             }
         }
         void Stroke(Vector2 a,Vector2 b,float roadRadius,float pavingRadius)
@@ -304,6 +310,9 @@ public sealed class RoadMap
             foreach(var covered in Geometry2D.OffsetPolygon(polygon,pavingPixelRadius))Polygon(covered,1);
         foreach(var (a,b) in paths)Stroke(new(a.X,a.Z),new(b.X,b.Z),-1,1.5f);
         foreach(var s in roads??_segments.Select(s=>(s.A,s.B,s.HalfWidth)))Stroke(s.A,s.B,s.HalfWidth,s.HalfWidth+3);
+        // Apply surveyed exclusions after building margins, raster padding and road shoulders.
+        if(pavingExclusions!=null)foreach(var rings in pavingExclusions)
+            if(rings.Length>0)Polygon(rings[0],1,0,rings[1..]);
         var image=Image.CreateFromData(width,height,false,Image.Format.Rgb8,pixels);
         image.GenerateMipmaps();return image;
     }

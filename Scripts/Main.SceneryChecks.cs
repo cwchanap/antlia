@@ -71,7 +71,8 @@ public partial class Main
             Check(expected==actual,"Harbour dynamic detail index must retain negative-coordinate and cell-edge collision hits");
         }
         // The survey road and park layout reserves space before roadside placement.
-        var expectedCounts=HasKaiTakDrive?(1345,4739,544,138):(1268,4531,544,138);
+        var expectedCounts=HasChoiHungDrive?(1355,4808,544,138):HasDiamondHillDrive?(1357,4794,544,138):
+            HasKaiTakDrive?(1345,4739,544,138):(1268,4531,544,138);
         Check(_harbourSceneryCounts==expectedCounts,
             $"Harbour scenery placement changed: {_harbourSceneryCounts.Trees} trees, {_harbourSceneryCounts.Lamps} lamps, {_harbourSceneryCounts.People} pedestrians, {_harbourSceneryCounts.Kiosks} kiosks");
         GD.Print("ANTILA_HARBOUR_SCENERY_FILTER_OK: negative coordinates, cell edges, exact road/lot/detail matches and deterministic source ordering");

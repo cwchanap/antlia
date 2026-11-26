@@ -160,7 +160,7 @@ public partial class Hud
     public void CheckMapGeometry()
     {
         void Check(bool ok,string message){if(!ok)throw new Exception(message);}
-        if(Game.HasKaiTakDrive)
+        if(Game.HasKaiTakDrive || Game.HasDiamondHillDrive)
             foreach(var route in Game.Routes)
             {
                 var (districts,stops)=ExpandedMapLabels(route);
@@ -168,7 +168,7 @@ public partial class Hud
                 {
                     var label=districts[i];
                     Check(ExpandedMapArea.Encloses(label) && !districts.Where((_,index)=>index!=i).Any(d=>d.Grow(3).Intersects(label)) &&
-                        !stops.Any(s=>s.Grow(3).Intersects(label)),"New Kai Tak map label must stay inside the map and clear of existing labels: "+label);
+                        !stops.Any(s=>s.Grow(3).Intersects(label)),"New district label must stay inside the map and clear of existing labels: "+label);
                 }
             }
         var straight=Enumerable.Range(0,1001).Select(i=>new Vector2(i,0)).ToArray();

@@ -1,12 +1,12 @@
 using Godot;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 public partial class Main
 {
     private const int KaiTakDriveIndex=14;
-    public bool HasKaiTakDrive=>_harbourRoutes.Count>KaiTakDriveIndex;
+    private const string KaiTakDriveName="Kai Tak → Kai Tak Cruise Terminal";
+    public bool HasKaiTakDrive=>HasHarbourDrive(KaiTakDriveIndex);
     public Vector3 KaiTakDriveEnd=>_harbourRoutes[KaiTakDriveIndex].Points[^1];
 
     private async Task CheckKaiTak()
@@ -15,44 +15,11 @@ public partial class Main
         Check(HasKaiTakDrive && _harbourRouteSources.Count>KaiTakDriveIndex,"Kai Tak drive and source itinerary are required");
         var (name,points)=_harbourRoutes[KaiTakDriveIndex];
         var ids=_harbourRouteSources[KaiTakDriveIndex];
-        Check(name.Contains("Kai Tak",StringComparison.Ordinal) && ids.Length>1 && points.Count>2,"Kai Tak needs a multi-section itinerary");
+        Check(ids.Length>1 && points.Count>2,"Kai Tak needs a multi-section itinerary");
         Check(points[0].X<3150 && points[^1].X>3150 && HarbourBounds.End.X>3230,"Kai Tak must connect established roads to the eastern extension");
         Check(InputMap.HasAction("kai_tak"),"Kai Tak shortcut action is missing");
 
-        int position=0;
-        Vector3? previousEnd=null;
-        foreach(string id in ids)
-        {
-            Check(_harbourRoadIndex.TryGetValue(id.TrimStart('-'),out int roadIndex),"Kai Tak source section is missing: "+id);
-            var road=HarbourRoads[roadIndex].Points;
-            var directed=id.StartsWith('-')?road.AsEnumerable().Reverse().ToArray():road.ToArray();
-            Check(previousEnd==null || previousEnd.Value.DistanceTo(directed[0])<.12f,"Kai Tak source junction is open at "+id);
-            foreach(var point in directed.Skip(previousEnd==null?0:1))
-            {
-                Check(position<points.Count && point.DistanceTo(points[position])<.02f,"Kai Tak itinerary deviates from source section "+id);
-                position++;
-            }
-            previousEnd=directed[^1];
-        }
-        Check(position==points.Count,"Kai Tak drive contains points outside the directed itinerary");
-
-        using var mask=((Texture2D)_terrain.GetShaderParameter("harbour_mask").AsGodotObject()).GetImage();
-        var laneData=RouteLaneData(KaiTakDriveIndex);
-        int support=0;
-        for(int i=0;i<points.Count-1;i+=10)
-        {
-            var start=points[i];var end=points[i+1];
-            var (width,elevated)=laneData[start];
-            var side=(end-start).Cross(Vector3.Up).Normalized();
-            var lane=(start+end)/2-side*BusLaneCenterOffset(width,elevated);
-            var uv=(new Vector2(lane.X,lane.Z)-HarbourBounds.Position)/HarbourBounds.Size;
-            Check(uv.X>=0 && uv.X<1 && uv.Y>=0 && uv.Y<1,"Kai Tak lane is outside the terrain mask at "+lane);
-            if(!elevated)
-                Check(mask.GetPixel((int)(uv.X*mask.GetWidth()),(int)(uv.Y*mask.GetHeight())).R>.95f,"Kai Tak lane lacks asphalt at "+lane);
-            using var ground=PhysicsRayQueryParameters3D.Create(lane+Vector3.Up*.5f,lane+Vector3.Down*.5f,1);
-            Check(GetWorld3D().DirectSpaceState.IntersectRay(ground).Count>0,"Kai Tak lane lacks collision support at "+lane);
-            support++;
-        }
+        int support=CheckSourceDriveLanes(KaiTakDriveIndex);
         GD.Print($"ANTILA_KAI_TAK_READY_OK: {ids.Length} directed sections, {points.Count} itinerary points and {support} lane-support probes");
 
         void PressShortcut()=>_UnhandledInput(new InputEventKey {Keycode=Key.F,PhysicalKeycode=Key.F,Pressed=true});

@@ -18,9 +18,25 @@ TSUEN_WAN = globals().get('TSUEN_WAN',False)
 WEST_COAST = globals().get('WEST_COAST',False)
 EAST_KOWLOON = globals().get('EAST_KOWLOON',False)
 ASSET = 'hung-hom-buildings' if EAST_KOWLOON else 'west-coast-buildings' if WEST_COAST else 'tsuen-wan-buildings' if TSUEN_WAN else 'kwai-chung-buildings' if KWAI_CHUNG else 'lai-chi-kok-buildings' if NORTHWEST else 'west-kowloon-buildings' if WEST else 'kowloon-north-buildings' if NORTH else 'island-buildings' if ISLAND else 'kowloon-buildings'
+EAST_ASSETS = ('hung-hom-buildings', 'to-kwa-wan-buildings', 'kowloon-city-buildings',
+               'wong-tai-sin-buildings', 'kai-tak-buildings', 'diamond-hill-buildings')
 
 
-def build():
+def east_building_asset(x, northing):
+    # Chunk origins use the 128 m grid. Diamond Hill takes only cells outside
+    # the established Wong Tai Sin and Kai Tak building extents.
+    if northing >= 4864:
+        return 'diamond-hill-buildings' if x >= 3200 or northing >= 6528 else 'wong-tai-sin-buildings'
+    if x >= 3328:
+        return 'diamond-hill-buildings' if northing >= 3840 else 'kai-tak-buildings'
+    if northing < 2048:
+        return 'hung-hom-buildings'
+    if northing < 3328:
+        return 'to-kwa-wan-buildings'
+    return 'kowloon-city-buildings'
+
+
+def build(*, material_suffix=''):
     global city_scene, previous_scene
     previous_scene = bpy.context.window.scene
     scene_name = 'CSDI_EastKowloon' if EAST_KOWLOON else 'CSDI_WestCoast' if WEST_COAST else 'CSDI_TsuenWan' if TSUEN_WAN else 'CSDI_KwaiChung' if KWAI_CHUNG else 'CSDI_LaiChiKok' if NORTHWEST else 'CSDI_KowloonWest' if WEST else 'CSDI_KowloonNorth' if NORTH else 'CSDI_Island' if ISLAND else 'CSDI_Kowloon'
@@ -48,19 +64,19 @@ def build():
         material.node_tree.links.new(texture.outputs['Color'], mix.inputs[1])
         material.node_tree.links.new(mix.outputs[0], bsdf.inputs['Base Color'])
         materials.append(material)
-    roof = bpy.data.materials.new('CSDI_roof_concrete'); roof.diffuse_color = (.25,.28,.27,1)
+    roof = bpy.data.materials.new('CSDI_roof_concrete' + material_suffix); roof.diffuse_color = (.25,.28,.27,1)
     roof.use_nodes = True; roof_bsdf = next(n for n in roof.node_tree.nodes if n.type=='BSDF_PRINCIPLED')
     roof_bsdf.inputs['Base Color'].default_value = (.25,.28,.27,1)
     roof_bsdf.inputs['Roughness'].default_value = .95
     materials.append(roof)
-    shop = bpy.data.materials.new('CSDI_shopfront'); shop.use_nodes = True
+    shop = bpy.data.materials.new('CSDI_shopfront' + material_suffix); shop.use_nodes = True
     texture = shop.node_tree.nodes.new('ShaderNodeTexImage')
     texture.image = bpy.data.images.load(str(ROOT/'Assets/Textures/cafe-storefront.png'),check_existing=True); texture.image.pack()
     shop_bsdf = next(n for n in shop.node_tree.nodes if n.type=='BSDF_PRINCIPLED')
     shop.node_tree.links.new(texture.outputs['Color'],shop_bsdf.inputs['Base Color'])
     shop_bsdf.inputs['Roughness'].default_value = .8
     materials.append(shop)
-    variety=shop.copy(); variety.name='CSDI_shopfront_variety'
+    variety=shop.copy(); variety.name='CSDI_shopfront_variety' + material_suffix
     next(n for n in variety.node_tree.nodes if n.type=='TEX_IMAGE').image=bpy.data.images.load(str(ROOT/'Assets/Textures/shopfront-variety.png'),check_existing=True)
     next(n for n in variety.node_tree.nodes if n.type=='TEX_IMAGE').image.pack()
     materials.append(variety)
@@ -155,22 +171,29 @@ def build():
     bpy.context.window.scene = previous_scene
 
 
-def export():
+def export(only_assets=None):
     current_scene = bpy.context.window.scene
     try:
         bpy.context.window.scene = city_scene
         # Keep each offline GLB below 100 MB.
         # Split on an existing 128 m chunk boundary, without changing geometry.
-        for asset in (['hung-hom-buildings','to-kwa-wan-buildings','kowloon-city-buildings','wong-tai-sin-buildings','kai-tak-buildings'] if EAST_KOWLOON else [ASSET] if WEST_COAST else ['tsuen-wan-buildings','tsuen-wan-west-buildings','kwai-chung-north-buildings'] if TSUEN_WAN else ['kwai-chung-buildings','kwai-chung-east-buildings','lai-king-buildings'] if KWAI_CHUNG else ['lai-chi-kok-west-buildings','lai-chi-kok-buildings','cheung-sha-wan-buildings'] if NORTHWEST else ['west-kowloon-buildings','tai-kok-tsui-buildings','sham-shui-po-west-buildings','sham-shui-po-east-buildings'] if WEST else ['yau-ma-tei-buildings','mong-kok-buildings'] if NORTH else [ASSET,'central-buildings'] if ISLAND else [ASSET]):
+        if EAST_KOWLOON:
+            eastern_assets = {obj.name: east_building_asset(obj.location.x, obj.location.y)
+                              for obj in city_scene.objects}
+            occupied_assets = set(eastern_assets.values())
+            assets = [asset for asset in EAST_ASSETS if asset in occupied_assets]
+        else:
+            assets = ([ASSET] if WEST_COAST else ['tsuen-wan-buildings','tsuen-wan-west-buildings','kwai-chung-north-buildings'] if TSUEN_WAN else ['kwai-chung-buildings','kwai-chung-east-buildings','lai-king-buildings'] if KWAI_CHUNG else ['lai-chi-kok-west-buildings','lai-chi-kok-buildings','cheung-sha-wan-buildings'] if NORTHWEST else ['west-kowloon-buildings','tai-kok-tsui-buildings','sham-shui-po-west-buildings','sham-shui-po-east-buildings'] if WEST else ['yau-ma-tei-buildings','mong-kok-buildings'] if NORTH else [ASSET,'central-buildings'] if ISLAND else [ASSET])
+        if only_assets is not None:
+            selected_assets = set(only_assets)
+            if selected_assets.difference(assets):
+                raise ValueError(f'Unknown or empty building export groups: {sorted(selected_assets.difference(assets))}')
+            assets = [asset for asset in assets if asset in selected_assets]
+        for asset in assets:
             bpy.ops.object.select_all(action='DESELECT')
             for obj in city_scene.objects:
                 if EAST_KOWLOON:
-                    if obj.location.y>=4864:district='wong-tai-sin-buildings'
-                    elif obj.location.x>=3328:district='kai-tak-buildings'
-                    elif obj.location.y<2048:district='hung-hom-buildings'
-                    elif obj.location.y<3328:district='to-kwa-wan-buildings'
-                    else:district='kowloon-city-buildings'
-                    if asset==district:obj.select_set(True)
+                    if asset == eastern_assets[obj.name]: obj.select_set(True)
                 elif TSUEN_WAN:
                     district='kwai-chung-north-buildings' if obj.location.x >= -5632 else 'tsuen-wan-west-buildings' if obj.location.x < -6784 else 'tsuen-wan-buildings'
                     if asset==district:obj.select_set(True)
@@ -196,8 +219,13 @@ def export():
 
 if __name__ == '__main__':
     saved_scene=bpy.context.window.scene
+    only_assets=globals().get('BUILDING_ASSETS')
+    if only_assets is not None:
+        only_assets=set(only_assets)
+    # Keep the published labels on scoped Wong Tai Sin exports in a fresh session.
+    material_suffix='.001' if EAST_KOWLOON and only_assets=={'wong-tai-sin-buildings'} else ''
     try:
-        build()
-        export()
+        build(material_suffix=material_suffix)
+        export(only_assets)
     finally:
         bpy.context.window.scene=saved_scene

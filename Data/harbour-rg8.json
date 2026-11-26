@@ -3,19 +3,19 @@
   "bounds": [
     -13880,
     -11280,
-    18860,
+    19340,
     13430
   ],
-  "width": 9707,
-  "height": 6912,
+  "width": 9830,
+  "height": 6826,
   "sourcePath": "res://Assets/Textures/TerrainMasks/harbour_mask.png",
   "sourceFormat": "Rgb8",
-  "sourceRgbSha256": "88E398E24A0482CEEFF5DA7CF7330B85916364B2B245D497FCDC5B99FE48319E",
+  "sourceRgbSha256": "96199AC2D6DF94A836063056DADE3A1231033CCC3143F8D304AF56B94BCE4951",
   "format": "Rg8",
   "mipLevels": 14,
-  "payloadBytes": 178911624,
-  "compactMipSha256": "FB84058754214BCA9C3A229E69B917F2735A92CDB7ABA90D176BEDF4C43846AE",
+  "payloadBytes": 178924212,
+  "compactMipSha256": "5CF365D730B861A0C5C43DEB8D5FE8ED7559F6A1B7916A0C26D747C7ACF7B1DC",
   "resourcePath": "res://Assets/Textures/TerrainMasks/harbour-rg8.res",
-  "resourceBytes": 6378498,
-  "resourceSha256": "C3999899A0114ED66EA0B5255FF8611A2DDEA1CC24693723DEE7D60DCF809519"
+  "resourceBytes": 6438565,
+  "resourceSha256": "7280EF742CD87E124E204BE248973444672A902A8724E2CDEA08C7206F8F5D73"
 }

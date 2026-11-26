@@ -7,10 +7,15 @@ using System.Text.Json;
 public partial class Main
 {
     private const string WonderlandSite="1910058892";
+    private const string NanLianSite="1503005988";
+    private const string NgauChiWanPark="1503006061";
+    private const string WongTaiSinSquare="1810008693";
+    private const string ShungLingPlayground="1503005949";
 
     private Node3D _eastRecreation = null!;
     private readonly List<(string Site,Vector3 Position,float Radius)> _eastRecreationProps = new();
     private readonly List<(Rect2 Bounds,Vector2[] Polygon)> _eastParkReservations = new();
+    private readonly List<Vector2[][]> _harbourPavingExclusions = new();
 
     private void BuildEasternOpenSpaces()
     {
@@ -25,6 +30,10 @@ public partial class Main
         _terrain.SetShaderParameter("recreation_size",_recreationBounds.Size);
         foreach(var triangle in root.GetProperty("paving").EnumerateArray())_harbourPaving.Add(Points(triangle));
         foreach(var garden in root.GetProperty("gardens").EnumerateArray())
+        {
+            if(garden.TryGetProperty("exclusions",out var exclusions))
+                foreach(var pond in exclusions.EnumerateArray().Where(e=>e.GetProperty("kind").GetString()=="pond"))
+                    _harbourPavingExclusions.Add(pond.GetProperty("rings").EnumerateArray().Select(Points).ToArray());
             foreach(string zone in new[]{"rings","access"})
                 foreach(var row in garden.GetProperty(zone).EnumerateArray())
                 {
@@ -32,6 +41,7 @@ public partial class Main
                     foreach(var point in polygon)area=area.Expand(point);
                     _eastParkReservations.Add((area,polygon));
                 }
+        }
         _eastRecreation=Asset("east-kowloon-recreation",Vector3.Zero);
         foreach(var mesh in _eastRecreation.FindChildren("Collision*","MeshInstance3D",true,false).Cast<MeshInstance3D>())
         {
@@ -90,8 +100,11 @@ public partial class Main
         using var data=JsonDocument.Parse(FileAccess.GetFileAsString("res://Data/east-kowloon-open-spaces.json"));
         var root=data.RootElement;
         var metadata=root.GetProperty("metadata");
-        bool hasKowloonCity=metadata.GetProperty("source_manifests").EnumerateArray().Any(source=>
-            source.GetProperty("path").GetString()=="Data/kowloon-city-open-spaces-source.geojson");
+        var sourcePaths=metadata.GetProperty("source_manifests").EnumerateArray()
+            .Select(source=>source.GetProperty("path").GetString()).ToHashSet();
+        bool hasKowloonCity=sourcePaths.Contains("Data/kowloon-city-open-spaces-source.geojson");
+        bool hasWongTaiSin=sourcePaths.Contains("Data/wong-tai-sin-open-spaces-source.geojson");
+        bool hasWongTaiSinDistrict=sourcePaths.Contains("Data/wong-tai-sin-district-open-spaces-source.geojson");
         var sittingOutAreas=new[]{"1503005180","1503005170","1503005157","1503005144","1503005135","1503005123","1503005605","1502005648"};
         var expected=new[]{
             "1503005871","1503005901","1503005881","1503005751","1503005870","1503005863","1503005866","1503005714","1910071209",
@@ -119,12 +132,71 @@ public partial class Main
                 Check(sportSurfaces.Any(s=>s.GetProperty("site").GetString()==id && s.GetProperty("source_id").GetString()==outline),
                     "Missing surveyed recreation surface: "+outline);
         }
+        if(hasWongTaiSin)
+        {
+            var surveyed=new[]{("1503006003","Hammer Hill Road Sports Ground"),("1503005994","Hammer Hill Park"),
+                ("1810005512","Po Kong Village Road Park"),(NanLianSite,"Nan Lian Garden")};
+            expected=expected.Concat(surveyed.Select(site=>site.Item1)).ToArray();
+            foreach(var (id,name) in surveyed)
+                Check(sites.TryGetValue(id,out var site) && site.GetProperty("name").GetString()==name,"Missing surveyed recreation site: "+name);
+            var outlines=new[]{("1503006003","1810044219","track"),("1503006003","1810017967","field"),
+                ("1503006003","1500001624","court"),("1810005512","1810009262","field"),("1810005512","1810009261","field")};
+            foreach(var (id,outline,kind) in outlines)
+            {
+                Check(sportSurfaces.Any(s=>s.GetProperty("site").GetString()==id && s.GetProperty("source_id").GetString()==outline
+                    && s.GetProperty("kind").GetString()==kind),"Missing surveyed recreation surface: "+outline);
+                if(kind!="track")Check(root.GetProperty("sports").EnumerateArray().Any(s=>s.GetProperty("source_id").GetString()==outline),
+                    "Missing surveyed pitch fitting: "+outline);
+            }
+        }
+        var districtSites=new[]{
+            ("1810014625","Lok Fu Recreation Ground"),("1503005918","Shek Ku Lung Road Playground"),
+            ("1503005915","Wong Tai Sin Cultural Garden"),(WongTaiSinSquare,"Wong Tai Sin Square"),
+            ("1503005950","Muk Lun Street Playground"),("1503005949","Shung Ling Street Playground"),
+            ("1503005974","Tsz Wan Shan Estate Central Playground"),("1502005559","Tsz Wan Shan Estate Service Reservoir Playground"),
+            ("1502005539","Wong Tai Sin Service Reservoir Playground"),("1810047476","Tsz Wan Shan Road Playground"),
+            ("1503005989","Lok Wah Street Playground"),
+            (NgauChiWanPark,"Ngau Chi Wan Park")};
+        var districtSports=new[]{
+            ("1810014625","1500001918","field"),
+            ("1503005918","1500001653","court"),("1503005918","1500001656","court"),
+            ("1503005918","1500004965","court"),("1503005918","1500004966","court"),
+            ("1503005918","1500001657","court"),("1503005918","1500001658","court"),
+            ("1503005950","1500001659","court"),("1503005950","1500004967","court"),("1503005950","1500004968","court"),
+            ("1503005974","1500001557","court"),("1503005974","1500001558","court"),("1503005974","1500001559","court"),
+            ("1502005559","1500001562","court"),("1502005559","1500001563","court"),("1502005559","1500001564","court"),
+            ("1502005539","1810016043","court"),("1503005989","1500004951","court"),("1503005989","1500004952","court"),
+            ("1810047476","1810039162","court"),("1810047476","1810039163","court"),
+            (NgauChiWanPark,"1810005401","court")};
+        if(hasWongTaiSinDistrict)
+        {
+            expected=expected.Concat(districtSites.Select(site=>site.Item1)).ToArray();
+            foreach(var (id,name) in districtSites)
+                Check(sites.TryGetValue(id,out var site) && site.GetProperty("name").GetString()==name,"Missing reviewed Wong Tai Sin site: "+name);
+            var fittedSports=root.GetProperty("sports").EnumerateArray().Select(fitting=>(
+                fitting.GetProperty("site").GetString(),fitting.GetProperty("source_id").GetString(),
+                fitting.GetProperty("usage").GetString(),fitting.GetProperty("kind").GetString())).ToHashSet();
+            foreach(var (id,outline,kind) in districtSports)
+            {
+                var surface=sportSurfaces.FirstOrDefault(s=>s.GetProperty("site").GetString()==id
+                    && s.GetProperty("source_id").GetString()==outline && s.GetProperty("kind").GetString()==kind);
+                Check(surface.ValueKind!=JsonValueKind.Undefined,"Missing reviewed Wong Tai Sin sport surface: "+outline);
+                Check(fittedSports.Contains((id,outline,surface.GetProperty("usage").GetString(),kind)),
+                    "Missing reviewed Wong Tai Sin sport fitting: "+outline);
+            }
+        }
         Check(sites.Keys.Order().SequenceEqual(expected.Order()),$"All {expected.Length} reviewed open spaces must be present");
         int sourceOutlines=sportSurfaces.Select(s=>s.GetProperty("source_id").GetString()).Distinct().Count();
-        Check(sourceOutlines==(hasKowloonCity?161:152),"Every reviewed source sports outline must have a rendered recreation surface");
-        Check(metadata.GetProperty("source_feature_count").GetInt32()==(hasKowloonCity?298:284) &&
-            metadata.GetProperty("source_site_fragment_count").GetInt32()==(hasKowloonCity?120:115) &&
-            metadata.GetProperty("source_sport_fragment_count").GetInt32()==(hasKowloonCity?178:169),"The complete source fragment inventory must be loaded");
+        int addedSites=(hasKowloonCity?5:0)+(hasWongTaiSin?4:0),addedSports=(hasKowloonCity?9:0)+(hasWongTaiSin?5:0);
+        if(hasWongTaiSinDistrict)
+        {
+            addedSites+=districtSites.Length;
+            addedSports+=districtSports.Length;
+        }
+        Check(sourceOutlines==152+addedSports,"Every reviewed source sports outline must have a rendered recreation surface");
+        Check(metadata.GetProperty("source_feature_count").GetInt32()==284+addedSites+addedSports &&
+            metadata.GetProperty("source_site_fragment_count").GetInt32()==115+addedSites &&
+            metadata.GetProperty("source_sport_fragment_count").GetInt32()==169+addedSports,"The complete source fragment inventory must be loaded");
         var southwest=metadata.GetProperty("supplemental_site_source");
         Check(southwest.GetProperty("feature_count").GetInt32()==193 && southwest.GetProperty("site_fragment_count").GetInt32()==2,
             "Both source-backed southwest waterfront spaces must be loaded");
@@ -164,6 +236,56 @@ public partial class Main
                 continue;
             }
             if(id=="1503005422")Check(fixtures.Length==0,"Cultural Centre piazzas must stay clear for events");
+            else if(id==WongTaiSinSquare)Check(fixtures.Length==0,"Wong Tai Sin Square must stay clear for public events");
+            else if(id==ShungLingPlayground)Check(fixtures.Length==0,"Shung Ling Street Playground must keep its compact play area clear");
+            else if(id=="1810047476" || id=="1502005539")Check(fixtures.Length>=1,"Playground should retain clear planting or seating: "+id);
+            else if(id==NanLianSite || id==NgauChiWanPark)
+            {
+                var name=sites[id].GetProperty("name").GetString();
+                Check(id==NanLianSite?fixtures.Length==0:fixtures.Length>=3,"Unexpected park fixtures at "+name);
+                var exclusions=garden.GetProperty("exclusions").EnumerateArray().ToArray();
+                int expectedPonds=id==NanLianSite?6:1,expectedPavilions=id==NanLianSite?3:5;
+                Check(exclusions.Length==expectedPonds+expectedPavilions && exclusions.Count(e=>e.GetProperty("kind").GetString()=="pond")==expectedPonds
+                    && exclusions.Count(e=>e.GetProperty("kind").GetString()=="pavilion")==expectedPavilions,
+                    $"{name} must retain all surveyed ponds and pavilions");
+                foreach(var sample in Points(garden.GetProperty("samples")))
+                    Check(!exclusions.Any(e=>Inside(sample,e.GetProperty("rings"))),$"{name} path enters surveyed landscape features");
+                // Classify texel centres against the survey without the geometry API's boundary tolerance.
+                bool InRing(double x,double z,(double X,double Z)[] ring)
+                {
+                    bool inside=false;
+                    for(int i=0;i<ring.Length;i++)
+                    {
+                        var a=ring[i];var b=ring[(i+1)%ring.Length];
+                        if((a.Z>z)!=(b.Z>z) && x<a.X+(b.X-a.X)*(z-a.Z)/(b.Z-a.Z))inside=!inside;
+                    }
+                    return inside;
+                }
+                int pondTexels=0;
+                var origin=HarbourBounds.Position;
+                double dx=(double)HarbourBounds.Size.X/paving.GetWidth(),dz=(double)HarbourBounds.Size.Y/paving.GetHeight();
+                foreach(var pond in exclusions.Where(e=>e.GetProperty("kind").GetString()=="pond"))
+                {
+                    var rings=pond.GetProperty("rings").EnumerateArray().Select(ring=>ring.EnumerateArray()
+                        .Select(p=>(X:p[0].GetDouble(),Z:p[1].GetDouble())).ToArray()).ToArray();
+                    int x0=Math.Max(0,(int)Math.Floor((rings[0].Min(p=>p.X)-origin.X)/dx));
+                    int x1=Math.Min(paving.GetWidth(),(int)Math.Ceiling((rings[0].Max(p=>p.X)-origin.X)/dx));
+                    int y0=Math.Max(0,(int)Math.Floor((rings[0].Min(p=>p.Z)-origin.Y)/dz));
+                    int y1=Math.Min(paving.GetHeight(),(int)Math.Ceiling((rings[0].Max(p=>p.Z)-origin.Y)/dz));
+                    for(int y=y0;y<y1;y++)
+                        for(int x=x0;x<x1;x++)
+                        {
+                            double atX=origin.X+(x+.5)*dx,atZ=origin.Y+(y+.5)*dz;
+                            if(!InRing(atX,atZ,rings[0]) || rings.Skip(1).Any(hole=>InRing(atX,atZ,hole)))continue;
+                            Check(paving.GetPixel(x,y).G==0,
+                                $"{name} pond {pond.GetProperty("source_id").GetString()} has baked pavement at ({atX:0.###}, {atZ:0.###})");
+                            pondTexels++;
+                        }
+                }
+                Check(pondTexels>0,$"{name} ponds must cover baked terrain texels");
+                var pondCheck=id==NanLianSite?"ANTILA_NAN_LIAN_POND_PAVING_OK":"ANTILA_NGAU_CHI_WAN_POND_PAVING_OK";
+                GD.Print($"{pondCheck}: {pondTexels} surveyed pond texels have zero paving");
+            }
             else if(pavedSittingOut)Check(fixtures.Length>=1,"A compact sitting-out area needs seating: "+id);
             else if(id!="1503005184" && id!="1503005688")Check(id=="1910062401" || fixtures.Length>=3,"Open space needs usable furniture and planting: "+id);
             Check(garden.GetProperty("access").GetArrayLength()>0,"Eastern park must retain pedestrian entrances: "+id);

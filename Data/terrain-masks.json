@@ -3,14 +3,14 @@
     "bounds": [
       -6529,
       -9276,
-      9648,
+      11051,
       9511
     ],
     "width": 8192,
-    "height": 8076,
+    "height": 7051,
     "format": "Rgb8",
     "mipLevels": 14,
-    "sha256": "7270EFA3D376EB7ECB98BE041C892FEB70B345CCC5332B9F2FC09AC69233CBB3"
+    "sha256": "A8CB9DB876C6ACC3D880776AA2D5308DE290975792B42565999AD21521217F7F"
   },
   "surface_mask": {
     "bounds": [
@@ -29,13 +29,13 @@
     "bounds": [
       -13880,
       -11280,
-      18860,
+      19340,
       13430
     ],
-    "width": 9707,
-    "height": 6912,
+    "width": 9830,
+    "height": 6826,
     "format": "Rgb8",
     "mipLevels": 14,
-    "sha256": "88E398E24A0482CEEFF5DA7CF7330B85916364B2B245D497FCDC5B99FE48319E"
+    "sha256": "96199AC2D6DF94A836063056DADE3A1231033CCC3143F8D304AF56B94BCE4951"
   }
 }

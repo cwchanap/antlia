@@ -5,7 +5,7 @@ using System.Linq;
 
 public partial class Hud : Control
 {
-    private const string DataCredit="Map data © HKSAR Govt · TD / LandsD / CEDD · 24 Nov 2026";
+    private const string DataCredit="Map data © HKSAR Govt · HAD / TD / LandsD / CEDD / LCSD · 25 Nov 2026";
     public Main Game = null!;
     private readonly SystemFont _font = new() { FontNames = new[] { "Avenir Next", "Noto Sans", "sans-serif" } };
     private readonly Color _paper = new("f4edda"), _muted = new("afc0b8"), _mint = new("95dbc0");
@@ -98,9 +98,15 @@ public partial class Hud : Control
     private IEnumerable<(string Label,Vector3 At,Vector2 Offset)> DistrictLabels()
     {
         foreach(var district in MapDistricts)yield return district;
-        if(!Game.HasKaiTakDrive)yield break;
-        yield return ("KAI TAK",new Vector3(2600,0,-3130),new Vector2(146,-114));
-        yield return ("KAI TAK CRUISE TERMINAL",Game.KaiTakDriveEnd,new Vector2(55,-23));
+        if(Game.HasKaiTakDrive)
+        {
+            yield return ("KAI TAK",new Vector3(2600,0,-3130),new Vector2(146,-114));
+            yield return ("KAI TAK CRUISE TERMINAL",Game.KaiTakDriveEnd,new Vector2(55,-23));
+        }
+        if(Game.HasDiamondHillDrive)
+            yield return ("DIAMOND HILL",Game.DiamondHillDriveEnd,new Vector2(-125,-4));
+        if(Game.HasChoiHungDrive)
+            yield return ("CHOI HUNG",Game.ChoiHungDriveStart,new Vector2(26,31));
     }
 
     // Text boxes on the expanded map: district names, then a route's stop labels; the route check keeps them apart.
@@ -310,7 +316,9 @@ public partial class Hud : Control
             }
             Text($"Approx. {bounds.Size.X/1000:0.00} km east–west  ×  {bounds.Size.Y/1000:0.00} km north–south",112,759,16,_paper);
             string kaiTak=Game.HasKaiTakDrive?" • F Kai Tak":"";
-            Text("T Tunnel • I Island • J Central • K Nathan • L West • N Lai Chi Kok • B Kwai Chung • U Tsuen Wan • O Coast • P East • Y Wong Tai Sin"+kaiTak+" (stopped)",112,784,13,_mint);
+            string diamondHill=Game.HasDiamondHillDrive?" • G Diamond Hill":"";
+            string choiHung=Game.HasChoiHungDrive?" • X Choi Hung":"";
+            Text("T Tunnel • I Island • J Central • K Nathan • L West • N Lai Chi Kok • B Kwai Chung • U Tsuen Wan • O Coast • P East • Y Wong Tai Sin"+kaiTak+diamondHill+choiHung+" (stopped)",112,784,13,_mint);
         }
         var bus=Point(Game.Bus.GlobalPosition);
         DrawCircle(bus,9,_panel);

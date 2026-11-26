@@ -49,7 +49,11 @@ public partial class Main
     public float TripDistance=>Bus.DistanceDriven-_tripDistance;
     public int StopsServed=>StopLog.Count(s=>!s.Missed);
     public int StopsMissed=>StopLog.Count(s=>s.Missed);
-    private static readonly (Key Key,int Drive)[] FreeDriveKeys={(Key.T,0),(Key.I,3),(Key.J,4),(Key.K,5),(Key.L,6),(Key.N,8),(Key.B,9),(Key.U,10),(Key.O,11),(Key.P,12),(Key.Y,13),(Key.F,KaiTakDriveIndex)};
+    private static readonly (string Action,Key Key,int Drive)[] FreeDriveShortcuts={
+        ("tunnel",Key.T,0),("island",Key.I,3),("central",Key.J,4),("kowloon",Key.K,5),("west",Key.L,6),
+        ("northwest",Key.N,8),("kwai_chung",Key.B,9),("tsuen_wan",Key.U,10),("west_coast",Key.O,11),
+        ("east_kowloon",Key.P,12),("wong_tai_sin",Key.Y,13),("kai_tak",Key.F,KaiTakDriveIndex),("diamond_hill",Key.G,DiamondHillDriveIndex),
+        ("choi_hung",Key.X,ChoiHungDriveIndex)};
 
     private static string StreetName(string name)=>string.IsNullOrWhiteSpace(name) || name is "-99" or "<Null>" or "&lt;Null&gt;"?"":name;
 
@@ -321,9 +325,22 @@ public partial class Main
 
     private void StartFreeDrive(int drive)
     {
-        if(drive>=_harbourRoutes.Count)return;
+        if(!HasHarbourDrive(drive))return;
         if(Menu){Menu=Briefing=false;Bus.SetPaused(false);Bus.RestartAudio();}
         StartHarbourDrive(drive);
+    }
+
+    private bool TryFreeDriveShortcut(InputEvent e)
+    {
+        // A synthetic key event can omit the physical key; real input uses the registered action.
+        var fallback=e is InputEventKey {Pressed:true,Echo:false,PhysicalKeycode:Key.None} keyEvent?keyEvent.Keycode:Key.None;
+        foreach(var (action,key,drive) in FreeDriveShortcuts)
+            if(e.IsActionPressed(action) || fallback==key)
+            {
+                StartFreeDrive(drive);
+                return true;
+            }
+        return false;
     }
 
     // Route select and briefing take keys and clicks only; the city keeps moving behind them.
@@ -344,8 +361,7 @@ public partial class Main
         else if(e.IsActionPressed("confirm"))Briefing=true;
         else if(e is InputEventKey {Pressed:true,Echo:false} key && key.Keycode>=Key.Key1 && key.Keycode<Key.Key1+Routes.Count)
             PreviewRoute((int)(key.Keycode-Key.Key1));
-        else if(e is InputEventKey {Pressed:true,Echo:false} drive && FreeDriveKeys.Any(k=>k.Key==drive.Keycode))
-            StartFreeDrive(FreeDriveKeys.First(k=>k.Key==drive.Keycode).Drive);
+        else if(TryFreeDriveShortcut(e))return;
         else if(e is InputEventMouseButton {Pressed:true,ButtonIndex:MouseButton.Left} click)
         {
             var at=Hud.Virtual(click.Position);
@@ -442,6 +458,18 @@ public partial class Main
             Check(!Menu && NoService(),$"{key} on route select must start a free drive without H3 on the blinds or map");
             Check(Bus.Position.DistanceTo(_harbourRoutes[drive].Points[0])<3,$"{key} menu free drive must use itinerary {drive}");
             Press("routes");Check(Menu && Route==Routes[2] && _frontBlind!.Text=="H3  WAN CHAI" && _rearBlind!.Text=="H3" && Hud.MapShowsService,$"tab from a free drive must restore H3: {_frontBlind!.Text}");
+        }
+        if(HasDiamondHillDrive)
+        {
+            // Dvorak translates the physical G position to logical I.
+            using var physicalG=new InputEventKey {Keycode=Key.I,PhysicalKeycode=Key.G,Pressed=true};
+            var start=_harbourRoutes[DiamondHillDriveIndex].Points[0];
+            _UnhandledInput(physicalG);
+            Check(!Menu && NoService() && Bus.Position.DistanceTo(start)<3,"Physical G with logical I must start Diamond Hill from route select");
+            Press("routes");Check(Menu && Route==Routes[2] && Hud.MapShowsService,"Tab from Diamond Hill must restore the selected H3 service");
+            BeginRoute(2);_UnhandledInput(physicalG);
+            Check(NoService() && Bus.Position.DistanceTo(start)<3,"Physical G with logical I must start Diamond Hill while stopped");
+            GD.Print("ANTILA_FREE_DRIVE_KEY_MAPPING_OK: physical G with logical I starts Diamond Hill from route select and stopped driving");
         }
         BeginRoute(2);Press("kowloon");Check(NoService(),"the in-game K shortcut must clear the service from the blinds and map");
         BeginRoute(2);Check(!Menu && Route==Routes[2] && !Complete && StopLog.Count==0 && _frontBlind!.Text=="H3  WAN CHAI","each route starts fresh");

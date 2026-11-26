@@ -1,0 +1,236 @@
+{
+  "acquisition_manifest_sha256": "441f9a86d0d632b57d8e6a3a468621fdb27f235d1ab71cf325ce99d079d38ec3",
+  "catalogue": "https://www.landsd.gov.hk/en/survey-mapping/mapping/multi-scale-topographic-mapping/digital-map.html",
+  "feature_code_dictionary": "https://www.landsd.gov.hk/doc/en/mapping/digital-map/common/feature/ib1_gml_mf.pdf",
+  "government": "Hong Kong Special Administrative Region Government",
+  "layers": {
+    "382": {
+      "codes": [
+        "SHG"
+      ],
+      "feature_type_counts": {
+        "SHG": 624
+      },
+      "features": 624,
+      "fields": [
+        "DISPLAYSTATUS",
+        "FEATURETYPE",
+        "HEIGHTVALUE",
+        "LASTUPDATEDATE",
+        "OBJECTID",
+        "SPOTHEIGHTID",
+        "SPOTHEIGHTSTATUS",
+        "ZPRECISION"
+      ],
+      "height_field": "HEIGHTVALUE",
+      "height_range_m_hkpd": [
+        84.10000000000001,
+        516.5
+      ],
+      "name": "SpotHeight",
+      "page_acquisition": {
+        "count_query": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/382/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&returnCountOnly=true",
+        "count_response_sha256": "ec62506361ed90d2f1f36bc57c8e1b18bbb2f2eff4f42373db3d7d4a8b92bf11",
+        "file": "382-native-features.json",
+        "id_query": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/382/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&returnIdsOnly=true",
+        "id_response_sha256": "b04aa98eeb0e72bd2e3627e8c7a070c94a3036a4bd6747cd028409159bac9efe",
+        "number_of_records": 7110,
+        "page_queries": [
+          {
+            "response_sha256": "f30ffc1dcf7fb427662c19f909c3b06ebfd532ef84913f29eaf4bbfe76344810",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/382/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=0&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CSPOTHEIGHTID%2CHEIGHTVALUE%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS%2CSPOTHEIGHTSTATUS%2CZPRECISION&outSR=2326"
+          },
+          {
+            "response_sha256": "70aa2c0adf42c7bda6d12a4f615268a118713691efa700d5482c3ffa3510005a",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/382/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=1000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CSPOTHEIGHTID%2CHEIGHTVALUE%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS%2CSPOTHEIGHTSTATUS%2CZPRECISION&outSR=2326"
+          },
+          {
+            "response_sha256": "047513db5398478c106f1acf34ee92f3b7d42e956a57ae643d2a06d973353428",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/382/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=2000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CSPOTHEIGHTID%2CHEIGHTVALUE%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS%2CSPOTHEIGHTSTATUS%2CZPRECISION&outSR=2326"
+          },
+          {
+            "response_sha256": "f7b9867f62bebe5e1d5903900c0c5ab34de9c79033468512af2d819c87e7e44c",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/382/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=3000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CSPOTHEIGHTID%2CHEIGHTVALUE%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS%2CSPOTHEIGHTSTATUS%2CZPRECISION&outSR=2326"
+          },
+          {
+            "response_sha256": "ab3fa43110950d5c8a62745aa521272b976589f89c21f84d228394d7f4b3ca54",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/382/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=4000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CSPOTHEIGHTID%2CHEIGHTVALUE%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS%2CSPOTHEIGHTSTATUS%2CZPRECISION&outSR=2326"
+          },
+          {
+            "response_sha256": "d1123ca959d6914b0103b8121b05ee9cd942cd43d906bd5f4981d5601dfb2840",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/382/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=5000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CSPOTHEIGHTID%2CHEIGHTVALUE%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS%2CSPOTHEIGHTSTATUS%2CZPRECISION&outSR=2326"
+          },
+          {
+            "response_sha256": "118bcce05b22e3e4eacc0023b49cbb068c28040ce56bf9fc4cfff77d94eb44f9",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/382/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=6000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CSPOTHEIGHTID%2CHEIGHTVALUE%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS%2CSPOTHEIGHTSTATUS%2CZPRECISION&outSR=2326"
+          },
+          {
+            "response_sha256": "6263115f6d03d12fa9dea72483c8fb268e7504d60b6ca2ffd565ba02232fc75d",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/382/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=7000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CSPOTHEIGHTID%2CHEIGHTVALUE%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS%2CSPOTHEIGHTSTATUS%2CZPRECISION&outSR=2326"
+          }
+        ],
+        "sha256": "801e069b7c4b1ad1a486387e451f7a008906c954f0337139f7382bccd044d0f0"
+      },
+      "selected_objectid_json_sha256": "cfe334d60a01972d6412562c38f19e1b5b72684b1acdacd50fb55bfa8c02edd4",
+      "xy_positions": 624
+    },
+    "393": {
+      "codes": [
+        "CIS",
+        "CNS"
+      ],
+      "feature_type_counts": {
+        "CIS": 632,
+        "CNS": 2463
+      },
+      "features": 3095,
+      "fields": [
+        "CONTOURHEIGHT",
+        "CONTOURID",
+        "DISPLAYSTATUS",
+        "FEATURETYPE",
+        "LASTUPDATEDATE",
+        "OBJECTID"
+      ],
+      "height_field": "CONTOURHEIGHT",
+      "height_range_m_hkpd": [
+        86,
+        532
+      ],
+      "name": "Contour",
+      "page_acquisition": {
+        "count_query": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&returnCountOnly=true",
+        "count_response_sha256": "28e8c15b6880b39e033b4bef25a9b949cdcd1f5eda4a414e7f3bb25062aa1720",
+        "file": "393-native-features.json",
+        "id_query": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&returnIdsOnly=true",
+        "id_response_sha256": "8fae94462057de20b183a1a5e6e9354bc9b4751d805c2f3deb6d51511d9a5a62",
+        "number_of_records": 18653,
+        "page_queries": [
+          {
+            "response_sha256": "41bc3563ca279845012dc4df114638512d4638535efc70471c63483ebb5e5fec",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=0&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "ca58be0a65ebd004446ea601a4f327aace27bcdef17e39b9bf74b27c862438fd",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=1000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "0dc117bc12c16eed61700ac2ee992a31073d0dae72f2684e89de13ffd4362c00",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=2000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "f8cfc560e345557129a6427f1dc50cf45cafa5889a021df4baa728a13face2a3",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=3000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "56eb23a31beba0af2b86a74767668ce092085f262fefd6146760571b041adfdd",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=4000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "c2faad3fe4285b4a4124a0352a02bffb8e622c00126e961195a7313dcc100273",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=5000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "63005f96ae0f33e760fe15204fc676ac35c7981e1475fa422353df4f06da69de",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=6000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "a23650dfe6ac672a24f980b51a99a5ec389c6274a0f322d519fad3be0dfcbd1f",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=7000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "1f9e710223a82aea91aa1c2ad12c9890ff77a51da3b21b95304d0be6369fdf7c",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=8000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "381736cc623d868e0af52aa0f12753115840f04cfe7fd2f8840075ad8708df15",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=9000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "a360b786d9c50965334cb1617fe22d6d2517550f54fc9bf7d7cc408158b09b9b",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=10000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "af081e0f9aec6edb8bbf65e31e5102863a723bcfc2c04bdaccb20404e1de2685",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=11000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "8e820b342d425b7dc55995b3e77a93e57c673389203c6129829319bf4b6b1ddb",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=12000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "a8e3e8d9c00b5910521560734aa52ac1050266327ec4940860e9d37f7fff6fe5",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=13000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "30dc249061b72cfdea23cc743cb02a1511cdfb3faa573f2b59a456449472eda5",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=14000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "c319eb027815ba239e1f99d26972cde3fb0455c65ce80bae09829e117b62cba6",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=15000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "9c742fbeb4cad8ba298e3b4f796320227f792bc4330d7cdbe8ff5d1474d61fbf",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=16000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "157be7d00522f3f90780be3495c1348382c70f5ac206000d958d109bbae07209",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=17000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          },
+          {
+            "response_sha256": "a092e44eb7468139c6f60606e7143b2f48fb6f3cf2290287ab7aeead954d26c3",
+            "url": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/393/query?geometry=836333%2C821065%2C841327%2C824565&geometryType=esriGeometryEnvelope&inSR=2326&spatialRel=esriSpatialRelIntersects&where=1%3D1&f=json&orderByFields=OBJECTID+ASC&resultOffset=18000&resultRecordCount=1000&returnGeometry=true&outFields=OBJECTID%2CCONTOURID%2CCONTOURHEIGHT%2CLASTUPDATEDATE%2CFEATURETYPE%2CDISPLAYSTATUS&outSR=2326"
+          }
+        ],
+        "sha256": "1d7ca827f6becf2c4ad97a2810ca4899f6228f0017087515ed434a1294d18b39"
+      },
+      "selected_objectid_json_sha256": "229251aae9ee03590bf7d2f4da8643eae404b5a825be30e0eed0e1a480e9e7c4",
+      "xy_positions": 283664
+    }
+  },
+  "output": {
+    "bytes": 2700496,
+    "compression": "gzip level 9 with mtime 0 and empty gzip filename",
+    "file": "wong-tai-sin-relief-survey.json.gz",
+    "sha256": "2010376ffd75539bf619f101e31999fc21e7cc2353ef359ae5ab3c31ac077c68",
+    "uncompressed_bytes": 11087364,
+    "uncompressed_sha256": "81279cb2851647133026f416024f31563b0949a084dd5855104411e606ee6a67",
+    "zlib_runtime_version": "1.3.2"
+  },
+  "provider": "Lands Department, Survey and Mapping Office",
+  "retrieved_utc": "2026-11-26T01:46:52.042346+00:00",
+  "schema_version": 1,
+  "selection": {
+    "footprint_area_m2": 1057787.729659794,
+    "footprint_bounds_local_xz": [
+      2607.2665421498355,
+      -6729.805963296379,
+      4674.14958170402,
+      -5908.0
+    ],
+    "footprint_sha256": "3541fff974cdde229f1927c5db765d89e3119d387316d5cd61bab6992e2bf58e",
+    "local_origin_wgs84": [
+      114.17232,
+      22.295
+    ],
+    "method": "Queried features intersect the native EPSG:2326 envelope. Retain whole features whose projection to Antila local XZ via WGS84 and Tools/import_map.local intersects the buffered footprint.",
+    "pyproj_version": "3.8.0",
+    "record_preservation": "Retained Esri JSON features keep every source coordinate and requested attribute in their native EPSG:2326 values. The projection is used only for selection, and the retained geometry is not clipped or simplified.",
+    "shapely_version": "2.1.2",
+    "source_selection_buffer_m": 180,
+    "source_selection_buffer_quad_segs": 16
+  },
+  "service_operator": "Civil Engineering and Development Department",
+  "source": "https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer",
+  "source_crs": "EPSG:2326",
+  "source_envelope_epsg_2326": [
+    836333,
+    821065,
+    841327,
+    824565
+  ],
+  "terms": "https://data.gov.hk/en/terms-and-conditions",
+  "title": "Wong Tai Sin hill relief, Lands Department iB1000 survey",
+  "vertical_datum": "HKPD (Hong Kong Principal Datum), metres"
+}

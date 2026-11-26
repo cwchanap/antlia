@@ -12,8 +12,13 @@
       "proxy": "res://Assets/Models/BuildingChunks/cheung-sha-wan-buildings-proxy.glb"
     },
     {
+      "path": "res://Assets/Models/diamond-hill-buildings.glb",
+      "sha256": "40533b2c0ff068f6e5f085e625e7d195208ae73c007ac512ad61f8d1e5586a60",
+      "proxy": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-proxy.glb"
+    },
+    {
       "path": "res://Assets/Models/hung-hom-buildings.glb",
-      "sha256": "cd218b1d8036e1b1936aeaea89d8f3038f6300165e0a8c5d1fb5693d084e3fe9",
+      "sha256": "5b3ecde4d33b8d4ae80019e768ea9ceda4745c79f11b8d319a8256f231d42bf5",
       "proxy": "res://Assets/Models/BuildingChunks/hung-hom-buildings-proxy.glb"
     },
     {
@@ -33,7 +38,7 @@
     },
     {
       "path": "res://Assets/Models/kowloon-city-buildings.glb",
-      "sha256": "82848163be065e1313d8f2bcee2f9fe9c1f9cf05fade34af5a8b278d3a6a26d5",
+      "sha256": "953295cb934b3597d6bb19981eaf22546c3eacf2a18a2c98c9505eb2ee2502ad",
       "proxy": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-proxy.glb"
     },
     {
@@ -113,7 +118,7 @@
     },
     {
       "path": "res://Assets/Models/wong-tai-sin-buildings.glb",
-      "sha256": "a22bf8a98dd31f53e6b602ba44f1b7a084cea93f00e066a61dc7a89af78fa307",
+      "sha256": "ac3840e320df1cde384d090884598c06e5ad9f15830e63fd9f10890a3203c0a4",
       "proxy": "res://Assets/Models/BuildingChunks/wong-tai-sin-buildings-proxy.glb"
     },
     {
@@ -5306,6 +5311,2328 @@
       ],
       "visual_vertices": 4176,
       "collision_vertices": 768
+    },
+    {
+      "id": "diamond-hill-buildings-District_21_-51",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_21_-51.glb",
+      "proxy_name": "Proxy_21_-51",
+      "source": "diamond-hill-buildings",
+      "min": [
+        2787.3189773559566,
+        -5e-324,
+        -6523.120370388032
+      ],
+      "max": [
+        2795.9766082763676,
+        6.050000190734864,
+        -6513.501869201659
+      ],
+      "visual_vertices": 62,
+      "collision_vertices": 22
+    },
+    {
+      "id": "diamond-hill-buildings-District_21_-52",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_21_-52.glb",
+      "proxy_name": "Proxy_21_-52",
+      "source": "diamond-hill-buildings",
+      "min": [
+        2764.619277954101,
+        -5e-324,
+        -6658.658289909364
+      ],
+      "max": [
+        2771.3044586181645,
+        10.149999618530275,
+        -6651.643650054931
+      ],
+      "visual_vertices": 70,
+      "collision_vertices": 22
+    },
+    {
+      "id": "diamond-hill-buildings-District_22_-51",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_22_-51.glb",
+      "proxy_name": "Proxy_22_-51",
+      "source": "diamond-hill-buildings",
+      "min": [
+        2811.5138278007503,
+        -5e-324,
+        -6528.540275335313
+      ],
+      "max": [
+        2935.4876251220708,
+        14.850000381469728,
+        -6438.880622863769
+      ],
+      "visual_vertices": 1333,
+      "collision_vertices": 385
+    },
+    {
+      "id": "diamond-hill-buildings-District_23_-51",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_23_-51.glb",
+      "proxy_name": "Proxy_23_-51",
+      "source": "diamond-hill-buildings",
+      "min": [
+        2952.920601844787,
+        -5e-324,
+        -6451.21502685547
+      ],
+      "max": [
+        3057.9547500610356,
+        10.149999618530275,
+        -6413.5306243896475
+      ],
+      "visual_vertices": 875,
+      "collision_vertices": 255
+    },
+    {
+      "id": "diamond-hill-buildings-District_24_-51",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_24_-51.glb",
+      "proxy_name": "Proxy_24_-51",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3073.813270568847,
+        -5e-324,
+        -6446.663764953614
+      ],
+      "max": [
+        3148.5660476684575,
+        10.149999618530275,
+        -6398.75454711914
+      ],
+      "visual_vertices": 909,
+      "collision_vertices": 281
+    },
+    {
+      "id": "diamond-hill-buildings-District_25_-38",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_25_-38.glb",
+      "proxy_name": "Proxy_25_-38",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3274.753684997558,
+        -5e-324,
+        -4868.736151218415
+      ],
+      "max": [
+        3336.1990356445317,
+        16.200000762939457,
+        -4752.7544860839835
+      ],
+      "visual_vertices": 882,
+      "collision_vertices": 198
+    },
+    {
+      "id": "diamond-hill-buildings-District_25_-39",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_25_-39.glb",
+      "proxy_name": "Proxy_25_-39",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3234.1431655883785,
+        -5e-324,
+        -4995.934559822083
+      ],
+      "max": [
+        3308.7437362670903,
+        11.050000190734865,
+        -4890.203903198241
+      ],
+      "visual_vertices": 952,
+      "collision_vertices": 328
+    },
+    {
+      "id": "diamond-hill-buildings-District_25_-40",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_25_-40.glb",
+      "proxy_name": "Proxy_25_-40",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3244.756412506103,
+        -5e-324,
+        -5024.9936752319345
+      ],
+      "max": [
+        3307.232360839844,
+        6.250000000000001,
+        -4983.289581298827
+      ],
+      "visual_vertices": 668,
+      "collision_vertices": 276
+    },
+    {
+      "id": "diamond-hill-buildings-District_25_-41",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_25_-41.glb",
+      "proxy_name": "Proxy_25_-41",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3241.9684066772456,
+        -5e-324,
+        -5247.114279031754
+      ],
+      "max": [
+        3344.985473632813,
+        14.250000000000002,
+        -5128.442710876464
+      ],
+      "visual_vertices": 1161,
+      "collision_vertices": 249
+    },
+    {
+      "id": "diamond-hill-buildings-District_25_-43",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_25_-43.glb",
+      "proxy_name": "Proxy_25_-43",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3223.5809555053706,
+        -5e-324,
+        -5528.523139953614
+      ],
+      "max": [
+        3361.466201782227,
+        25.000000000000004,
+        -5421.012702941894
+      ],
+      "visual_vertices": 3001,
+      "collision_vertices": 745
+    },
+    {
+      "id": "diamond-hill-buildings-District_25_-44",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_25_-44.glb",
+      "proxy_name": "Proxy_25_-44",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3195.4808721542354,
+        -5e-324,
+        -5638.191185951234
+      ],
+      "max": [
+        3303.0180816650395,
+        28.250000000000004,
+        -5499.300323486327
+      ],
+      "visual_vertices": 7147,
+      "collision_vertices": 2295
+    },
+    {
+      "id": "diamond-hill-buildings-District_25_-45",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_25_-45.glb",
+      "proxy_name": "Proxy_25_-45",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3199.573864012956,
+        -5e-324,
+        -5762.988878488542
+      ],
+      "max": [
+        3326.01872253418,
+        28.750000000000004,
+        -5616.139892578124
+      ],
+      "visual_vertices": 4669,
+      "collision_vertices": 1157
+    },
+    {
+      "id": "diamond-hill-buildings-District_25_-46",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_25_-46.glb",
+      "proxy_name": "Proxy_25_-46",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3218.6049747467036,
+        -5e-324,
+        -5879.812578201295
+      ],
+      "max": [
+        3378.394134521485,
+        116.09999847412111,
+        -5732.882461547851
+      ],
+      "visual_vertices": 11604,
+      "collision_vertices": 1416
+    },
+    {
+      "id": "diamond-hill-buildings-District_25_-47",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_25_-47.glb",
+      "proxy_name": "Proxy_25_-47",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3199.296268820762,
+        -5e-324,
+        -5947.6303024292
+      ],
+      "max": [
+        3312.5456695556645,
+        109.50000000000001,
+        -5888.657554626464
+      ],
+      "visual_vertices": 6890,
+      "collision_vertices": 734
+    },
+    {
+      "id": "diamond-hill-buildings-District_25_-48",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_25_-48.glb",
+      "proxy_name": "Proxy_25_-48",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3190.1409034729,
+        -5e-324,
+        -6125.01156616211
+      ],
+      "max": [
+        3323.9019165039067,
+        114.59999847412111,
+        -6003.047988891601
+      ],
+      "visual_vertices": 11246,
+      "collision_vertices": 558
+    },
+    {
+      "id": "diamond-hill-buildings-District_25_-50",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_25_-50.glb",
+      "proxy_name": "Proxy_25_-50",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3204.6947312355037,
+        -5e-324,
+        -6398.796785712243
+      ],
+      "max": [
+        3293.635536193848,
+        10.149999618530275,
+        -6298.393768310546
+      ],
+      "visual_vertices": 2075,
+      "collision_vertices": 675
+    },
+    {
+      "id": "diamond-hill-buildings-District_26_-35",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_26_-35.glb",
+      "proxy_name": "Proxy_26_-35",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3339.0787706375118,
+        -5e-324,
+        -4481.813307046891
+      ],
+      "max": [
+        3458.24333190918,
+        9.949999809265138,
+        -4378.428993225097
+      ],
+      "visual_vertices": 389,
+      "collision_vertices": 145
+    },
+    {
+      "id": "diamond-hill-buildings-District_26_-36",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_26_-36.glb",
+      "proxy_name": "Proxy_26_-36",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3314.361784934997,
+        -5e-324,
+        -4617.30143070221
+      ],
+      "max": [
+        3454.0820999145512,
+        54.45000076293946,
+        -4398.947891235351
+      ],
+      "visual_vertices": 5413,
+      "collision_vertices": 709
+    },
+    {
+      "id": "diamond-hill-buildings-District_26_-37",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_26_-37.glb",
+      "proxy_name": "Proxy_26_-37",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3319.747072219848,
+        -5e-324,
+        -4722.701726913453
+      ],
+      "max": [
+        3427.435638427735,
+        53.75000000000001,
+        -4594.067352294921
+      ],
+      "visual_vertices": 3802,
+      "collision_vertices": 498
+    },
+    {
+      "id": "diamond-hill-buildings-District_26_-38",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_26_-38.glb",
+      "proxy_name": "Proxy_26_-38",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3358.774806976318,
+        -5e-324,
+        -4804.784183502198
+      ],
+      "max": [
+        3377.7453346252446,
+        10.449999809265138,
+        -4790.86196899414
+      ],
+      "visual_vertices": 537,
+      "collision_vertices": 213
+    },
+    {
+      "id": "diamond-hill-buildings-District_26_-39",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_26_-39.glb",
+      "proxy_name": "Proxy_26_-39",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3340.451616287231,
+        -5e-324,
+        -4969.6944770813
+      ],
+      "max": [
+        3457.265243530274,
+        9.850000381469728,
+        -4902.877395629882
+      ],
+      "visual_vertices": 1307,
+      "collision_vertices": 467
+    },
+    {
+      "id": "diamond-hill-buildings-District_26_-40",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_26_-40.glb",
+      "proxy_name": "Proxy_26_-40",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3345.126806259155,
+        -5e-324,
+        -5120.749970555306
+      ],
+      "max": [
+        3476.3698577880864,
+        21.04999923706055,
+        -4994.801681518554
+      ],
+      "visual_vertices": 3544,
+      "collision_vertices": 1004
+    },
+    {
+      "id": "diamond-hill-buildings-District_26_-41",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_26_-41.glb",
+      "proxy_name": "Proxy_26_-41",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3363.4037780761714,
+        -5e-324,
+        -5147.721580505372
+      ],
+      "max": [
+        3471.8317413330083,
+        20.000000000000004,
+        -5110.091491699218
+      ],
+      "visual_vertices": 1444,
+      "collision_vertices": 368
+    },
+    {
+      "id": "diamond-hill-buildings-District_26_-42",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_26_-42.glb",
+      "proxy_name": "Proxy_26_-42",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3447.7815246582027,
+        -5e-324,
+        -5323.148509979249
+      ],
+      "max": [
+        3451.121574401856,
+        3.7500000000000004,
+        -5320.5982360839835
+      ],
+      "visual_vertices": 54,
+      "collision_vertices": 22
+    },
+    {
+      "id": "diamond-hill-buildings-District_26_-43",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_26_-43.glb",
+      "proxy_name": "Proxy_26_-43",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3317.6572475433345,
+        -5e-324,
+        -5468.546665191651
+      ],
+      "max": [
+        3422.6773910522465,
+        11.050000190734865,
+        -5357.3062438964835
+      ],
+      "visual_vertices": 372,
+      "collision_vertices": 44
+    },
+    {
+      "id": "diamond-hill-buildings-District_26_-44",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_26_-44.glb",
+      "proxy_name": "Proxy_26_-44",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3362.718868255615,
+        -5e-324,
+        -5668.378078460694
+      ],
+      "max": [
+        3461.9216613769536,
+        30.149999618530277,
+        -5495.642379760741
+      ],
+      "visual_vertices": 21429,
+      "collision_vertices": 5749
+    },
+    {
+      "id": "diamond-hill-buildings-District_26_-45",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_26_-45.glb",
+      "proxy_name": "Proxy_26_-45",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3369.342533111572,
+        -5e-324,
+        -5762.50750565529
+      ],
+      "max": [
+        3488.3411254882817,
+        21.000000000000004,
+        -5641.391357421874
+      ],
+      "visual_vertices": 3965,
+      "collision_vertices": 785
+    },
+    {
+      "id": "diamond-hill-buildings-District_26_-46",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_26_-46.glb",
+      "proxy_name": "Proxy_26_-46",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3394.9381484985347,
+        -5e-324,
+        -5792.712722778321
+      ],
+      "max": [
+        3474.4392852783208,
+        16.149999618530277,
+        -5762.493095397948
+      ],
+      "visual_vertices": 2019,
+      "collision_vertices": 351
+    },
+    {
+      "id": "diamond-hill-buildings-District_26_-47",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_26_-47.glb",
+      "proxy_name": "Proxy_26_-47",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3342.390478134155,
+        -5e-324,
+        -6006.489961624146
+      ],
+      "max": [
+        3429.7982864379887,
+        7.849999904632569,
+        -5926.075149536132
+      ],
+      "visual_vertices": 1128,
+      "collision_vertices": 368
+    },
+    {
+      "id": "diamond-hill-buildings-District_26_-48",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_26_-48.glb",
+      "proxy_name": "Proxy_26_-48",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3331.62851691246,
+        -5e-324,
+        -6061.11996459961
+      ],
+      "max": [
+        3422.2253265380864,
+        10.149999618530275,
+        -6021.399139404296
+      ],
+      "visual_vertices": 718,
+      "collision_vertices": 214
+    },
+    {
+      "id": "diamond-hill-buildings-District_27_-34",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_27_-34.glb",
+      "proxy_name": "Proxy_27_-34",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3545.066383361816,
+        -5e-324,
+        -4355.921046018601
+      ],
+      "max": [
+        3559.867149353028,
+        3.9500000476837163,
+        -4313.748847961425
+      ],
+      "visual_vertices": 140,
+      "collision_vertices": 44
+    },
+    {
+      "id": "diamond-hill-buildings-District_27_-35",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_27_-35.glb",
+      "proxy_name": "Proxy_27_-35",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3436.949611663818,
+        -5e-324,
+        -4469.445602416993
+      ],
+      "max": [
+        3585.2182159423833,
+        53.25000000000001,
+        -4326.196456909179
+      ],
+      "visual_vertices": 4390,
+      "collision_vertices": 554
+    },
+    {
+      "id": "diamond-hill-buildings-District_27_-36",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_27_-36.glb",
+      "proxy_name": "Proxy_27_-36",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3421.3013229370113,
+        -5e-324,
+        -4610.699183940888
+      ],
+      "max": [
+        3621.2834472656255,
+        55.00000000000001,
+        -4448.830947875976
+      ],
+      "visual_vertices": 8577,
+      "collision_vertices": 1201
+    },
+    {
+      "id": "diamond-hill-buildings-District_27_-37",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_27_-37.glb",
+      "proxy_name": "Proxy_27_-37",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3390.944946289062,
+        -5e-324,
+        -4737.600965976716
+      ],
+      "max": [
+        3585.5210418701176,
+        55.049999237060554,
+        -4564.679031372069
+      ],
+      "visual_vertices": 5381,
+      "collision_vertices": 757
+    },
+    {
+      "id": "diamond-hill-buildings-District_27_-38",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_27_-38.glb",
+      "proxy_name": "Proxy_27_-38",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3481.533205032348,
+        -5e-324,
+        -4881.545520782472
+      ],
+      "max": [
+        3589.9064483642583,
+        19.04999923706055,
+        -4695.6714935302725
+      ],
+      "visual_vertices": 4210,
+      "collision_vertices": 982
+    },
+    {
+      "id": "diamond-hill-buildings-District_27_-39",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_27_-39.glb",
+      "proxy_name": "Proxy_27_-39",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3441.7034206390376,
+        -5e-324,
+        -4914.699287414552
+      ],
+      "max": [
+        3470.483309745789,
+        14.250000000000002,
+        -4860.383911132812
+      ],
+      "visual_vertices": 748,
+      "collision_vertices": 176
+    },
+    {
+      "id": "diamond-hill-buildings-District_27_-40",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_27_-40.glb",
+      "proxy_name": "Proxy_27_-40",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3437.9049415588374,
+        -5e-324,
+        -5140.094833374024
+      ],
+      "max": [
+        3631.156341552735,
+        91.15000152587892,
+        -4982.934585571288
+      ],
+      "visual_vertices": 10858,
+      "collision_vertices": 1618
+    },
+    {
+      "id": "diamond-hill-buildings-District_27_-41",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_27_-41.glb",
+      "proxy_name": "Proxy_27_-41",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3513.3457489013667,
+        -5e-324,
+        -5144.2800521850595
+      ],
+      "max": [
+        3533.8035507202153,
+        15.649999618530275,
+        -5134.0806350708
+      ],
+      "visual_vertices": 204,
+      "collision_vertices": 44
+    },
+    {
+      "id": "diamond-hill-buildings-District_27_-42",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_27_-42.glb",
+      "proxy_name": "Proxy_27_-42",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3478.176744461059,
+        -5e-324,
+        -5356.710323333741
+      ],
+      "max": [
+        3518.970825195313,
+        3.0499999523162846,
+        -5299.1439056396475
+      ],
+      "visual_vertices": 146,
+      "collision_vertices": 58
+    },
+    {
+      "id": "diamond-hill-buildings-District_27_-43",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_27_-43.glb",
+      "proxy_name": "Proxy_27_-43",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3488.49681854248,
+        -5e-324,
+        -5423.380073547364
+      ],
+      "max": [
+        3492.4095115661626,
+        10.449999809265138,
+        -5411.989501953124
+      ],
+      "visual_vertices": 86,
+      "collision_vertices": 22
+    },
+    {
+      "id": "diamond-hill-buildings-District_27_-44",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_27_-44.glb",
+      "proxy_name": "Proxy_27_-44",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3450.8820824623103,
+        -5e-324,
+        -5621.248370170594
+      ],
+      "max": [
+        3609.9102020263676,
+        41.20000076293946,
+        -5516.3726272583
+      ],
+      "visual_vertices": 3869,
+      "collision_vertices": 657
+    },
+    {
+      "id": "diamond-hill-buildings-District_27_-45",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_27_-45.glb",
+      "proxy_name": "Proxy_27_-45",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3477.0705833435054,
+        -5e-324,
+        -5748.863082885743
+      ],
+      "max": [
+        3547.912376403809,
+        28.04999923706055,
+        -5623.43878173828
+      ],
+      "visual_vertices": 1465,
+      "collision_vertices": 165
+    },
+    {
+      "id": "diamond-hill-buildings-District_27_-46",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_27_-46.glb",
+      "proxy_name": "Proxy_27_-46",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3481.648378372192,
+        -5e-324,
+        -5810.591094970704
+      ],
+      "max": [
+        3501.470710754395,
+        13.350000381469728,
+        -5753.166503906249
+      ],
+      "visual_vertices": 380,
+      "collision_vertices": 100
+    },
+    {
+      "id": "diamond-hill-buildings-District_27_-48",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_27_-48.glb",
+      "proxy_name": "Proxy_27_-48",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3494.4476928710933,
+        -5e-324,
+        -6125.29200744629
+      ],
+      "max": [
+        3510.6417465209965,
+        10.149999618530275,
+        -6091.701232910155
+      ],
+      "visual_vertices": 232,
+      "collision_vertices": 72
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-34",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-34.glb",
+      "proxy_name": "Proxy_28_-34",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3567.9717617034908,
+        -5e-324,
+        -4369.335197448731
+      ],
+      "max": [
+        3656.8561477661137,
+        53.3499984741211,
+        -4298.975257873534
+      ],
+      "visual_vertices": 2411,
+      "collision_vertices": 235
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-35",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-35.glb",
+      "proxy_name": "Proxy_28_-35",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3553.4687347412105,
+        -5e-324,
+        -4493.6704721450815
+      ],
+      "max": [
+        3715.7995147705083,
+        53.3499984741211,
+        -4358.871757507323
+      ],
+      "visual_vertices": 3314,
+      "collision_vertices": 414
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-36",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-36.glb",
+      "proxy_name": "Proxy_28_-36",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3577.3757348060603,
+        -5e-324,
+        -4616.02700996399
+      ],
+      "max": [
+        3720.4434356689458,
+        13.149999618530275,
+        -4475.010375976562
+      ],
+      "visual_vertices": 4243,
+      "collision_vertices": 1267
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-37",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-37.glb",
+      "proxy_name": "Proxy_28_-37",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3573.0312681198116,
+        -5e-324,
+        -4706.86649131775
+      ],
+      "max": [
+        3720.1105804443364,
+        83.65000152587892,
+        -4602.689239501952
+      ],
+      "visual_vertices": 10423,
+      "collision_vertices": 2919
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-38",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-38.glb",
+      "proxy_name": "Proxy_28_-38",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3588.042559623718,
+        -5e-324,
+        -4884.999391555787
+      ],
+      "max": [
+        3725.5463409423833,
+        25.250000000000004,
+        -4742.31817626953
+      ],
+      "visual_vertices": 1813,
+      "collision_vertices": 297
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-39",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-39.glb",
+      "proxy_name": "Proxy_28_-39",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3612.7624664306636,
+        -5e-324,
+        -5002.074309349061
+      ],
+      "max": [
+        3710.159561157227,
+        16.399999618530277,
+        -4878.772048950194
+      ],
+      "visual_vertices": 3277,
+      "collision_vertices": 901
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-40",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-40.glb",
+      "proxy_name": "Proxy_28_-40",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3599.2377204895015,
+        -5e-324,
+        -5120.758682131768
+      ],
+      "max": [
+        3725.7798461914067,
+        124.65000152587892,
+        -4993.001144409179
+      ],
+      "visual_vertices": 8676,
+      "collision_vertices": 1248
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-41",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-41.glb",
+      "proxy_name": "Proxy_28_-41",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3573.1649627685542,
+        -5e-324,
+        -5269.178346633912
+      ],
+      "max": [
+        3710.2152786254887,
+        111.55000305175783,
+        -5100.077880859374
+      ],
+      "visual_vertices": 26727,
+      "collision_vertices": 2335
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-42",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-42.glb",
+      "proxy_name": "Proxy_28_-42",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3615.0820941925044,
+        -5e-324,
+        -5360.868259429933
+      ],
+      "max": [
+        3725.4833984375005,
+        65.65000152587892,
+        -5269.264282226562
+      ],
+      "visual_vertices": 3812,
+      "collision_vertices": 340
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-43",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-43.glb",
+      "proxy_name": "Proxy_28_-43",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3690.5327606201167,
+        -5e-324,
+        -5511.859308719636
+      ],
+      "max": [
+        3714.527755737305,
+        63.549999237060554,
+        -5386.3193130493155
+      ],
+      "visual_vertices": 794,
+      "collision_vertices": 122
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-44",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-44.glb",
+      "proxy_name": "Proxy_28_-44",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3613.7885799407954,
+        -5e-324,
+        -5660.561420440675
+      ],
+      "max": [
+        3683.6436996459965,
+        32.3499984741211,
+        -5527.924247741698
+      ],
+      "visual_vertices": 10247,
+      "collision_vertices": 3367
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-45",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-45.glb",
+      "proxy_name": "Proxy_28_-45",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3556.4493274688716,
+        -5e-324,
+        -5720.330936431886
+      ],
+      "max": [
+        3704.90560913086,
+        33.799999237060554,
+        -5627.174148559569
+      ],
+      "visual_vertices": 2681,
+      "collision_vertices": 365
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-48",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-48.glb",
+      "proxy_name": "Proxy_28_-48",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3597.039537429809,
+        -5e-324,
+        -6138.629930496217
+      ],
+      "max": [
+        3660.5004043579106,
+        10.149999618530275,
+        -6091.6362991333
+      ],
+      "visual_vertices": 360,
+      "collision_vertices": 88
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-49",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-49.glb",
+      "proxy_name": "Proxy_28_-49",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3687.5112991333003,
+        -5e-324,
+        -6228.154712677003
+      ],
+      "max": [
+        3701.991981506348,
+        10.149999618530275,
+        -6206.78246307373
+      ],
+      "visual_vertices": 202,
+      "collision_vertices": 50
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-50",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-50.glb",
+      "proxy_name": "Proxy_28_-50",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3676.498252868652,
+        -5e-324,
+        -6400.308532625438
+      ],
+      "max": [
+        3683.4361190795903,
+        10.149999618530275,
+        -6348.33808517456
+      ],
+      "visual_vertices": 167,
+      "collision_vertices": 51
+    },
+    {
+      "id": "diamond-hill-buildings-District_28_-51",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_28_-51.glb",
+      "proxy_name": "Proxy_28_-51",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3662.3224639892574,
+        -5e-324,
+        -6441.79485321045
+      ],
+      "max": [
+        3702.776847839356,
+        10.149999618530275,
+        -6398.148864746093
+      ],
+      "visual_vertices": 501,
+      "collision_vertices": 153
+    },
+    {
+      "id": "diamond-hill-buildings-District_29_-35",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_29_-35.glb",
+      "proxy_name": "Proxy_29_-35",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3707.278792381286,
+        -5e-324,
+        -4484.833404064179
+      ],
+      "max": [
+        3865.668869018555,
+        72.05000305175783,
+        -4370.696937561034
+      ],
+      "visual_vertices": 8930,
+      "collision_vertices": 1534
+    },
+    {
+      "id": "diamond-hill-buildings-District_29_-36",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_29_-36.glb",
+      "proxy_name": "Proxy_29_-36",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3684.502258300781,
+        -5e-324,
+        -4598.2012128829965
+      ],
+      "max": [
+        3851.8910980224614,
+        99.00000000000001,
+        -4465.77700805664
+      ],
+      "visual_vertices": 19329,
+      "collision_vertices": 3801
+    },
+    {
+      "id": "diamond-hill-buildings-District_29_-37",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_29_-37.glb",
+      "proxy_name": "Proxy_29_-37",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3699.3486680984493,
+        -5e-324,
+        -4726.945943832398
+      ],
+      "max": [
+        3820.644180297852,
+        100.34999847412111,
+        -4615.624916076659
+      ],
+      "visual_vertices": 13436,
+      "collision_vertices": 1948
+    },
+    {
+      "id": "diamond-hill-buildings-District_29_-38",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_29_-38.glb",
+      "proxy_name": "Proxy_29_-38",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3713.7707601785655,
+        -5e-324,
+        -4812.5110664367685
+      ],
+      "max": [
+        3720.990148544312,
+        6.050000190734864,
+        -4797.515388488769
+      ],
+      "visual_vertices": 111,
+      "collision_vertices": 43
+    },
+    {
+      "id": "diamond-hill-buildings-District_29_-40",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_29_-40.glb",
+      "proxy_name": "Proxy_29_-40",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3699.821914672851,
+        -5e-324,
+        -5122.020558118821
+      ],
+      "max": [
+        3867.115829467774,
+        102.09999847412111,
+        -5040.742919921874
+      ],
+      "visual_vertices": 14561,
+      "collision_vertices": 2089
+    },
+    {
+      "id": "diamond-hill-buildings-District_29_-41",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_29_-41.glb",
+      "proxy_name": "Proxy_29_-41",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3734.6388492584224,
+        -5e-324,
+        -5241.011250019074
+      ],
+      "max": [
+        3852.971603393555,
+        113.09999847412111,
+        -5138.0867614746085
+      ],
+      "visual_vertices": 11757,
+      "collision_vertices": 1721
+    },
+    {
+      "id": "diamond-hill-buildings-District_29_-42",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_29_-42.glb",
+      "proxy_name": "Proxy_29_-42",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3674.2783622741695,
+        -5e-324,
+        -5375.125513970853
+      ],
+      "max": [
+        3868.1048126220708,
+        110.84999847412111,
+        -5242.644790649413
+      ],
+      "visual_vertices": 17437,
+      "collision_vertices": 1985
+    },
+    {
+      "id": "diamond-hill-buildings-District_29_-43",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_29_-43.glb",
+      "proxy_name": "Proxy_29_-43",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3712.0716104060407,
+        -5e-324,
+        -5450.388591766358
+      ],
+      "max": [
+        3746.4945869445805,
+        62.8499984741211,
+        -5389.130432128905
+      ],
+      "visual_vertices": 1560,
+      "collision_vertices": 300
+    },
+    {
+      "id": "diamond-hill-buildings-District_29_-48",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_29_-48.glb",
+      "proxy_name": "Proxy_29_-48",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3722.792147636413,
+        -5e-324,
+        -6129.288940429688
+      ],
+      "max": [
+        3774.6989784240727,
+        10.149999618530275,
+        -6041.2010192871085
+      ],
+      "visual_vertices": 649,
+      "collision_vertices": 165
+    },
+    {
+      "id": "diamond-hill-buildings-District_30_-35",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_30_-35.glb",
+      "proxy_name": "Proxy_30_-35",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3858.8358688354488,
+        -5e-324,
+        -4479.279796540738
+      ],
+      "max": [
+        3932.916725158692,
+        12.350000381469728,
+        -4393.286056518554
+      ],
+      "visual_vertices": 948,
+      "collision_vertices": 292
+    },
+    {
+      "id": "diamond-hill-buildings-District_30_-36",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_30_-36.glb",
+      "proxy_name": "Proxy_30_-36",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3849.116399765014,
+        -5e-324,
+        -4605.329099893571
+      ],
+      "max": [
+        3947.785583496094,
+        10.149999618530275,
+        -4545.883758544921
+      ],
+      "visual_vertices": 852,
+      "collision_vertices": 268
+    },
+    {
+      "id": "diamond-hill-buildings-District_30_-37",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_30_-37.glb",
+      "proxy_name": "Proxy_30_-37",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3880.9854660034175,
+        -5e-324,
+        -4651.461433410645
+      ],
+      "max": [
+        3956.155021667481,
+        10.149999618530275,
+        -4610.727493286132
+      ],
+      "visual_vertices": 951,
+      "collision_vertices": 275
+    },
+    {
+      "id": "diamond-hill-buildings-District_30_-38",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_30_-38.glb",
+      "proxy_name": "Proxy_30_-38",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3872.4083023071285,
+        -5e-324,
+        -4767.59351348877
+      ],
+      "max": [
+        3884.949760437012,
+        10.149999618530275,
+        -4751.55303955078
+      ],
+      "visual_vertices": 210,
+      "collision_vertices": 66
+    },
+    {
+      "id": "diamond-hill-buildings-District_30_-40",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_30_-40.glb",
+      "proxy_name": "Proxy_30_-40",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3862.2732410430904,
+        -5e-324,
+        -5092.1874656677255
+      ],
+      "max": [
+        3972.4350280761723,
+        132.1499938964844,
+        -5050.715713500976
+      ],
+      "visual_vertices": 5558,
+      "collision_vertices": 474
+    },
+    {
+      "id": "diamond-hill-buildings-District_30_-41",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_30_-41.glb",
+      "proxy_name": "Proxy_30_-41",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3817.634897232055,
+        -5e-324,
+        -5267.718540191651
+      ],
+      "max": [
+        3964.787818908692,
+        106.84999847412111,
+        -5106.533142089843
+      ],
+      "visual_vertices": 22087,
+      "collision_vertices": 2923
+    },
+    {
+      "id": "diamond-hill-buildings-District_30_-42",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_30_-42.glb",
+      "proxy_name": "Proxy_30_-42",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3813.2231559753413,
+        -5e-324,
+        -5338.282142639161
+      ],
+      "max": [
+        3879.2781448364262,
+        12.449999809265138,
+        -5264.074707031249
+      ],
+      "visual_vertices": 2220,
+      "collision_vertices": 708
+    },
+    {
+      "id": "diamond-hill-buildings-District_30_-45",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_30_-45.glb",
+      "proxy_name": "Proxy_30_-45",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3899.062519073486,
+        -5e-324,
+        -5665.201957702638
+      ],
+      "max": [
+        3911.171539306641,
+        10.149999618530275,
+        -5656.949417114257
+      ],
+      "visual_vertices": 132,
+      "collision_vertices": 36
+    },
+    {
+      "id": "diamond-hill-buildings-District_31_-35",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_31_-35.glb",
+      "proxy_name": "Proxy_31_-35",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3984.493759155273,
+        -5e-324,
+        -4474.0722885131845
+      ],
+      "max": [
+        4104.6017150878915,
+        75.80000305175783,
+        -4408.780273437499
+      ],
+      "visual_vertices": 2122,
+      "collision_vertices": 150
+    },
+    {
+      "id": "diamond-hill-buildings-District_31_-37",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_31_-37.glb",
+      "proxy_name": "Proxy_31_-37",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4081.412315368652,
+        -5e-324,
+        -4653.524253845216
+      ],
+      "max": [
+        4084.5764312744145,
+        3.2500000000000004,
+        -4649.198905944823
+      ],
+      "visual_vertices": 54,
+      "collision_vertices": 22
+    },
+    {
+      "id": "diamond-hill-buildings-District_31_-40",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_31_-40.glb",
+      "proxy_name": "Proxy_31_-40",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3906.2146720886226,
+        -5e-324,
+        -5125.292021274568
+      ],
+      "max": [
+        4069.0939483642583,
+        156.6499938964844,
+        -4984.087417602538
+      ],
+      "visual_vertices": 28006,
+      "collision_vertices": 2278
+    },
+    {
+      "id": "diamond-hill-buildings-District_31_-41",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_31_-41.glb",
+      "proxy_name": "Proxy_31_-41",
+      "source": "diamond-hill-buildings",
+      "min": [
+        3970.2853012084956,
+        -5e-324,
+        -5294.182476043702
+      ],
+      "max": [
+        4116.80047607422,
+        128.25000000000003,
+        -5144.349296569823
+      ],
+      "visual_vertices": 26356,
+      "collision_vertices": 3684
+    },
+    {
+      "id": "diamond-hill-buildings-District_31_-42",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_31_-42.glb",
+      "proxy_name": "Proxy_31_-42",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4007.630477905273,
+        -5e-324,
+        -5271.508781433106
+      ],
+      "max": [
+        4039.5874328613286,
+        127.34999847412111,
+        -5252.966033935546
+      ],
+      "visual_vertices": 2534,
+      "collision_vertices": 134
+    },
+    {
+      "id": "diamond-hill-buildings-District_32_-34",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_32_-34.glb",
+      "proxy_name": "Proxy_32_-34",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4144.167800903319,
+        -5e-324,
+        -4338.760095596314
+      ],
+      "max": [
+        4221.376083374024,
+        74.84999847412111,
+        -4253.8287048339835
+      ],
+      "visual_vertices": 2074,
+      "collision_vertices": 122
+    },
+    {
+      "id": "diamond-hill-buildings-District_32_-35",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_32_-35.glb",
+      "proxy_name": "Proxy_32_-35",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4093.860826015472,
+        -5e-324,
+        -4470.334292411805
+      ],
+      "max": [
+        4221.320976257325,
+        108.05000305175783,
+        -4351.229721069335
+      ],
+      "visual_vertices": 7678,
+      "collision_vertices": 702
+    },
+    {
+      "id": "diamond-hill-buildings-District_32_-36",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_32_-36.glb",
+      "proxy_name": "Proxy_32_-36",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4113.220294952392,
+        -5e-324,
+        -4596.851828575135
+      ],
+      "max": [
+        4219.117897033692,
+        10.149999618530275,
+        -4526.607116699218
+      ],
+      "visual_vertices": 5896,
+      "collision_vertices": 2044
+    },
+    {
+      "id": "diamond-hill-buildings-District_32_-37",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_32_-37.glb",
+      "proxy_name": "Proxy_32_-37",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4102.127479553222,
+        -5e-324,
+        -4725.375307083131
+      ],
+      "max": [
+        4163.447784423829,
+        3.349999904632569,
+        -4640.971534729003
+      ],
+      "visual_vertices": 186,
+      "collision_vertices": 66
+    },
+    {
+      "id": "diamond-hill-buildings-District_32_-39",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_32_-39.glb",
+      "proxy_name": "Proxy_32_-39",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4159.103122711181,
+        -5e-324,
+        -4988.648374795915
+      ],
+      "max": [
+        4222.710922241212,
+        23.750000000000004,
+        -4905.114021301269
+      ],
+      "visual_vertices": 468,
+      "collision_vertices": 172
+    },
+    {
+      "id": "diamond-hill-buildings-District_32_-41",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_32_-41.glb",
+      "proxy_name": "Proxy_32_-41",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4081.7695245742793,
+        -5e-324,
+        -5222.9130725860605
+      ],
+      "max": [
+        4111.2818155288705,
+        127.34999847412111,
+        -5199.397853851317
+      ],
+      "visual_vertices": 2534,
+      "collision_vertices": 134
+    },
+    {
+      "id": "diamond-hill-buildings-District_33_-33",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_33_-33.glb",
+      "proxy_name": "Proxy_33_-33",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4279.165973663329,
+        -5e-324,
+        -4239.449972152711
+      ],
+      "max": [
+        4319.957641601563,
+        71.1999969482422,
+        -4199.737710952758
+      ],
+      "visual_vertices": 1872,
+      "collision_vertices": 128
+    },
+    {
+      "id": "diamond-hill-buildings-District_33_-34",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_33_-34.glb",
+      "proxy_name": "Proxy_33_-34",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4211.786585807799,
+        -5e-324,
+        -4359.895461082459
+      ],
+      "max": [
+        4380.6615295410165,
+        75.6999969482422,
+        -4226.054771423339
+      ],
+      "visual_vertices": 5859,
+      "collision_vertices": 487
+    },
+    {
+      "id": "diamond-hill-buildings-District_33_-35",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_33_-35.glb",
+      "proxy_name": "Proxy_33_-35",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4212.983090400695,
+        -5e-324,
+        -4484.472168445588
+      ],
+      "max": [
+        4364.240478515626,
+        76.9499969482422,
+        -4340.655532836913
+      ],
+      "visual_vertices": 9112,
+      "collision_vertices": 664
+    },
+    {
+      "id": "diamond-hill-buildings-District_33_-36",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_33_-36.glb",
+      "proxy_name": "Proxy_33_-36",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4298.057144165038,
+        -5e-324,
+        -4584.53849220276
+      ],
+      "max": [
+        4316.481285095216,
+        5.050000190734864,
+        -4559.635700225829
+      ],
+      "visual_vertices": 358,
+      "collision_vertices": 150
+    },
+    {
+      "id": "diamond-hill-buildings-District_33_-37",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_33_-37.glb",
+      "proxy_name": "Proxy_33_-37",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4232.02047920227,
+        -5e-324,
+        -4730.318473815919
+      ],
+      "max": [
+        4321.822166442872,
+        4.550000190734864,
+        -4696.909183502196
+      ],
+      "visual_vertices": 689,
+      "collision_vertices": 285
+    },
+    {
+      "id": "diamond-hill-buildings-District_33_-38",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_33_-38.glb",
+      "proxy_name": "Proxy_33_-38",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4297.493347167968,
+        -5e-324,
+        -4857.83635377884
+      ],
+      "max": [
+        4390.169540405274,
+        109.75000000000001,
+        -4741.434486389159
+      ],
+      "visual_vertices": 16374,
+      "collision_vertices": 2638
+    },
+    {
+      "id": "diamond-hill-buildings-District_33_-39",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_33_-39.glb",
+      "proxy_name": "Proxy_33_-39",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4210.8049268722525,
+        -5e-324,
+        -4997.194646835328
+      ],
+      "max": [
+        4316.05062866211,
+        133.19999694824222,
+        -4857.543029785155
+      ],
+      "visual_vertices": 23152,
+      "collision_vertices": 2012
+    },
+    {
+      "id": "diamond-hill-buildings-District_33_-53",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_33_-53.glb",
+      "proxy_name": "Proxy_33_-53",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4284.769870758056,
+        -5e-324,
+        -6759.0035705566415
+      ],
+      "max": [
+        4289.961212158204,
+        10.149999618530275,
+        -6753.555227279662
+      ],
+      "visual_vertices": 70,
+      "collision_vertices": 22
+    },
+    {
+      "id": "diamond-hill-buildings-District_33_-54",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_33_-54.glb",
+      "proxy_name": "Proxy_33_-54",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4335.5132522583,
+        -5e-324,
+        -6883.572401046754
+      ],
+      "max": [
+        4350.722106933595,
+        2.4500000476837163,
+        -6877.114662170409
+      ],
+      "visual_vertices": 170,
+      "collision_vertices": 66
+    },
+    {
+      "id": "diamond-hill-buildings-District_34_-33",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_34_-33.glb",
+      "proxy_name": "Proxy_34_-33",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4330.436807632445,
+        -5e-324,
+        -4248.152765274049
+      ],
+      "max": [
+        4429.330207824708,
+        79.84999847412111,
+        -4176.18585205078
+      ],
+      "visual_vertices": 3218,
+      "collision_vertices": 234
+    },
+    {
+      "id": "diamond-hill-buildings-District_34_-34",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_34_-34.glb",
+      "proxy_name": "Proxy_34_-34",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4342.6810464859,
+        -5e-324,
+        -4369.296134948731
+      ],
+      "max": [
+        4469.50969696045,
+        79.75000000000001,
+        -4220.319519042968
+      ],
+      "visual_vertices": 9568,
+      "collision_vertices": 1096
+    },
+    {
+      "id": "diamond-hill-buildings-District_34_-35",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_34_-35.glb",
+      "proxy_name": "Proxy_34_-35",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4448.3337173461905,
+        -5e-324,
+        -4434.669731140138
+      ],
+      "max": [
+        4488.448028564454,
+        74.65000152587892,
+        -4398.8561782836905
+      ],
+      "visual_vertices": 1854,
+      "collision_vertices": 78
+    },
+    {
+      "id": "diamond-hill-buildings-District_34_-36",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_34_-36.glb",
+      "proxy_name": "Proxy_34_-36",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4366.929362297057,
+        -5e-324,
+        -4597.23771762848
+      ],
+      "max": [
+        4483.639526367188,
+        4.550000190734864,
+        -4477.343048095702
+      ],
+      "visual_vertices": 578,
+      "collision_vertices": 206
+    },
+    {
+      "id": "diamond-hill-buildings-District_34_-37",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_34_-37.glb",
+      "proxy_name": "Proxy_34_-37",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4363.244195938109,
+        -5e-324,
+        -4764.920305252076
+      ],
+      "max": [
+        4484.3238830566415,
+        118.65000152587892,
+        -4665.893653869628
+      ],
+      "visual_vertices": 35072,
+      "collision_vertices": 4848
+    },
+    {
+      "id": "diamond-hill-buildings-District_34_-38",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_34_-38.glb",
+      "proxy_name": "Proxy_34_-38",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4334.7364559173575,
+        -5e-324,
+        -4867.5548701286325
+      ],
+      "max": [
+        4428.501930236817,
+        118.65000152587892,
+        -4725.518692016601
+      ],
+      "visual_vertices": 12935,
+      "collision_vertices": 1019
+    },
+    {
+      "id": "diamond-hill-buildings-District_34_-40",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_34_-40.glb",
+      "proxy_name": "Proxy_34_-40",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4404.479324340819,
+        -5e-324,
+        -5092.770572662354
+      ],
+      "max": [
+        4428.674491882325,
+        9.449999809265138,
+        -5072.291088104247
+      ],
+      "visual_vertices": 271,
+      "collision_vertices": 87
+    },
+    {
+      "id": "diamond-hill-buildings-District_34_-54",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_34_-54.glb",
+      "proxy_name": "Proxy_34_-54",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4352.061200618743,
+        -5e-324,
+        -6898.17575454712
+      ],
+      "max": [
+        4457.56674194336,
+        4.750000000000001,
+        -6866.197326660155
+      ],
+      "visual_vertices": 506,
+      "collision_vertices": 202
+    },
+    {
+      "id": "diamond-hill-buildings-District_35_-34",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_35_-34.glb",
+      "proxy_name": "Proxy_35_-34",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4457.649055480956,
+        -5e-324,
+        -4363.866960525514
+      ],
+      "max": [
+        4618.296447753907,
+        87.34999847412111,
+        -4213.547103881835
+      ],
+      "visual_vertices": 10022,
+      "collision_vertices": 938
+    },
+    {
+      "id": "diamond-hill-buildings-District_35_-35",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_35_-35.glb",
+      "proxy_name": "Proxy_35_-35",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4471.337069511413,
+        -5e-324,
+        -4477.448559999467
+      ],
+      "max": [
+        4607.873374938966,
+        69.65000152587892,
+        -4360.104408264159
+      ],
+      "visual_vertices": 3629,
+      "collision_vertices": 597
+    },
+    {
+      "id": "diamond-hill-buildings-District_35_-36",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_35_-36.glb",
+      "proxy_name": "Proxy_35_-36",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4475.791036605834,
+        -5e-324,
+        -4597.024209022523
+      ],
+      "max": [
+        4625.6000061035165,
+        12.350000381469728,
+        -4477.264663696288
+      ],
+      "visual_vertices": 2092,
+      "collision_vertices": 544
+    },
+    {
+      "id": "diamond-hill-buildings-District_35_-38",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_35_-38.glb",
+      "proxy_name": "Proxy_35_-38",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4577.408622741698,
+        -5e-324,
+        -4815.78931427002
+      ],
+      "max": [
+        4585.587188720704,
+        2.349999904632569,
+        -4805.270160675048
+      ],
+      "visual_vertices": 148,
+      "collision_vertices": 64
+    },
+    {
+      "id": "diamond-hill-buildings-District_35_-41",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_35_-41.glb",
+      "proxy_name": "Proxy_35_-41",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4539.466987609862,
+        -5e-324,
+        -5220.005235671998
+      ],
+      "max": [
+        4544.013664245606,
+        10.149999618530275,
+        -5215.852279663085
+      ],
+      "visual_vertices": 70,
+      "collision_vertices": 22
+    },
+    {
+      "id": "diamond-hill-buildings-District_35_-42",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_35_-42.glb",
+      "proxy_name": "Proxy_35_-42",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4511.257417678832,
+        -5e-324,
+        -5313.760498046876
+      ],
+      "max": [
+        4517.243041992188,
+        10.149999618530275,
+        -5307.913719177245
+      ],
+      "visual_vertices": 73,
+      "collision_vertices": 25
+    },
+    {
+      "id": "diamond-hill-buildings-District_35_-43",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_35_-43.glb",
+      "proxy_name": "Proxy_35_-43",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4555.534690856933,
+        -5e-324,
+        -5382.399475097657
+      ],
+      "max": [
+        4565.412521362306,
+        10.149999618530275,
+        -5373.327148437499
+      ],
+      "visual_vertices": 86,
+      "collision_vertices": 22
+    },
+    {
+      "id": "diamond-hill-buildings-District_35_-53",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_35_-53.glb",
+      "proxy_name": "Proxy_35_-53",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4602.534858703612,
+        -5e-324,
+        -6696.242073059083
+      ],
+      "max": [
+        4611.276611328126,
+        4.349999904632569,
+        -6688.387504577636
+      ],
+      "visual_vertices": 62,
+      "collision_vertices": 22
+    },
+    {
+      "id": "diamond-hill-buildings-District_35_-54",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_35_-54.glb",
+      "proxy_name": "Proxy_35_-54",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4507.407678604125,
+        -5e-324,
+        -6897.9112491607675
+      ],
+      "max": [
+        4526.5443992614755,
+        10.149999618530275,
+        -6883.409391403197
+      ],
+      "visual_vertices": 260,
+      "collision_vertices": 100
+    },
+    {
+      "id": "diamond-hill-buildings-District_36_-34",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_36_-34.glb",
+      "proxy_name": "Proxy_36_-34",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4617.111938476562,
+        -5e-324,
+        -4310.313430786134
+      ],
+      "max": [
+        4675.779556274415,
+        56.45000076293946,
+        -4242.060707092284
+      ],
+      "visual_vertices": 3133,
+      "collision_vertices": 209
+    },
+    {
+      "id": "diamond-hill-buildings-District_36_-35",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_36_-35.glb",
+      "proxy_name": "Proxy_36_-35",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4635.236921310424,
+        -5e-324,
+        -4482.60304760933
+      ],
+      "max": [
+        4736.8072662353525,
+        64.34999847412111,
+        -4353.650382995605
+      ],
+      "visual_vertices": 3704,
+      "collision_vertices": 288
+    },
+    {
+      "id": "diamond-hill-buildings-District_36_-36",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_36_-36.glb",
+      "proxy_name": "Proxy_36_-36",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4604.122087478637,
+        -5e-324,
+        -4571.4633445739755
+      ],
+      "max": [
+        4766.297851562501,
+        118.50000000000001,
+        -4427.113174438476
+      ],
+      "visual_vertices": 18139,
+      "collision_vertices": 3251
+    },
+    {
+      "id": "diamond-hill-buildings-District_36_-46",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_36_-46.glb",
+      "proxy_name": "Proxy_36_-46",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4604.17017507553,
+        -5e-324,
+        -5859.530075073243
+      ],
+      "max": [
+        4635.885149002076,
+        10.149999618530275,
+        -5762.6650161743155
+      ],
+      "visual_vertices": 328,
+      "collision_vertices": 88
+    },
+    {
+      "id": "diamond-hill-buildings-District_36_-55",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_36_-55.glb",
+      "proxy_name": "Proxy_36_-55",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4608.722438037395,
+        -5e-324,
+        -7011.089431762696
+      ],
+      "max": [
+        4689.778266906739,
+        8.449999809265138,
+        -6922.315063476562
+      ],
+      "visual_vertices": 1012,
+      "collision_vertices": 404
+    },
+    {
+      "id": "diamond-hill-buildings-District_37_-34",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_37_-34.glb",
+      "proxy_name": "Proxy_37_-34",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4759.625156402587,
+        -5e-324,
+        -4336.894124984742
+      ],
+      "max": [
+        4788.299591064454,
+        10.149999618530275,
+        -4321.536674499511
+      ],
+      "visual_vertices": 437,
+      "collision_vertices": 121
+    },
+    {
+      "id": "diamond-hill-buildings-District_37_-35",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_37_-35.glb",
+      "proxy_name": "Proxy_37_-35",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4710.201171874999,
+        -5e-324,
+        -4502.405563354493
+      ],
+      "max": [
+        4858.0055236816415,
+        117.75000000000001,
+        -4339.388626098632
+      ],
+      "visual_vertices": 16249,
+      "collision_vertices": 1549
+    },
+    {
+      "id": "diamond-hill-buildings-District_37_-36",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_37_-36.glb",
+      "proxy_name": "Proxy_37_-36",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4804.536994934081,
+        -5e-324,
+        -4505.056983947755
+      ],
+      "max": [
+        4811.2745513916025,
+        4.6500000953674325,
+        -4497.305763244628
+      ],
+      "visual_vertices": 92,
+      "collision_vertices": 36
+    },
+    {
+      "id": "diamond-hill-buildings-District_37_-37",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_37_-37.glb",
+      "proxy_name": "Proxy_37_-37",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4840.679336547851,
+        -5e-324,
+        -4675.666229248048
+      ],
+      "max": [
+        4866.318771362306,
+        10.149999618530275,
+        -4661.80248260498
+      ],
+      "visual_vertices": 202,
+      "collision_vertices": 58
+    },
+    {
+      "id": "diamond-hill-buildings-District_38_-35",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_38_-35.glb",
+      "proxy_name": "Proxy_38_-35",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4859.386016845702,
+        -5e-324,
+        -4422.16106414795
+      ],
+      "max": [
+        4967.672729492188,
+        23.200000762939457,
+        -4354.0508880615225
+      ],
+      "visual_vertices": 4029,
+      "collision_vertices": 777
+    },
+    {
+      "id": "diamond-hill-buildings-District_38_-36",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_38_-36.glb",
+      "proxy_name": "Proxy_38_-36",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4897.524501800536,
+        -5e-324,
+        -4612.626678466798
+      ],
+      "max": [
+        4938.5898666381845,
+        10.149999618530275,
+        -4490.547851562499
+      ],
+      "visual_vertices": 994,
+      "collision_vertices": 274
+    },
+    {
+      "id": "diamond-hill-buildings-District_38_-37",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_38_-37.glb",
+      "proxy_name": "Proxy_38_-37",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4853.468739509582,
+        -5e-324,
+        -4680.986804962159
+      ],
+      "max": [
+        4916.556808471681,
+        10.149999618530275,
+        -4606.221481323241
+      ],
+      "visual_vertices": 1968,
+      "collision_vertices": 636
+    },
+    {
+      "id": "diamond-hill-buildings-District_38_-53",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_38_-53.glb",
+      "proxy_name": "Proxy_38_-53",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4909.017791748046,
+        -5e-324,
+        -6732.52109527588
+      ],
+      "max": [
+        4914.133155822755,
+        10.149999618530275,
+        -6727.054676055907
+      ],
+      "visual_vertices": 70,
+      "collision_vertices": 22
+    },
+    {
+      "id": "diamond-hill-buildings-District_38_-54",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_38_-54.glb",
+      "proxy_name": "Proxy_38_-54",
+      "source": "diamond-hill-buildings",
+      "min": [
+        4867.887636899947,
+        -5e-324,
+        -6909.106237173081
+      ],
+      "max": [
+        4880.081373214723,
+        4.349999904632569,
+        -6899.8967447280875
+      ],
+      "visual_vertices": 224,
+      "collision_vertices": 88
+    },
+    {
+      "id": "diamond-hill-buildings-District_40_-39",
+      "path": "res://Assets/Models/BuildingChunks/diamond-hill-buildings-District_40_-39.glb",
+      "proxy_name": "Proxy_40_-39",
+      "source": "diamond-hill-buildings",
+      "min": [
+        5214.356475830077,
+        -5e-324,
+        -4993.474415898324
+      ],
+      "max": [
+        5224.890296936036,
+        5.750000000000001,
+        -4978.171845436095
+      ],
+      "visual_vertices": 133,
+      "collision_vertices": 57
     },
     {
       "id": "hung-hom-buildings-District_10_-10",
@@ -16622,12 +18949,12 @@
         -4608.16389656067
       ],
       "max": [
-        3169.258224487305,
+        3214.025085449219,
         83.34999847412111,
         -4513.876388549804
       ],
-      "visual_vertices": 7809,
-      "collision_vertices": 845
+      "visual_vertices": 15242,
+      "collision_vertices": 1610
     },
     {
       "id": "kowloon-city-buildings-District_24_-37",
@@ -16644,8 +18971,8 @@
         66.00000000000001,
         -4593.416442871093
       ],
-      "visual_vertices": 18168,
-      "collision_vertices": 2524
+      "visual_vertices": 18283,
+      "collision_vertices": 2559
     },
     {
       "id": "kowloon-city-buildings-District_25_-27",
@@ -16772,6 +19099,42 @@
       ],
       "visual_vertices": 533,
       "collision_vertices": 113
+    },
+    {
+      "id": "kowloon-city-buildings-District_25_-36",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_25_-36.glb",
+      "proxy_name": "Proxy_25_-36",
+      "source": "kowloon-city-buildings",
+      "min": [
+        3203.879949331283,
+        -5e-324,
+        -4603.747080802918
+      ],
+      "max": [
+        3332.378784179688,
+        22.04999923706055,
+        -4500.904716491698
+      ],
+      "visual_vertices": 1150,
+      "collision_vertices": 306
+    },
+    {
+      "id": "kowloon-city-buildings-District_25_-37",
+      "path": "res://Assets/Models/BuildingChunks/kowloon-city-buildings-District_25_-37.glb",
+      "proxy_name": "Proxy_25_-37",
+      "source": "kowloon-city-buildings",
+      "min": [
+        3194.8169550895686,
+        -5e-324,
+        -4650.42660522461
+      ],
+      "max": [
+        3319.1745147705083,
+        4.949999809265138,
+        -4593.942123413085
+      ],
+      "visual_vertices": 360,
+      "collision_vertices": 88
     },
     {
       "id": "kowloon-city-buildings-District_5_-26",
@@ -53321,15 +55684,15 @@
       "min": [
         1528.7579808235166,
         -5e-324,
-        -5534.997436523438
+        -5539.826263427735
       ],
       "max": [
-        1632.2448959350588,
+        1632.316589355469,
         61.50000000000001,
         -5493.378738403319
       ],
-      "visual_vertices": 3447,
-      "collision_vertices": 415
+      "visual_vertices": 3850,
+      "collision_vertices": 590
     },
     {
       "id": "wong-tai-sin-buildings-District_12_-45",
@@ -54149,10 +56512,10 @@
       "min": [
         2248.269165039062,
         -5e-324,
-        -6400.000000000001
+        -6401.5862444639215
       ],
       "max": [
-        2252.6808776855473,
+        2252.8691406250005,
         2.4500000476837163,
         -6397.062176227569
       ],
@@ -55358,12 +57721,12 @@
         -5263.171933174134
       ],
       "max": [
-        3126.7985382080083,
+        3126.7036895751958,
         143.44999694824222,
         -5132.903945922851
       ],
-      "visual_vertices": 34127,
-      "collision_vertices": 4983
+      "visual_vertices": 34163,
+      "collision_vertices": 4999
     },
     {
       "id": "wong-tai-sin-buildings-District_23_-42",
@@ -55434,8 +57797,8 @@
         77.05000305175783,
         -5699.886951446532
       ],
-      "visual_vertices": 10997,
-      "collision_vertices": 2021
+      "visual_vertices": 11137,
+      "collision_vertices": 2049
     },
     {
       "id": "wong-tai-sin-buildings-District_23_-46",
@@ -55517,15 +57880,15 @@
       "min": [
         3042.714302062988,
         -5e-324,
-        -6400.000000000001
+        -6400.36815044284
       ],
       "max": [
         3069.211708068848,
         10.149999618530275,
         -6385.284864425658
       ],
-      "visual_vertices": 167,
-      "collision_vertices": 51
+      "visual_vertices": 148,
+      "collision_vertices": 44
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-38",
@@ -55538,12 +57901,12 @@
         -4871.618457317353
       ],
       "max": [
-        3176.5350570678715,
+        3194.4439620971684,
         10.449999809265138,
         -4765.360893249511
       ],
-      "visual_vertices": 673,
-      "collision_vertices": 101
+      "visual_vertices": 1034,
+      "collision_vertices": 250
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-39",
@@ -55556,12 +57919,12 @@
         -4966.222473144532
       ],
       "max": [
-        3117.4551658630376,
+        3153.9339981079106,
         14.550000190734865,
         -4899.067108154296
       ],
-      "visual_vertices": 1236,
-      "collision_vertices": 368
+      "visual_vertices": 1306,
+      "collision_vertices": 390
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-40",
@@ -55578,7 +57941,7 @@
         141.80000305175784,
         -5081.220188140868
       ],
-      "visual_vertices": 8194,
+      "visual_vertices": 8314,
       "collision_vertices": 978
     },
     {
@@ -55592,12 +57955,12 @@
         -5228.402488708497
       ],
       "max": [
-        3140.991119384766,
+        3140.9679489135747,
         144.60000610351565,
         -5105.754150390624
       ],
-      "visual_vertices": 16015,
-      "collision_vertices": 1655
+      "visual_vertices": 16188,
+      "collision_vertices": 1704
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-43",
@@ -55610,11 +57973,11 @@
         -5524.866828918458
       ],
       "max": [
-        3125.7549400329594,
+        3125.2545547485356,
         99.40000152587892,
         -5367.131149291991
       ],
-      "visual_vertices": 13848,
+      "visual_vertices": 13936,
       "collision_vertices": 2096
     },
     {
@@ -55625,15 +57988,15 @@
       "min": [
         3029.177467346191,
         -5e-324,
-        -5605.184881210328
+        -5628.160951137544
       ],
       "max": [
-        3110.567752838135,
+        3204.595642089844,
         27.85000038146973,
-        -5535.625076293944
+        -5505.861930847167
       ],
-      "visual_vertices": 1655,
-      "collision_vertices": 255
+      "visual_vertices": 1885,
+      "collision_vertices": 341
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-45",
@@ -55646,12 +58009,12 @@
         -5764.70985031128
       ],
       "max": [
-        3160.791427612305,
+        3160.6983184814458,
         77.59999847412111,
-        -5716.873931884765
+        -5717.641216278075
       ],
-      "visual_vertices": 8587,
-      "collision_vertices": 1483
+      "visual_vertices": 9228,
+      "collision_vertices": 1616
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-46",
@@ -55664,12 +58027,12 @@
         -5875.2007637023935
       ],
       "max": [
-        3162.8129882812505,
+        3210.257507324219,
         115.90000152587892,
         -5762.598686218261
       ],
-      "visual_vertices": 20397,
-      "collision_vertices": 1985
+      "visual_vertices": 27002,
+      "collision_vertices": 2490
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-47",
@@ -55682,12 +58045,12 @@
         -6013.216869354249
       ],
       "max": [
-        3167.629333496094,
-        109.1999969482422,
-        -5888.761245727538
+        3216.8841094970708,
+        109.40000152587892,
+        -5887.987686157226
       ],
-      "visual_vertices": 8208,
-      "collision_vertices": 1064
+      "visual_vertices": 16205,
+      "collision_vertices": 2005
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-48",
@@ -55700,12 +58063,12 @@
         -6134.967730522157
       ],
       "max": [
-        3169.6426239013676,
+        3224.8008117675786,
         114.90000152587892,
         -6006.079803466796
       ],
-      "visual_vertices": 10660,
-      "collision_vertices": 656
+      "visual_vertices": 11716,
+      "collision_vertices": 812
     },
     {
       "id": "wong-tai-sin-buildings-District_24_-49",
@@ -55733,15 +58096,15 @@
       "min": [
         3072.610999822616,
         -5e-324,
-        -6400.000000000001
+        -6400.1506522893915
       ],
       "max": [
-        3146.0009231567387,
+        3170.5816040039067,
         10.149999618530275,
-        -6355.917690277099
+        -6351.195152282714
       ],
-      "visual_vertices": 630,
-      "collision_vertices": 182
+      "visual_vertices": 730,
+      "collision_vertices": 218
     },
     {
       "id": "wong-tai-sin-buildings-District_4_-38",

@@ -68,7 +68,8 @@ GROUND_CLIPPED_ACCESS_SITE_ID='1910071209'
 def check(cache,manifest_path,preservation_baseline=None):
     check_touching_paving()
     check_supplemental_fixture_refresh()
-    for path in (importer.SOURCE,importer.KOWLOON_CITY_SOURCE,importer.TARGET):
+    for path in (importer.SOURCE,importer.KOWLOON_CITY_SOURCE,importer.WONG_TAI_SIN_SOURCE,
+                 importer.WONG_TAI_SIN_DISTRICT_SOURCE,importer.TARGET):
         assert path.is_file(),'Missing eastern recreation data: '+str(path)
     source=importer.SOURCE.read_bytes();target=importer.TARGET.read_bytes()
     raw=importer.combined_source(source);data=json.loads(target)
@@ -79,7 +80,7 @@ def check(cache,manifest_path,preservation_baseline=None):
         for feature in raw['features'] if feature.get('properties',{}).get('layer')=='BuiltStructurePolygon'}
     assert len(WESTERN_SITE_IDS)==40 and WESTERN_SITE_IDS<=source_site_ids and WESTERN_SITE_IDS<=site_ids,'Western source sites missing from the integrated source/layout: '+repr(sorted(WESTERN_SITE_IDS-(source_site_ids&site_ids)))
     assert len(NEW_SPORT_IDS)==81 and NEW_SPORT_IDS<=sport_ids,'Western source sports missing from the integrated source: '+repr(sorted(NEW_SPORT_IDS-sport_ids))
-    assert site_ids==importer.EXPECTED_SITE_IDS|{'1503005422','1910058892'} and len(sport_ids)==161,'Expected 62 surveyed sites plus two supplemental southwest spaces, and 161 unique sports IDs'
+    assert site_ids==importer.EXPECTED_SITE_IDS|{'1503005422','1910058892'} and len(sport_ids)==188,'Expected 78 surveyed sites plus two supplemental southwest spaces, and 188 unique sports IDs'
     survey_sports={(surface['source_id'],surface['site'],surface['usage']) for surface in data['surfaces']
                     if surface['source_id'] in importer.KOWLOON_CITY_SPORTS}
     assert survey_sports=={(uid,site,usage) for uid,(site,usage) in importer.KOWLOON_CITY_SPORTS.items()},\
@@ -94,8 +95,21 @@ def check(cache,manifest_path,preservation_baseline=None):
     assert {uid:fitting['site'] for uid,fitting in court_fittings.items()}==KOWLOON_TONG_COURT_SITES,\
         'A Kowloon Tong basketball court is missing its fitted recreation model'
     cedd_fittings={fitting['source_id']:fitting for fitting in data['sports']
-                   if fitting['source_id'] in importer.KOWLOON_CITY_SPORTS}
+                   if fitting['source_id'] in importer.SUPPLEMENTAL_SPORTS}
     assert {'1500002030','1500004996'}<=cedd_fittings.keys(),'Ho Man Tin Park lost its two source-backed fittings'
+    assert importer.WONG_TAI_SIN_FOOTBALL_INSETS.keys()<=cedd_fittings.keys(),'A Hammer Hill or Po Kong pitch lost its source-backed fitting'
+    expected_wts_kinds={'1810044219':'track','1810017967':'field','1500001624':'court',
+                        '1810009262':'field','1810009261':'field'}
+    assert {surface['source_id']:surface['kind'] for surface in data['surfaces']
+            if surface['source_id'] in expected_wts_kinds}==expected_wts_kinds,'A Wong Tai Sin track or soccer surface is missing'
+    assert {(surface['source_id'],surface['site'],surface['usage']) for surface in data['surfaces']
+            if surface['source_id'] in importer.WONG_TAI_SIN_SPORTS}=={
+                (uid,site,usage) for uid,(site,usage) in importer.WONG_TAI_SIN_SPORTS.items()},\
+        'A Wong Tai Sin sport outline is missing or assigned to the wrong site'
+    assert {(surface['source_id'],surface['site'],surface['usage']) for surface in data['surfaces']
+            if surface['source_id'] in importer.WONG_TAI_SIN_DISTRICT_SPORTS}=={
+                (uid,site,usage) for uid,(site,usage) in importer.WONG_TAI_SIN_DISTRICT_SPORTS.items()},\
+        'A Wong Tai Sin district sport outline is missing or assigned to the wrong site'
     checked_fittings={'1500001941':court_fittings['1500001941']} | cedd_fittings
     for source_id,fitting in checked_fittings.items():
         cx,cz=fitting['center'];fx,fz=fitting['forward'];rx,rz=fz,-fx
@@ -117,7 +131,8 @@ def check(cache,manifest_path,preservation_baseline=None):
     assert abs(kent['width']-14.018553)<.001 and abs(kent['length']-25.379270)<.001,\
         'Kent Road Garden fitting lost its source-contained 0.5m inscribed rectangle'
     importer.validate_layout(source,target)
-    check_western_path_connectivity(data)
+    check_district_fitting_rejections(data['sports'])
+    check_path_connectivity(data)
     assert {s['source_id'] for s in data['surfaces']}==importer.EXPECTED_SPORTS,'Mapped sport outline lost'
     football_kinds={surface['source_id']:surface['kind'] for surface in data['surfaces']
                     if surface['source_id'] in {'1500001977','1500002075','1500002078','1500002094','1500002093'}}
@@ -133,8 +148,8 @@ def check(cache,manifest_path,preservation_baseline=None):
         importer.Point(f['position']).buffer(f['radius']).intersects(tung_chau_shell)
         for f in data['fixtures'] if f['site']=='1503005112'),\
         'Tung Chau Street Park fixture circle enters building 214665 outer shell'
-    assert len(raw['features'])==298 and data['metadata']['source_feature_count']==298,'Expected 298 exact Site and sport source records'
-    assert data['metadata']['source_site_fragment_count']==120 and data['metadata']['source_sport_fragment_count']==178,'Source record counts changed'
+    assert len(raw['features'])==341 and data['metadata']['source_feature_count']==341,'Expected 341 exact Site and sport source records'
+    assert data['metadata']['source_site_fragment_count']==136 and data['metadata']['source_sport_fragment_count']==205,'Source record counts changed'
     if preservation_baseline is not None:
         check_preservation(Path(preservation_baseline),raw,data)
     for uid,point in [('1503005881',(1989.2677387146189,-2149.3834432934027)),
@@ -156,6 +171,9 @@ def check(cache,manifest_path,preservation_baseline=None):
         if feature['properties'].get('USAGETYPE')=='RAT' for p in importer.geometry_polygons(importer.source_local(feature))])
     paving=importer.union_all([importer.Polygon(t) for t in data['paving']])
     assert paving.intersection(tracks).area<.01,'Authored paving enters the running-track infield'
+    safe_landscape=importer.union_all([importer.Polygon(row['rings'][0],row['rings'][1:])
+                                    for garden in data['gardens'] for row in garden.get('exclusions',[])])
+    assert paving.intersection(safe_landscape).area<.01,'Rendered paving enters a surveyed pond or pavilion'
     assert all(not importer.Point(f['position']).buffer(f['radius']).intersects(tracks)
         for f in data['fixtures']),'Authored furniture or planting enters the running-track infield'
     assert data['metadata']['source_sha256']==hashlib.sha256(source).hexdigest()
@@ -324,19 +342,55 @@ def check(cache,manifest_path,preservation_baseline=None):
     print(f'ANTILA_EAST_OPEN_SPACE_REFRESH_OK: {len(site_ids)} sites across {data["metadata"]["source_site_fragment_count"]} Site records; {len(sport_ids)} source sports across {data["metadata"]["source_sport_fragment_count"]} survey records; complete deterministic rebuild; {len(rejected)+saved_source_rejections} rejected cases ({len(rejected)} ZIP refreshes, {saved_source_rejections} direct saved-source rebuilds); outputs preserved')
 
 
+def check_district_fitting_rejections(sports):
+    tennis_id='1500001653'
+    tennis=next(fitting for fitting in sports if fitting['source_id']==tennis_id)
+    without_tennis=[fitting for fitting in sports if fitting['source_id']!=tennis_id]
+    for invalid in (
+            without_tennis,
+            without_tennis+[tennis | {'site':'1503005950'}],
+            without_tennis+[tennis | {'usage':'BAC'}]):
+        try:
+            importer.validate_wong_tai_sin_district_fittings(invalid)
+        except ValueError as error:
+            assert tennis_id in str(error), 'District fitting error must identify the affected court'
+        else:
+            raise AssertionError('Invalid Shek Ku Lung Road tennis fitting was accepted')
+
+
 def check_supplemental_fixture_refresh():
     uid = '1503005679'
     ring = [[0,0],[12,0],[12,12],[0,12]]
     manifest = {'path':'Data/kowloon-city-open-spaces-source.geojson','sha256':'1'*64}
+    road_path = 'Data/cross-harbour.json'
+    network = {
+        'metadata': {'retrieved_utc':'2026-11-25T00:00:00Z'},
+        'bounds':[0,0,50,50], 'ground_triangles':[[[0,0],[50,50],[50,0]]],
+        'roads':[{'name':'A ROAD','tunnel':False,'width':12,'points':[[5,0,10],[25,0,10]]}],
+    }
+    replay = network | {'metadata':{'retrieved_utc':'2026-11-25T01:00:00Z'}}
+    moved_road = network['roads'][0] | {'points':[[5,0,11],[25,0,11]]}
+    moved = network | {'roads':[moved_road]}
+    excluded = {'source_id':'1101167247','kind':'pond','rings':[[[3,3],[4,3],[4,4],[3,4]]]}
 
-    def layout(supplemental_manifest, fixture_position):
+    def layout(supplemental_manifest, fixture_position, roads, *, legacy=False, stale_garden=False):
+        payload = importer.encoded(roads)
+        metadata = {'source_sha256':'2'*64,'inputs_sha256':{road_path:hashlib.sha256(payload).hexdigest()},
+                    'source_manifests':[supplemental_manifest]}
+        if not legacy:
+            metadata['clearance_inputs_sha256'] = {road_path:importer.clearance_input_sha256(road_path,payload)}
+        nan_lian = {'site':importer.NAN_LIAN_SITE_ID,'rings':[[ring]],'paths':[[ring]],'access':[],
+                    'samples':[[6,6]]}
+        if not stale_garden:
+            nan_lian['exclusions'] = [excluded]
         return importer.encoded({
-            'metadata':{'source_sha256':'2'*64,'inputs_sha256':{'Data/cross-harbour.json':'3'*64},
-                        'source_manifests':[supplemental_manifest]},
+            'metadata':metadata,
             'sites':[{'id':uid,'name':'Ho Man Tin Park','bounds':[0,0,12,12],
-                      'source_area_m2':144,'fixtures':1}],
+                      'source_area_m2':144,'fixtures':1},
+                     {'id':importer.NAN_LIAN_SITE_ID,'name':'Nan Lian Garden','bounds':[0,0,12,12],
+                      'source_area_m2':144,'fixtures':0}],
             'gardens':[{'site':uid,'rings':[[ring]],'paths':[[ring]],'access':[],
-                        'samples':[[6,6]]}],
+                        'samples':[[6,6]]},nan_lian],
             'fixtures':[{'site':uid,'asset':'bench','position':fixture_position}],
             'surfaces':[],'sports':[],'paving':[]})
 
@@ -346,20 +400,25 @@ def check_supplemental_fixture_refresh():
         source_path = Path(directory)/'source.geojson'
         source_path.write_bytes(b'fixture refresh uses a mocked geodata build')
         target_path = Path(directory)/'layout.json'
-        for current_manifest, expected_position in (
-                (manifest, old_position),
-                (manifest | {'sha256':'4'*64}, new_position),
-                (manifest | {'path':'Data/reviewed-resurvey.geojson'}, new_position)):
-            target_path.write_bytes(layout(manifest, old_position))
-            with patch.object(importer,'build',return_value=layout(current_manifest,new_position)), \
+        for current_manifest, roads, legacy, expected_position in (
+                (manifest, network, True, old_position),
+                (manifest, replay, True, new_position),
+                (manifest, replay, False, old_position),
+                (manifest, moved, False, new_position),
+                (manifest | {'sha256':'4'*64}, replay, False, new_position),
+                (manifest | {'path':'Data/reviewed-resurvey.geojson'}, replay, False, new_position)):
+            target_path.write_bytes(layout(manifest,old_position,network,legacy=legacy,stale_garden=True))
+            rebuilt = layout(current_manifest,new_position,roads)
+            with patch.object(importer,'build',return_value=rebuilt), \
                     patch.object(importer,'validate_source_fragments'), patch.object(importer,'validate_layout'), \
                     patch.object(shared,'TARGET',target_path):
                 importer.refresh(source_path=source_path,target_path=target_path)
             refreshed = json.loads(target_path.read_bytes())
-            assert refreshed['metadata']['source_manifests']==[current_manifest]
+            assert refreshed['metadata']==json.loads(rebuilt)['metadata'],'Refresh must publish current provenance'
             assert refreshed['fixtures'][0]['position']==expected_position, \
-                'Fixture reuse must require an unchanged supplemental source manifest'
-    print('ANTILA_SUPPLEMENTAL_FIXTURE_REFRESH_OK: identical provenance preserves fixtures; changed source regenerates them')
+                'Fixture reuse must require unchanged source manifests and clearance geometry'
+            assert refreshed['gardens'][1]['exclusions']==[excluded],'Refresh must recover current Nan Lian exclusions'
+    print('ANTILA_SUPPLEMENTAL_FIXTURE_REFRESH_OK: timestamp-only replay preserves fixtures, geometry and source changes regenerate fixtures, stale garden exclusions repaired')
 
 
 def check_touching_paving():
@@ -370,18 +429,18 @@ def check_touching_paving():
         'A path joining paving that touches its boundary must retain an in-site pedestrian access corridor'
 
 
-def check_western_path_connectivity(data):
+def check_path_connectivity(data):
     _,lots,east_roads,east_prop_roads,east_land,east_targets,east_carriageways,ground,west_regions,pavement_patches,paving_margin=importer.safe_site_polygons()
     east_region=(east_roads,east_prop_roads,east_land,east_targets,east_carriageways)
     district_roads=json.loads((importer.ROOT/'Data/nathan-road.json').read_text())
     road_network=json.loads((importer.ROOT/'Data/cross-harbour.json').read_text())
     gardens={garden['site']:garden for garden in data['gardens']}
-    for site_id in sorted(WESTERN_SITE_IDS):
+    for site_id in sorted(WESTERN_SITE_IDS | importer.WONG_TAI_SIN_PATH_SITES):
         garden=gardens[site_id]
         site=importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in garden['rings']])
         paths=importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in garden['paths']])
         access=importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in garden['access']])
-        region=west_regions[importer.WESTERN_SITE_COAST[site_id]]
+        region=west_regions[importer.WESTERN_SITE_COAST[site_id]] if site_id in WESTERN_SITE_IDS else east_region
         if site_id in importer.GROUND_SCOPE_SITE_IDS:
             region=importer.ground_scope_region(region,east_region,ground)
         region=importer.site_road_scope(site_id,site,region,district_roads)
@@ -404,11 +463,14 @@ def check_western_path_connectivity(data):
         components=importer.geometry_polygons(paths)
         assert components and all(any(public.intersects(component) for public in connected)
                                   for component in components),\
-            'Western retained path component does not connect to public paving: '+site_id
+            'Retained path component does not connect to public paving: '+site_id
         paved_components=importer.geometry_polygons(importer.union_all([paths,access]))
         assert all(any(importer.Point(sample).covered_by(component) for sample in garden['samples'])
                    for component in paved_components),\
-            'Western paved component has no interior connectivity probe: '+site_id
+            'Paved component has no interior connectivity probe: '+site_id
+        if site_id in importer.WONG_TAI_SIN_PATH_SITES:
+            assert access.difference(east_land).area<=.01 and access.intersection(east_carriageways).area<=.01,\
+                'Wong Tai Sin access leaves ground or enters a carriageway: '+site_id
     kwai=gardens['1910069198']
     failed_probe=importer.Point(-5460.90744575262,-6427.402350829019)
     kwai_paths=importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in kwai['paths']])
@@ -419,27 +481,83 @@ def check_western_path_connectivity(data):
     assert not any(row.get('site')=='1910069198' and row.get('component')=='1910069198:02'
                    for row in rejected),\
         'Kwai Chung disconnected source component was rejected rather than connected'
-    print(f'ANTILA_EAST_OPEN_SPACE_CONNECTIVITY_OK: {len(WESTERN_SITE_IDS)} western sites; retained path components connect to public paving; Kwai Chung failed probe preserved')
+    print(f'ANTILA_EAST_OPEN_SPACE_CONNECTIVITY_OK: {len(WESTERN_SITE_IDS)} western and {len(importer.WONG_TAI_SIN_PATH_SITES)} Wong Tai Sin sites; retained path components connect to public paving; Kwai Chung failed probe preserved')
 
 
 def garden_geometry(garden,field):
     return importer.union_all([importer.Polygon(rings[0],rings[1:]) for rings in garden[field]])
 
 
+def check_reviewed_paving_change(uid,baseline,current,old_paths,new_paths,old_access,new_access):
+    if uid=='1910059822' and old_paths.symmetric_difference(new_paths).area>.01:
+        # The lower Lung Cheung Road approach changes the Water Feature Park's path clearance.
+        removed=old_paths.difference(new_paths);added=new_paths.difference(old_paths)
+        assert removed.area<=4.36 and added.area<=2.10 and removed.union(added).difference(
+            importer.box(2679.65,-5073.50,2923.70,-4949.04)).area<=.01,\
+            'Diamond Hill Water Feature Park path change exceeds the reviewed area'
+        assert old_access.symmetric_difference(new_access).area<=.01, 'Water Feature Park entrance changed'
+        assert len(baseline['samples'])==len(current['samples']) and all(
+            importer.Point(old).distance(importer.Point(new))<=2.02
+            for old,new in zip(baseline['samples'],current['samples'])),\
+            'Water Feature Park probes moved beyond the reviewed path adjustment'
+    elif uid==importer.NAN_LIAN_SITE_ID and old_access.symmetric_difference(new_access).area>.01:
+        # The new road network changes the generated public entrance, while retaining the garden walk.
+        assert old_paths.symmetric_difference(new_paths).area<=.01, 'Nan Lian perimeter walk changed'
+        added=new_access.difference(old_access)
+        assert abs(old_access.difference(new_access).area-213.27)<.02 and abs(added.area-115.66)<.02,\
+            'Unexpected Nan Lian entrance change'
+        network=json.loads((importer.ROOT/'Data/cross-harbour.json').read_bytes())
+        approach=next(road for road in network['roads'] if road['id']=='TD_103841')
+        target=importer.LineString([(x,z) for x,_,z in approach['points']]).buffer(max(12,approach['width'])/2+3,join_style='mitre')
+        assert new_access.intersection(new_paths).area>.1 and added.distance(target)<=.01 and added.difference(
+            importer.box(3188.90,-4911.81,3210.02,-4883.20)).area<=.01, 'Unexpected Nan Lian entrance location'
+        interior=lambda garden: [sample for sample in garden['samples'] if new_paths.covers(importer.Point(sample))]
+        current_interior=interior(current)
+        assert interior(baseline)==current_interior and len(baseline['samples'])==len(current['samples']) and all(
+            new_access.covers(importer.Point(sample)) for sample in current['samples'] if sample not in current_interior),\
+            'Nan Lian interior or entrance probes changed beyond the reviewed relocation'
+    else:
+        return None
+    old_paved=old_paths.union(old_access)
+    new_paved=new_paths.union(new_access)
+    assert baseline['paving_area_m2']==round(old_paved.area,2) and current['paving_area_m2']==round(new_paved.area,2),\
+        'Paving area does not match retained path and access geometry: '+uid
+    return baseline['paving_area_m2']-current['paving_area_m2']
+
+
 def check_preservation(baseline_dir,raw,data):
     baseline_dir=Path(baseline_dir)
-    old_source=json.loads((baseline_dir/'Data/east-kowloon-open-spaces-source.geojson').read_bytes())
+    old_source_bytes=(baseline_dir/'Data/east-kowloon-open-spaces-source.geojson').read_bytes()
+    old_source=json.loads(old_source_bytes)
     old_layout=json.loads((baseline_dir/'Data/east-kowloon-open-spaces.json').read_bytes())
+    old_metadata=old_layout['metadata']
+    if 'source_sha256' in old_metadata:
+        assert hashlib.sha256(old_source_bytes).hexdigest()==old_metadata['source_sha256'],\
+            'Baseline layout does not match its primary source extract'
+    included_sources={row['path']:row for row in old_source.get('metadata',{}).get('source_manifests',())}
+    for manifest in old_metadata.get('source_manifests',()):
+        path=Path(manifest['path'])
+        if manifest['path'] in included_sources:
+            assert manifest==included_sources[manifest['path']], 'Baseline source manifest differs: '+str(path)
+            continue
+        assert not path.is_absolute() and '..' not in path.parts, 'Invalid baseline source path: '+str(path)
+        payload=(baseline_dir/path).read_bytes()
+        assert hashlib.sha256(payload).hexdigest()==manifest['sha256'], 'Baseline supplemental source differs: '+str(path)
+        old_source['features'].extend(json.loads(payload)['features'])
     old_site_ids={str(site['id']) for site in old_layout['sites']}
     old_sport_ids={str(surface['source_id']) for surface in old_layout['surfaces']}
     def canonical(features):
         return Counter(json.dumps(feature,sort_keys=True,separators=(',',':')) for feature in features)
     def source_rows(collection,site_ids,sport_ids):
-        return [feature for feature in collection['features']
-                if (feature['properties'].get('layer')=='Site' and str(feature['properties'].get('SITEID')) in site_ids) or
-                   (feature['properties'].get('layer')=='BuiltStructurePolygon' and
-                    str(feature['properties'].get('BUILTSTRUCTUREPOLYGONID')) in sport_ids)]
-    assert canonical(source_rows({'features':raw['features']},old_site_ids,old_sport_ids))==\
+        layer_keys={'Site':('SITEID',site_ids),'BuiltStructurePolygon':('BUILTSTRUCTUREPOLYGONID',sport_ids)}
+        for feature in collection['features']:
+            properties=feature['properties']
+            if properties.get('layer') in layer_keys:
+                key,ids=layer_keys[properties['layer']]
+                uid=str(properties.get(key))
+                if uid in ids:
+                    yield {**feature,'properties':{**properties,key:uid}}
+    assert canonical(source_rows(raw,old_site_ids,old_sport_ids))==\
            canonical(source_rows(old_source,old_site_ids,old_sport_ids)),'Existing Site/sport source geometries or attributes changed'
     old_sites={str(site['id']):site for site in old_layout['sites']}
     new_sites={str(site['id']):site for site in data['sites']}
@@ -461,23 +579,36 @@ def check_preservation(baseline_dir,raw,data):
         assert retained==baseline,'Existing sports records changed: '+field
     old_gardens={garden['site']:garden for garden in old_layout['gardens']}
     new_gardens={garden['site']:garden for garden in data['gardens']}
+    site_geometry=None
+
+    def current_site_geometry():
+        nonlocal site_geometry
+        if site_geometry is None:
+            site_geometry=importer.safe_site_polygons(include_southwest_landmarks=False)
+        return site_geometry
+
     lost_access_area=0
+    reviewed_paving_delta=0
     for uid,baseline in old_gardens.items():
         current=new_gardens[uid]
         assert garden_geometry(baseline,'rings').symmetric_difference(garden_geometry(current,'rings')).area<=.01,\
             'Existing site boundary changed: '+uid
+        assert current.get('exclusions')==baseline.get('exclusions'), 'Existing surveyed landscape exclusions changed: '+uid
         if uid in CLEARANCE_REBUILT_SITE_IDS:
             # Rebuilt paths and entrances are validated against current clearance by check().
             continue
-        for field in ('rings','paths'):
-            assert garden_geometry(baseline,field).symmetric_difference(garden_geometry(current,field)).area<=.01,\
-                'Existing site/path ground geometry changed: '+uid+':'+field
+        old_paths=garden_geometry(baseline,'paths');new_paths=garden_geometry(current,'paths')
         old_access=garden_geometry(baseline,'access');new_access=garden_geometry(current,'access')
+        reviewed_delta=check_reviewed_paving_change(uid,baseline,current,old_paths,new_paths,old_access,new_access)
+        if reviewed_delta is not None:
+            reviewed_paving_delta+=reviewed_delta
+            continue
+        assert old_paths.symmetric_difference(new_paths).area<=.01, 'Existing path geometry changed: '+uid
         if uid==GROUND_CLIPPED_ACCESS_SITE_ID:
             retained=new_access.area/old_access.area
             assert .99<=retained<=1 and len(importer.geometry_polygons(new_access))==1,\
                 'Hung Hom access clip lost too much area or disconnected the corridor'
-            _,_,_,_,_,east_targets,_,ground,_,_,_=importer.safe_site_polygons()
+            _,_,_,_,_,east_targets,_,ground,_,_,_=current_site_geometry()
             expected_access=old_access.intersection(ground)
             assert new_access.symmetric_difference(expected_access).area<=.01,\
                 'Hung Hom access is not the exact shared-ground intersection'
@@ -503,15 +634,17 @@ def check_preservation(baseline_dir,raw,data):
                    if uid not in CLEARANCE_REBUILT_SITE_IDS)
     new_volume=sum(new_gardens[uid]['paving_area_m2'] for uid in old_gardens
                    if uid not in CLEARANCE_REBUILT_SITE_IDS)
-    assert abs((old_volume-new_volume)-lost_access_area)<.02,'Historical paving volume changed beyond the supported access clip'
+    assert abs((old_volume-new_volume)-lost_access_area-reviewed_paving_delta)<.02,\
+        'Historical paving volume changed beyond the reviewed path and access changes'
 
     old_fixtures={uid:[fixture for fixture in old_layout['fixtures'] if fixture['site']==uid] for uid in old_site_ids}
     new_fixtures={uid:[fixture for fixture in data['fixtures'] if fixture['site']==uid] for uid in old_site_ids}
+    clearance=None
     for uid in old_site_ids:
         previous=old_fixtures[uid];current=new_fixtures[uid]
         if uid in CLEARANCE_REBUILT_SITE_IDS:
-            _,lots,*_=importer.safe_site_polygons(include_southwest_landmarks=False)
-            clearance=lots.buffer(4)
+            if clearance is None:
+                clearance=current_site_geometry()[1].buffer(4)
             assert all(clearance.intersection(importer.Point(fixture['position']).buffer(fixture['radius'])).area<=.01
                        for fixture in current),\
                 'Regenerated fixture enters current building clearance: '+uid
@@ -531,7 +664,8 @@ def check_preservation(baseline_dir,raw,data):
                      len(old_layout['fixtures']),len(old_layout['paving']))
     assert baseline_counts in ((16,71,50,1505,44518),(25,120,88,3068,81836),
                                (27,120,88,3302,86722),(41,132,94,3620,103444),
-                               (53,149,106,3976,111845)),\
+                               (53,149,106,3976,111845),(64,161,111,4073,120908),
+                               (68,166,115,4296,132744)),\
         'Unexpected preservation baseline counts: '+repr(baseline_counts)
     for key,ids in [('source_revisions',old_site_ids),('sports_revisions',old_sport_ids)]:
         assert {uid:value for uid,value in data['metadata'][key].items() if uid in ids}==\
@@ -539,8 +673,8 @@ def check_preservation(baseline_dir,raw,data):
             'Existing source revision records changed: '+key
     print(f'ANTILA_EAST_OPEN_SPACE_PRESERVATION_OK: {baseline_counts[0]} prior sites; '
           f'{baseline_counts[1]} source outlines; {baseline_counts[2]} fittings; '
-          f'{baseline_counts[3]:,} prior fixtures; geometry and paving preserved; '
-          f'one {lost_access_area:.2f}m² supported access clip; approved bench-only changes retained')
+          f'{baseline_counts[3]:,} prior fixtures; source geometry preserved; '
+          f'{lost_access_area+reviewed_paving_delta:.2f}m² reviewed paving reduction; approved bench-only changes retained')
 
 
 if __name__=='__main__':

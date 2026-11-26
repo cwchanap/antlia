@@ -1,10 +1,12 @@
 """Execute through Blender MCP. Government XY geometry, authored tunnel structure, metres."""
 import bpy
+import hashlib
 import json
 import math
 from os import environ
 from pathlib import Path
 from mathutils import Vector
+from mathutils.geometry import tessellate_polygon
 
 project_override = globals().get('ANTILA_ROOT') or environ.get('ANTILA_ROOT')
 if not project_override and not globals().get('__file__'):
@@ -12,6 +14,42 @@ if not project_override and not globals().get('__file__'):
 ROOT = Path(project_override or Path(__file__).resolve().parents[1]).expanduser().resolve()
 SINGLE_LANE_APPROACHES = {'TD_103438','TD_103954'}
 data = json.loads((ROOT/'Data/cross-harbour.json').read_text())
+
+def load_ground_relief(data):
+    relief_path = ROOT/'Data/wong-tai-sin-relief.json'
+    if not relief_path.is_file():
+        if 'wong_tai_sin_network_sections' in data['metadata']:
+            raise FileNotFoundError('Full Wong Tai Sin requires Data/wong-tai-sin-relief.json from Tools/import_wong_tai_sin_relief.py')
+        return None, set()
+    relief = json.loads(relief_path.read_bytes())
+    metadata = relief['metadata']
+    ground_triangles = data['ground_triangles']
+    planar_payload = json.dumps(ground_triangles, separators=(',', ':')).encode()
+    if hashlib.sha256(planar_payload).hexdigest() != metadata['ground_triangles_sha256']:
+        raise ValueError('The Wong Tai Sin relief must be rebuilt against this harbour ground')
+    surface_roads = [(road['width'], [(x, z) for x, _, z in road['points']])
+                     for road in sorted(data['roads'], key=lambda road: road['id']) if not road['tunnel']]
+    clearance_map = json.dumps([surface_roads, sorted(data['kowloon_boundary'])], ensure_ascii=False,
+                               separators=(',', ':')).encode()
+    files = metadata.get('clearance_files_sha256')
+    if not files or hashlib.sha256(clearance_map).hexdigest() != metadata.get('clearance_map_sha256'):
+        raise ValueError('Rebuild Wong Tai Sin relief with Tools/import_wong_tai_sin_relief.py for these roads and boundaries')
+    for name, recorded in files.items():
+        payload = (ROOT/'Data'/name).read_bytes()
+        if recorded['fields']:
+            source = json.loads(payload)
+            payload = json.dumps([source[key] for key in recorded['fields']], ensure_ascii=False,
+                                 separators=(',', ':'), sort_keys=True).encode()
+        if hashlib.sha256(payload).hexdigest() != recorded['sha256']:
+            raise ValueError(f'Rebuild Wong Tai Sin relief with Tools/import_wong_tai_sin_relief.py for {name}')
+    replaced = set(relief['old_triangles'])
+    if not replaced or min(replaced) < 0 or max(replaced) >= len(ground_triangles):
+        raise ValueError('Invalid planar ground replacement in the Wong Tai Sin relief')
+    return relief, replaced
+
+
+# Check the compiled relief before changing the Blender scene or any output.
+relief, replaced = load_ground_relief(data)
 previous = bpy.context.window.scene
 if previous.name.startswith('Antila_CrossHarbour'):
     previous=bpy.data.scenes.get(previous.get('antila_previous_scene','')) or next(s for s in bpy.data.scenes if not s.name.startswith('Antila_CrossHarbour'))
@@ -68,12 +106,20 @@ try:
 
 
     # One triangulated surface with portal openings, used for both visible ground and physics.
-    ground = [Vector((p[0],0,p[1])) for tri in data['ground_triangles'] for p in tri]
+    ground = [Vector((p[0],0,p[1])) for i,tri in enumerate(data['ground_triangles']) if i not in replaced for p in tri]
     faces = []
     for i in range(0,len(ground),3):
         a,b,c = ground[i:i+3]
         faces.append((i,i+1,i+2) if (b-a).cross(c-a).y>0 else (i,i+2,i+1))
-    mesh('HarbourGround',ground,faces,concrete)
+    first_relief_face=len(faces)
+    if relief:
+        offset=len(ground)
+        ground.extend(Vector(point) for point in relief['vertices'])
+        faces.extend(tuple(offset+i for i in face) for face in relief['raised_faces']+relief['planar_faces'])
+    ground_obj=mesh('HarbourGround',ground,faces,concrete)
+    if relief:
+        for face in ground_obj.data.polygons[first_relief_face:]:
+            face.use_smooth=True
     water = material('CHT_water',(.045,.16,.20))
     next(n for n in water.node_tree.nodes if n.type=='BSDF_PRINCIPLED').inputs['Roughness'].default_value = .3
     vertices = [Vector((p[0],-2,p[1])) for tri in data['water_triangles'] for p in tri]
@@ -148,6 +194,61 @@ try:
         miter=axis/axis.dot(a)
         ra[ia],rb[ib]=miter*sa,-miter*sb
     print('ANTILA_RAISED_JOINS:',sum(len(ends)==2 for ends in raised_ends.values()),'shared cross-sections')
+
+    def build_deck_merge(merge):
+        approaches = merge['approaches']
+        departure = merge['departure']
+        height = merge['height_m']
+        by_id = {road['id']: (road, points, rights) for road, points, rights in sections}
+        center = by_id[departure][1][0]
+        assert abs(center.y - height) < .0001, 'The shared junction must be level'
+        trimmed = {}
+        corners = []
+        for ident in (*approaches, departure):
+            road, points, rights = by_id[ident]
+            incoming = ident in approaches
+            end = -1 if incoming else 0
+            assert road['elevated'] and (points[end] - center).length < .001
+            flat = [i for i, point in enumerate(points) if abs(point.y - height) < .0001]
+            assert flat, f'{ident}: no sampled level merge section'
+            index = min(flat) if incoming else max(flat)
+            assert flat == list(range(index, len(points)) if incoming else range(index + 1))
+            kept = slice(0, index + 1) if incoming else slice(index, None)
+            assert len(points[kept]) >= 2 and 0 < index < len(points) - 1
+            trimmed[ident] = points[kept], rights[kept]
+            half = road['width'] / 2
+            for offset in (-half, half):
+                corners.append((ident, points[index] + rights[index] * offset))
+
+        corners.sort(key=lambda item: math.atan2(item[1].z - center.z, item[1].x - center.x))
+        vertices = [point for _, point in corners]
+        sides = []
+        seam_ids = set()
+        count = len(vertices)
+        for i, (ident, _) in enumerate(corners):
+            j = (i + 1) % count
+            if ident == corners[j][0]:
+                seam_ids.add(ident)
+            else:
+                sides.append((i, j, j + count, i + count))
+        assert seam_ids == set(trimmed), 'The merge apron must share all three deck cross-sections'
+        faces = []
+        for a, b, c in tessellate_polygon([vertices]):
+            normal = (vertices[b] - vertices[a]).cross(vertices[c] - vertices[a]).y
+            assert abs(normal) > .001, 'The merge apron has a degenerate triangle'
+            faces.append((a, b, c) if normal > 0 else (a, c, b))
+        assert len(faces) == count - 2, 'The merge apron must cover its full outline'
+        top = [point + Vector((0, .035, 0)) for point in vertices]
+        bottom = [point + Vector((0, -.65, 0)) for point in vertices]
+        mesh('Road_HammerHillMerge', top, faces, asphalt)
+        mesh('DeckSoffit_HammerHillMerge', bottom, [tuple(reversed(face)) for face in faces], exterior)
+        mesh('DeckFascia_HammerHillMerge', top + bottom, sides, exterior)
+        print('ANTILA_HAMMER_HILL_MERGE:', len(faces), 'apron triangles and', len(sides), 'exterior faces')
+        return [(road, *trimmed.get(road['id'], (points, rights))) for road, points, rights in sections]
+
+    merge = data['metadata'].get('wong_tai_sin_decks', {}).get('merge')
+    if merge:
+        sections = build_deck_merge(merge)
     for road,points,rights in sections:
         half = road['width']/2
         other_tube_edges=[(Vector((a[0],a[2])),Vector((b[0],b[2])),r['width']/2)

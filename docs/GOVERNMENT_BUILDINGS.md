@@ -1,6 +1,10 @@
 # Government building layout — 13 September 2026
 
-The [24 November district expansion and review](KOWLOON_CITY_DISTRICT_REVIEW.md) brings the layout to **40,576 derived parts in 3,232 render/collision chunk pairs**. The eastern layout contains 8,942 parts, including the Cruise Terminal. The Kai Tak source GLB has its own spatial chunk group. The North layout retains the surveyed SPCA footprint beside Chi Man Street.
+The [Wong Tai Sin and Diamond Hill expansion](DIAMOND_HILL_EXPANSION.md) brings the layout to **41,477 derived parts in 3,363 render/collision chunk pairs**, including 9,843 parts in the eastern layout. New massing follows surveyed building footprints around Chi Lin Nunnery, Nan Lian Garden and the estates farther east. The Diamond Hill source GLB adds 129 chunk pairs on the existing 128 m grid.
+
+The later district pass applies the updated Lands Department footprint for the Ma Chai Hang Ventilation Building. The same surveyed roof and ground heights give a 10 m rise over the enlarged 897.44 m² outline. [District building audit](WONG_TAI_SIN_DISTRICT.md#hillside-and-surveyed-buildings) · [Bundled source feature](../Data/ma-chai-hang-building-source.geojson)
+
+The [24 November district expansion and review](KOWLOON_CITY_DISTRICT_REVIEW.md) brought the layout to **40,576 derived parts in 3,232 render/collision chunk pairs**. The eastern layout contained 8,942 parts, including the Cruise Terminal. The Kai Tak source GLB has its own spatial chunk group. The North layout retains the surveyed SPCA footprint beside Chi Man Street.
 
 The [24 October Wong Tai Sin extension](WONG_TAI_SIN_EXPANSION.md) brought the total at that date to **39,946 derived parts in 3,135 render/collision chunk pairs**, including 8,528 eastern parts. Its northern asset contains 1,666 parts in 202 chunk pairs. Earlier counts below apply to their recorded snapshots.
 

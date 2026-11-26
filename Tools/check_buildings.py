@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from shapely import union_all
-from shapely.geometry import LineString, Polygon, box
+from shapely.geometry import LineString, Polygon, box, shape
 
 import import_buildings as importer
 
@@ -226,8 +226,9 @@ def check_kai_tak_buildings():
     root=importer.ROOT
     source_bytes=(root/EAST_BUILDING_SOURCE).read_bytes()
     source=json.loads(source_bytes)
-    features=source['features']
     metadata=source['metadata']
+    wong_tai_sin_ids=set(metadata.get('wong_tai_sin_merge',{}).get('added_csuids',[]))
+    features=[f for f in source['features'] if f['properties']['BuildingCSUID'] not in wong_tai_sin_ids]
     provenance=metadata['merge_provenance']
     northern_count=8153
     def digest(value,sort_keys=False):
@@ -238,7 +239,9 @@ def check_kai_tak_buildings():
     assert digest(provenance['northern_strip_provenance'],sort_keys=True)== \
         '34dccabf59266b80c0e3d0c4b12a20bfe605cd34f620f19c3963cb925bd79c95', \
         'Kai Tak refresh changed the original northern strip provenance'
-    assert metadata['source']==importer.SOURCE and metadata['bbox_wgs84']==list(importer.EAST_KOWLOON_BBOX)
+    assert metadata['source']==importer.SOURCE
+    west,south=importer.local(metadata['bbox_wgs84'][:2]);east,north=importer.local(metadata['bbox_wgs84'][2:])
+    assert [west,north,east,south]==provenance['expanded_bounds_local']
     assert (metadata['query_feature_count'],metadata['query_features_sha256'])== \
         (provenance['query_feature_count'],provenance['query_features_sha256'])
     props=[feature['properties'] for feature in features]
@@ -270,7 +273,7 @@ def check_kai_tak_buildings():
     layout=json.loads((root/'Data/east-kowloon-layout.json').read_text())
     source_sha=hashlib.sha256(source_bytes).hexdigest()
     assert layout['metadata']['source_sha256']==layout['metadata']['base_sources_sha256'][EAST_BUILDING_SOURCE]==source_sha
-    assert layout['metadata']['source_parts']==len(features), 'Stale Eastern Kowloon building layout'
+    assert layout['metadata']['source_parts']==len(source['features']), 'Stale Eastern Kowloon building layout'
     parts=[b for b in layout['buildings'] if b['name']==terminal_name]
     terminal_ids={f['properties']['OBJECTID'] for f in terminal}
     podium_parts=[b for b in parts if b['id']==podium_props['OBJECTID']]
@@ -285,6 +288,126 @@ def check_kai_tak_buildings():
         'Kai Tak Cruise Terminal footprint extends beyond its source geometry'
     print(f'ANTILA_KAI_TAK_BUILDINGS_OK: {len(features)-northern_count:,} official east-strip records; '
           f'preserved northern provenance; {rendered_footprint.area:,.0f} m² terminal massing')
+
+
+def check_wong_tai_sin_merge():
+    boundary_path=Path('Data/wong-tai-sin-district-boundary.geojson')
+    feature,=json.loads((importer.ROOT/boundary_path).read_text())['features']
+    district=importer.local_geometry(feature['geometry'])
+    edge=district.intersection(LineString([(1000,-5000),(6000,-5000)])).bounds[2]
+
+    def source_feature(ident,uid,x,z,status='Active'):
+        scale_x=111320*math.cos(math.radians(importer.ORIGIN[1]))
+        corners=[(x-4,z-4),(x+4,z-4),(x+4,z+4),(x-4,z+4),(x-4,z-4)]
+        ring=[[importer.ORIGIN[0]+px/scale_x,importer.ORIGIN[1]-pz/111320] for px,pz in corners]
+        return {'type':'Feature','properties':{'OBJECTID':ident,'BuildingCSUID':uid,'Status':status,
+                'BuildingBlockType':'Tower','BaseHeight':10,'TopHeight':20},
+                'geometry':{'type':'Polygon','coordinates':[ring]}}
+
+    preserved=[source_feature(1,'prior-wong-tai-sin',2600,-5400),source_feature(2,'prior-kai-tak',4200,-1400)]
+    old_metadata={'bbox_wgs84':list(importer.EAST_KOWLOON_BBOX),'retrieved_utc':'2026-10-21T00:00:00+00:00',
+                  'merge_provenance':{'strategy':'Retain the existing Kai Tak provenance'}}
+    baseline=dict(type='FeatureCollection',metadata=old_metadata,features=preserved)
+    revised=source_feature(3,'prior-wong-tai-sin',2610,-5400)
+    collision=source_feature(2,'new-estate',3900,-5350)
+    crossing=source_feature(4,'district-edge',edge+1,-5000)
+    inactive=source_feature(5,'inactive',3910,-5350,'Demolished')
+    outside=source_feature(6,'outside',4200,-4000)
+    assert district.intersection(importer.local_geometry(outside['geometry'])).area==0
+    donor=[revised,collision,crossing,inactive,outside]
+
+    with tempfile.TemporaryDirectory(prefix='antila-wong-tai-sin-building-merge-') as directory:
+        trial=Path(directory);(trial/'Data').mkdir()
+        (trial/boundary_path).symlink_to(importer.ROOT/boundary_path)
+        cache=trial/EAST_BUILDING_SOURCE
+        cache.write_text(json.dumps(baseline))
+        baseline_hash=hashlib.sha256(cache.read_bytes()).hexdigest()
+        for expected_increment in (2,0):
+            responses=iter([{'count':len(donor)},{'type':'FeatureCollection','features':donor}])
+            def response(url,**_):
+                params=importer.urllib.parse.parse_qs(importer.urllib.parse.urlparse(url).query)
+                assert params['where']==["Status='Active'"]
+                return io.BytesIO(json.dumps(next(responses)).encode())
+            with patch.object(importer,'ROOT',trial),patch.object(importer.urllib.request,'urlopen',response), \
+                 contextlib.redirect_stdout(io.StringIO()):
+                importer.download_island(wong_tai_sin=True)
+            result=json.loads(cache.read_text())
+            assert result['features'][:2]==preserved
+            metadata=result['metadata'].copy()
+            scope=metadata.pop('wong_tai_sin_merge')
+            assert metadata==old_metadata and scope['preserved_source_sha256']==baseline_hash
+            assert scope['preserved_feature_count']==2 and scope['incremental_added_feature_count']==expected_increment
+            assert scope['added_csuids']==['district-edge','new-estate']
+            assert scope['objectid_remaps']==[{'BuildingCSUID':'new-estate','source_OBJECTID':2,'internal_OBJECTID':7}]
+            assert result['features'][-1]==crossing, 'The full surveyed footprint must remain after scope selection'
+            assert len(result['features'])==4
+    print('ANTILA_WONG_TAI_SIN_BUILDING_MERGE_OK: exact prior records and provenance, active district selection and repeat refresh')
+
+
+def check_wong_tai_sin_buildings():
+    source_bytes=(importer.ROOT/EAST_BUILDING_SOURCE).read_bytes()
+    source=json.loads(source_bytes)
+    features=source['features']
+    scope=source['metadata']['wong_tai_sin_merge']
+    preserved=scope['preserved_feature_count']
+    assert preserved==8528
+    canonical_prefix=json.dumps(features[:preserved],ensure_ascii=False,separators=(',',':'),allow_nan=False)
+    assert hashlib.sha256(canonical_prefix.encode()).hexdigest()== \
+        'bc0cfb725509bc5334fe3e6a77d1fec113902709c61757b7f33d118813d903c2', 'A previously pinned building feature changed'
+    by_uid={f['properties']['BuildingCSUID']:f for f in features}
+    assert len(by_uid)==len({f['properties']['OBJECTID'] for f in features})==len(features)
+    feature,digest=importer.district_boundary_feature(importer.WONG_TAI_SIN_BOUNDARY,'Wong Tai Sin District')
+    district=importer.local_geometry(feature['geometry'])
+    assert scope['district_boundary_feature_sha256']==digest and scope['source']==importer.SOURCE
+    assert scope['bbox_wgs84']==list(shape(feature['geometry']).bounds)
+    added=scope['added_csuids']
+    assert sorted(set(added))==added and len(added)==scope['added_feature_count']
+    assert hashlib.sha256(json.dumps(added,separators=(',',':')).encode()).hexdigest()==scope['added_csuids_sha256']
+    assert all(by_uid[uid]['properties']['Status']=='Active' and
+               importer.local_geometry(by_uid[uid]['geometry']).intersection(district).area>.01 for uid in added)
+    assert set(added).isdisjoint(f['properties']['BuildingCSUID'] for f in features[:preserved])
+
+    layout=json.loads((importer.ROOT/'Data/east-kowloon-layout.json').read_text())
+    assert layout['metadata']['source_sha256']==hashlib.sha256(source_bytes).hexdigest()
+    assert layout['metadata']['source_parts']==len(features)
+    coast=json.loads((importer.ROOT/'Data/east-kowloon-coast.json').read_text())
+    west,south=importer.local(layout['metadata']['bbox_wgs84'][:2])
+    east,north=importer.local(layout['metadata']['bbox_wgs84'][2:])
+    assert all(abs(actual-expected)<.0001 for actual,expected in zip((west,north,east,south),coast['bounds'])), \
+        'East layout metadata must use the effective coast bounds'
+    revised=layout['metadata']['ma_chai_hang_footprint']
+    source_path=importer.ROOT/importer.MA_CHAI_HANG_BUILDING_SOURCE
+    source_bytes=source_path.read_bytes()
+    survey,=json.loads(source_bytes)['features']
+    props=survey['properties']
+    source=by_uid[importer.MA_CHAI_HANG_CSUID]
+    assert revised['path']==importer.MA_CHAI_HANG_BUILDING_SOURCE and revised['sha256']==hashlib.sha256(source_bytes).hexdigest()
+    assert props['BuildingCSUID']==revised['BuildingCSUID']==importer.MA_CHAI_HANG_CSUID
+    assert props['OBJECTID']==revised['source_OBJECTID']==341800 and source['properties']['OBJECTID']==revised['layout_OBJECTID']==341966
+    assert (props['BaseHeight'],props['TopHeight'])==(46,56)
+    parts=[b for b in layout['buildings'] if b['id']==revised['layout_OBJECTID']]
+    assert parts and all(b['height']==10 for b in parts), 'Ma Chai Hang must retain its surveyed 10 m rise'
+    footprint=union_all([Polygon(b['rings'][0],b['rings'][1:]) for b in parts])
+    surveyed=importer.local_geometry(survey['geometry'])
+    assert surveyed.area>890 and footprint.symmetric_difference(surveyed).area<1, 'Ma Chai Hang refined footprint is missing'
+    landmarks={
+        '3883422415T20050430':('Plaza Hollywood',13,44.8,15000),
+        '3873722435T20050430':('MTR DIAMOND HILL STATION',13.2,17.6,175),
+        '3871822802T20050430':('Fung Tak Shopping Centre',23.8,39.2,6800),
+        '3881522494T20050430':('Galaxia Tower E',21.4,160.4,485),
+        '3919522418T20050430':('Chi Lin Nunnery Main Hall',27.3,42.3,350),
+        '3921122446T20050430':('Chi Lin Nunnery Scripture Library',32.8,46,280),
+        '3909422310T20130731':('NAN LIAN GARDEN',17.5,23.2,165),
+        '3944022543T20050430':('Grand View Garden Tower 1',39.7,149.4,580),
+    }
+    for uid,(name,base,top,min_area) in landmarks.items():
+        source=by_uid[uid]
+        props=source['properties']
+        assert (props['BuildingNameEN'],props['BaseHeight'],props['TopHeight'])==(name,base,top)
+        parts=[b for b in layout['buildings'] if b['id']==props['OBJECTID']]
+        footprint=union_all([Polygon(b['rings'][0],b['rings'][1:]) for b in parts])
+        assert footprint.area>=min_area, (name,footprint.area,min_area)
+    print(f'ANTILA_WONG_TAI_SIN_BUILDINGS_OK: {len(added)} active district additions, {preserved:,} pinned rows and {len(landmarks)} named massing checks')
 
 
 def check_chi_man_street():
@@ -306,6 +429,34 @@ def check_chi_man_street():
     assert not rendered.is_empty and rendered.is_valid and rendered.disjoint(clearance)
     assert rendered.symmetric_difference(surveyed).area<1, 'Chi Man Street clearance removed surveyed SPCA massing'
     print(f'ANTILA_CHI_MAN_BUILDING_OK: {rendered.area:.2f} m² SPCA footprint retained at the 5 m carriageway')
+
+
+def check_choi_hung_carriageway_clearance():
+    # Pavement width, nearest surveyed building distance and LandsD OBJECTID.
+    cases = {'TD_102856': (6, 6.794, 227804), 'TD_103858': (6, 8.941, 249530),
+             'TD_103428': (6, 8.925, 246786), 'TD_103861': (6, 8.576, 179380),
+             'TD_103672': (6, 8.6085, 112163), 'TD_103841': (11.5, 9.45855, 111197)}
+    data = importer.ROOT/'Data'
+    roads = {road['id']: road for road in json.loads((data/'cross-harbour.json').read_text())['roads']
+             if road['id'] in cases}
+    source = json.loads((data/'east-kowloon-buildings.geojson').read_text())
+    building_ids = {building_id for _,_,building_id in cases.values()}
+    surveyed = {feature['properties']['OBJECTID']: importer.local_geometry(feature['geometry'])
+                for feature in source['features']
+                if feature['properties']['OBJECTID'] in building_ids}
+    for road_id, (width, building_gap, building_id) in cases.items():
+        radius = importer.building_road_clearance({'id': road_id, 'width': width})
+        assert radius < building_gap, (road_id, radius, building_gap)
+        assert radius - width/2 == 3.5
+        assert importer.building_road_clearance({'id': road_id, 'width': 12}) == 9.5
+        if road_id in roads:
+            road = roads[road_id]
+            assert road['width'] == width
+            line = LineString([(x,z) for x,_,z in road['points']])
+            clearance = line.buffer(radius,quad_segs=2,join_style='mitre')
+            assert surveyed[building_id].disjoint(clearance), (road_id,building_id)
+    assert importer.building_road_clearance({'id': 'TD_103859', 'width': 6}) == 9.5
+    print(f'ANTILA_CHOI_HUNG_BUILDING_CLEARANCE_OK: {len(cases)} surveyed carriageway setbacks preserve nearby footprints')
 
 
 def check():
@@ -491,7 +642,9 @@ def check_kowloon_tong_extension():
     expected=json.loads(json.dumps(derived,ensure_ascii=False,allow_nan=False))
     saved_east_hash=saved['metadata']['base_sources_sha256'][EAST_BUILDING_SOURCE]
     rebuilt_east_hash=expected['metadata']['base_sources_sha256'][EAST_BUILDING_SOURCE]
-    assert saved_east_hash in (PRE_KAI_TAK_EAST_SOURCE_SHA256,rebuilt_east_hash)
+    east_source=json.loads((root/EAST_BUILDING_SOURCE).read_text())
+    prior_source_hash=east_source['metadata'].get('wong_tai_sin_merge',{}).get('preserved_source_sha256')
+    assert saved_east_hash in (PRE_KAI_TAK_EAST_SOURCE_SHA256,prior_source_hash,rebuilt_east_hash)
     expected['metadata']['base_sources_sha256'][EAST_BUILDING_SOURCE]=saved_east_hash
     assert saved.keys()==expected.keys() and saved['metadata']==expected['metadata'], \
         'The Northwest layout metadata does not match the source-backed build'
@@ -544,13 +697,21 @@ if __name__ == '__main__':
         check_kowloon_tong_extension()
     elif '--kai-tak' in sys.argv:
         check_kai_tak_buildings()
+    elif '--wong-tai-sin-district' in sys.argv:
+        check_wong_tai_sin_merge()
+        check_wong_tai_sin_buildings()
     elif '--chi-man-street' in sys.argv:
         check_chi_man_street()
+    elif '--choi-hung-clearance' in sys.argv:
+        check_choi_hung_carriageway_clearance()
     elif '--southwest-landmarks' in sys.argv:
         check_southwest_landmarks()
     else:
         check_download()
         check_east_kowloon_merge()
         check_kai_tak_buildings()
+        check_wong_tai_sin_merge()
+        check_wong_tai_sin_buildings()
         check_chi_man_street()
+        check_choi_hung_carriageway_clearance()
         check()

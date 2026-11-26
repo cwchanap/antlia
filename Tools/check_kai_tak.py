@@ -23,7 +23,9 @@ def check(data_path=DATA):
     assert metadata['source_crs'] == 'EPSG:4326', 'The November TD archive is already in WGS84'
 
     routes = data['routes']
-    assert len(routes) == 15
+    has_diamond_hill = 'wong_tai_sin_district_boundary_sha256' in metadata
+    has_choi_hung = 'wong_tai_sin_network_sections' in metadata
+    assert len(routes) == 15 + has_diamond_hill + has_choi_hung
     route = routes[14]
     assert route['name'] == 'Kai Tak → Kai Tak Cruise Terminal'
     assert route['source_ids'] == KAI_TAK and len(KAI_TAK) == 34

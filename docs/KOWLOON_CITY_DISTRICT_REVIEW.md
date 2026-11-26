@@ -65,7 +65,7 @@ python3 Tools/split_building_chunks.py --check
 
 The audit reads the checked-in data and reports current coverage without hard-coding the baseline totals. Run `./run.command --headless -- --kai-tak-check` to check the shortcut, driving surface and physical route. Run `./run.command --headless -- --kowloon-city-north-check` to verify the ground and collision walls at the former northern gap. Clean checkouts render procedural passengers when the licensed scans are absent. [Passenger assets and installation](PASSENGER_ASSETS.md)
 
-To replay the expansion, regenerate the coastal geometry from the pinned sources and use the documented November TD archive. Reclip the four building regions touched by the new roads. Rebuild the recreation layout after those outputs are ready so its input hashes match the map.
+To replay the Kowloon City snapshot in a checkout of that edition, regenerate the coastal geometry from the pinned sources and use the documented November TD archive. Reclip the four building regions touched by its roads, then rebuild the recreation layout with the updated input hashes. The current map includes the later Wong Tai Sin District expansion. [Current regeneration workflow](WONG_TAI_SIN_DISTRICT.md#rebuild-and-verify)
 
 ```sh
 .venv-geodata/bin/python Tools/import_shoreline.py --east-kowloon

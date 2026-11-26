@@ -1,7 +1,7 @@
 """TD centreline KMZ -> metre-scale Cross-Harbour extension. Regeneration needs Shapely.
 
-Run the reviewed WGS84 archive with --kowloon-city-district. Use --hk1980 for
-the earlier HK1980 snapshots that require conversion.
+Run the reviewed WGS84 archive with --whole-wong-tai-sin-district for the current map.
+Use the matching district or --hk1980 flags with corresponding earlier snapshots.
 The source supplies XY, travel direction and relative road levels; metric elevations are authored.
 """
 import datetime
@@ -45,12 +45,16 @@ TSUEN_WAN_BOUNDS = (-8500,-11000,-3900,-6900)
 WEST_COAST_BOUNDS = (-13800,-11200,-6400,-6900)
 EAST_KOWLOON_BOUNDS = (550,-6400,4900,-100)
 KOWLOON_CITY_NORTH_FILL_BOUNDS = (250,-6075,550,-6000)
+WONG_TAI_SIN_DISTRICT_BOUNDS = (550,-7110,5380,-100)
 # Required unnamed ground-level connections, ordered in the government's one-way direction.
 # Other unnamed access links remain excluded until their access and clearance are assessed.
 EAST_ROUNDABOUTS = [('Hereford / Renfrew',['TD_107211','TD_107576','TD_107598','TD_107575','TD_107601']),
                    ('Ho Tung / Oxford',['TD_107564','TD_107580','TD_107235'])]
 WEST_ROUNDABOUTS = [('Kwai Yue / Kwai Hei',['TD_8457','TD_9137','TD_9138'])]
 REQUIRED_ROUNDABOUTS = EAST_ROUNDABOUTS + WEST_ROUNDABOUTS
+HAMMER_HILL_ROUNDABOUT = [
+    'TD_103019', 'TD_103025', 'TD_103024', 'TD_103020', 'TD_103027', 'TD_103026',
+]
 WESTERN_APPROACHES = ['TD_57333']
 # Ground-level Kowloon Tong links reviewed against the exact TD centreline archive.
 REVIEWED_KOWLOON_TONG_ROADS = [
@@ -127,6 +131,79 @@ WONG_TAI_SIN = ['-TD_102650','-TD_115861','-TD_102706','-TD_102390','-TD_102389'
                 'TD_102580','TD_103436','TD_103488','TD_103731','TD_103486','TD_102669',
                 'TD_103804','TD_102670','TD_272331']
 WONG_TAI_SIN_NETWORK = ['TD_103730']
+# From Wong Tai Sin Road through Tsz Wan Shan and Po Kong Village Road to Lung Poon Street.
+DIAMOND_HILL = [
+    'TD_102715', 'TD_102761', 'TD_261466', 'TD_102817', 'TD_102828', 'TD_103823',
+    'TD_102822', 'TD_102798', 'TD_102788', 'TD_102787', 'TD_102748', 'TD_102785',
+    'TD_103279', 'TD_103373', 'TD_103420', 'TD_103419', 'TD_271929', 'TD_103418',
+    'TD_103272', 'TD_103409', 'TD_103366', 'TD_109834', 'TD_103394', 'TD_261450',
+    'TD_104123', 'TD_103367', 'TD_103372', 'TD_115580', 'TD_103354', '-TD_103277',
+    '-TD_103282', '-TD_103283', 'TD_103339', 'TD_103338', 'TD_103337', '-TD_103336',
+    'TD_103291', '-TD_103290', '-TD_103288', 'TD_103382', '-TD_103377', '-TD_103375',
+    'TD_272783', 'TD_103383', '-TD_103378', '-TD_103379', 'TD_103380', 'TD_103938',
+    '-TD_103835', '-TD_102939', 'TD_103941', 'TD_272445', 'TD_103385', 'TD_103391',
+    'TD_103937', 'TD_164890', 'TD_102838', 'TD_273245',
+]
+# Public, ground-level streets connected in both directions to the retained map.
+WONG_TAI_SIN_DISTRICT_ROADS = {
+    'TD_102843', 'TD_102871', 'TD_102872', 'TD_102926', 'TD_103005',
+    'TD_103023', 'TD_103036', 'TD_103277', 'TD_103281',
+    'TD_103282', 'TD_103283', 'TD_103288', 'TD_103289', 'TD_103290', 'TD_103291',
+    'TD_103305', 'TD_103306', 'TD_103307', 'TD_103308', 'TD_103309', 'TD_103310',
+    'TD_103311', 'TD_103313', 'TD_103314', 'TD_103315', 'TD_103316', 'TD_103317',
+    'TD_103319', 'TD_103321', 'TD_103322', 'TD_103323', 'TD_103324', 'TD_103325',
+    'TD_103327', 'TD_103328', 'TD_103329', 'TD_103330', 'TD_103332', 'TD_103333',
+    'TD_103334', 'TD_103335', 'TD_103336', 'TD_103337', 'TD_103338', 'TD_103339',
+    'TD_103340', 'TD_103341', 'TD_103343', 'TD_103344', 'TD_103345', 'TD_103346',
+    'TD_103355', 'TD_103376', 'TD_103382', 'TD_103433', 'TD_103434',
+    'TD_103843', 'TD_103848', 'TD_103849', 'TD_103885', 'TD_103942', 'TD_103943',
+    'TD_103953', 'TD_104130',
+    'TD_109836', 'TD_109837', 'TD_115590', 'TD_269008', 'TD_269009', 'TD_272446',
+    'TD_272447', 'TD_272463', 'TD_272483', 'TD_284314', 'TD_284333', 'TD_284356',
+}.union(HAMMER_HILL_ROUNDABOUT)
+# The Choi Hung Road loop requires an unmodeled interchange to exit legally.
+# Keep its connected surface approaches and defer the loop and its Hammer Hill stubs.
+WONG_TAI_SIN_DEFERRED_ROADS = {
+    'TD_102853', 'TD_102854', 'TD_102855', 'TD_102856', 'TD_102857', 'TD_102858',
+    'TD_102961', 'TD_103009', 'TD_103017', 'TD_103827', 'TD_103828', 'TD_103846',
+    'TD_103862', 'TD_103863',
+}
+# Follow the surveyed one-way approach past Choi Hung into the retained Hammer Hill roundabout.
+CHOI_HUNG_TO_HAMMER_HILL = [
+    'TD_102872', 'TD_102856', 'TD_102961', 'TD_103828', 'TD_103863', 'TD_103009',
+    'TD_103017', 'TD_273265', 'TD_103859', 'TD_103858', 'TD_103429', 'TD_103428',
+    'TD_103861', 'TD_270803', 'TD_270804', 'TD_103960', 'TD_165412', 'TD_280343',
+    'TD_103447', 'TD_103877', 'TD_103022', 'TD_103027',
+]
+CHOI_HUNG_SIDE_LOOP = ['TD_103017', 'TD_103862', 'TD_103827', 'TD_103828']
+HAMMER_HILL_DECKS = {'TD_103671', 'TD_103672'}
+HAMMER_HILL_MERGE = {
+    'approaches': ['TD_103877', 'TD_104038'],
+    'departure': 'TD_103022',
+    'height_m': 3.3105,
+}
+HAMMER_HILL_MERGE_ROADS = {*HAMMER_HILL_MERGE['approaches'], HAMMER_HILL_MERGE['departure']}
+HAMMER_HILL_WEST_EXIT = [
+    'TD_103024', 'TD_103021', 'TD_104039', 'TD_103672', 'TD_104037', 'TD_102858',
+    'TD_102857', 'TD_102926', 'TD_102871', 'TD_283007',
+]
+HAMMER_HILL_EAST_ENTRY = [
+    'TD_102872', 'TD_102843', '-TD_102857', '-TD_102858', 'TD_103844',
+    'TD_104036', 'TD_103671', 'TD_104038', 'TD_103022', 'TD_103027',
+]
+LUNG_CHEUNG_UNDERPASS = ['TD_103832', 'TD_103841', 'TD_102964', 'TD_103871', 'TD_103429']
+# The last westbound section and the underpass endpoints predate the district expansion.
+WONG_TAI_SIN_NETWORK_ROADS = {
+    member.lstrip('-') for member in (
+        CHOI_HUNG_TO_HAMMER_HILL+CHOI_HUNG_SIDE_LOOP+HAMMER_HILL_WEST_EXIT[:-1]+
+        HAMMER_HILL_EAST_ENTRY+LUNG_CHEUNG_UNDERPASS[1:-1])
+}
+# These one-way carriageway widths preserve the standard 3.5 m building setback.
+WONG_TAI_SIN_NARROW_CARRIAGEWAYS = {
+    'TD_102856':6.0,'TD_103858':6.0,'TD_103428':6.0,'TD_103861':6.0,'TD_103672':6.0,
+    'TD_103841':11.5,
+}
+WONG_TAI_SIN_CENTERLINE_SHA256 = 'ebdc7052bbd07fbc3f6f068012ba8354e62c9f3c21c080d6cd43f334b1169adf'
 KAI_TAK = [
     'TD_261277', 'TD_261274', '-TD_261256', 'TD_261255', 'TD_261253',
     'TD_261246', 'TD_281785', 'TD_281805', 'TD_285648', 'TD_284207',
@@ -250,15 +327,93 @@ def build_tst_shoreline_geometry(district, east_land, site_features, east_shorel
     assert cut.is_valid and cut.area>300000, 'TST apron water cut is incomplete'
     return unary_union(list(sites.values())),cut,waterfront,east_cut
 
-def build(source, *, retain_road_inventory=False, complete_kowloon_city=False):
+def hammer_hill_deck_profiles(lines, *, legacy_merge=False):
+    # Relative level one is surveyed. The 7 m decks and their approach grades are authored.
+    profiles={}
+    def add_ramp(members,start,end,flat_start=0,flat_finish=0):
+        total=sum(lines[ident].length for ident in members)-flat_start-flat_finish
+        assert total>0, (members,'Level approach exceeds ramp length')
+        offset=-flat_start
+        for ident in members:
+            profiles[ident]=(offset,total,start,end)
+            offset+=lines[ident].length
+    def height(ident,distance):
+        offset,total,start,end=profiles[ident]
+        phase=max(0,min(1,(offset+distance)/total))
+        return start+(end-start)*(1-math.cos(math.pi*phase))/2
+    add_ramp(('TD_103021','TD_104039'),0,7)
+    add_ramp(('TD_104037',),7,0)
+    add_ramp(('TD_104036',),0,7)
+    add_ramp(('TD_103671',),7,7)
+    add_ramp(('TD_103672',),7,7)
+    # Hold all overlapping carriageways at the same level and taper smoothly into the shared apron.
+    lung_cheung,bridge=HAMMER_HILL_MERGE['approaches']
+    departure=HAMMER_HILL_MERGE['departure']
+    if legacy_merge:
+        # The pre-apron release tapered each approach into the same endpoint only.
+        add_ramp((bridge,departure),7,0)
+        add_ramp((lung_cheung,),0,height(bridge,lines[bridge].length))
+    else:
+        merge_height=HAMMER_HILL_MERGE['height_m']
+        add_ramp((lung_cheung,),0,merge_height,flat_finish=20)
+        add_ramp((bridge,),7,merge_height,flat_finish=20)
+        add_ramp((departure,),merge_height,0,flat_start=8)
+    return profiles,height
+
+
+def migrate_hammer_hill_merge(roads, prior_roads, prior_decks, lines):
+    present=HAMMER_HILL_MERGE_ROADS & prior_roads.keys()
+    if not present and prior_decks is None:
+        return False
+    if present!=HAMMER_HILL_MERGE_ROADS or prior_decks is None:
+        raise ValueError('The existing Hammer Hill merge inventory is incomplete')
+    legacy=prior_decks=={'source_ids':sorted(HAMMER_HILL_DECKS),'authored_height_m':7}
+    if legacy:
+        _,legacy_height=hammer_hill_deck_profiles(lines,legacy_merge=True)
+    elif prior_decks.get('merge')!=HAMMER_HILL_MERGE:
+        raise ValueError('The existing Hammer Hill merge uses an unsupported profile')
+    for road in roads:
+        ident=road['id']
+        if ident not in present:
+            continue
+        expected=road
+        if legacy:
+            length=lines[ident].length
+            points=[[x,round(legacy_height(ident,min(i*4,length)),4),z]
+                    for i,(x,_,z) in enumerate(road['points'])]
+            expected=dict(road,points=points)
+        if prior_roads[ident]!=expected:
+            raise ValueError(f'{ident} differs from the reviewed Hammer Hill merge profile')
+    return legacy
+
+
+def build(source, *, retain_road_inventory=False, complete_kowloon_city=False,
+          complete_wong_tai_sin=False, whole_wong_tai_sin=False):
+    complete_wong_tai_sin = complete_wong_tai_sin or whole_wong_tai_sin
+    complete_kowloon_city = complete_kowloon_city or complete_wong_tai_sin
     if retain_road_inventory and complete_kowloon_city:
         raise ValueError('Select either the retained road inventory or the Kowloon City district refresh')
     previous = json.loads((ROOT/'Data/cross-harbour-source.geojson').read_text())
+    if 'wong_tai_sin_network_sections' in previous['metadata'] and not whole_wong_tai_sin:
+        raise ValueError('Use --whole-wong-tai-sin-district to rebuild the full Wong Tai Sin road network')
+    if whole_wong_tai_sin and 'wong_tai_sin_deferred_roads' not in previous['metadata']:
+        raise ValueError('The full Wong Tai Sin network requires the reviewed Diamond Hill snapshot')
+    if 'wong_tai_sin_district_boundary_sha256' in previous['metadata'] and not complete_wong_tai_sin:
+        raise ValueError('Use --wong-tai-sin-district to rebuild the Wong Tai Sin and Diamond Hill map')
+    if complete_wong_tai_sin and 'kowloon_city_district_boundary_sha256' not in previous['metadata']:
+        raise ValueError('Wong Tai Sin expansion requires the reviewed Kowloon City district snapshot')
     if 'kowloon_city_district_boundary_sha256' in previous['metadata'] and not complete_kowloon_city:
         raise ValueError('Use --kowloon-city-district to rebuild the expanded Kowloon City map')
     if complete_kowloon_city and '--hk1980' in sys.argv:
         raise ValueError('The Kowloon City road archive uses WGS84. Omit --hk1980')
-    deferred = KOWLOON_CITY_DEFERRED_ROADS if complete_kowloon_city else {}
+    deferred = set(KOWLOON_CITY_DEFERRED_ROADS) if complete_kowloon_city else set()
+    district_roads = WONG_TAI_SIN_DISTRICT_ROADS
+    wong_tai_sin_deferred = WONG_TAI_SIN_DEFERRED_ROADS
+    if whole_wong_tai_sin:
+        district_roads = district_roads | WONG_TAI_SIN_NETWORK_ROADS
+        wong_tai_sin_deferred = wong_tai_sin_deferred - WONG_TAI_SIN_NETWORK_ROADS
+    if complete_wong_tai_sin:
+        deferred.update(wong_tai_sin_deferred)
     previous_features = [f for f in previous['features'] if f['properties']['source_id'] not in deferred]
     coast_data=json.loads((ROOT/'Data/west-kowloon-coast.json').read_text())
     northwest_coast=json.loads((ROOT/'Data/lai-chi-kok-coast.json').read_text())
@@ -280,6 +435,24 @@ def build(source, *, retain_road_inventory=False, complete_kowloon_city=False):
     east_coast=json.loads((ROOT/'Data/east-kowloon-coast.json').read_text())
     east_land=shape(east_coast['land'])
     east_bounds=tuple(east_coast['bounds'])
+    roundabouts=REQUIRED_ROUNDABOUTS
+    if complete_wong_tai_sin:
+        wong_tai_sin_boundary_path=ROOT/'Data/wong-tai-sin-district-boundary.geojson'
+        boundary_source=wong_tai_sin_boundary_path.read_bytes()
+        wong_tai_sin_data=json.loads(boundary_source)
+        feature,=wong_tai_sin_data['features']
+        feature_bytes=json.dumps(feature,ensure_ascii=False,sort_keys=True,separators=(',',':'),allow_nan=False).encode('utf-8')
+        feature_sha256=hashlib.sha256(feature_bytes).hexdigest()
+        if (feature_sha256!=wong_tai_sin_data['metadata']['feature_sha256']
+                or feature['properties']['District']!='Wong Tai Sin District'
+                or feature['properties']['地區號碼']!='H'):
+            raise ValueError('Invalid official Wong Tai Sin District boundary provenance')
+        terrain_provenance=east_coast['metadata'].get('wong_tai_sin_district_land',{})
+        if (east_bounds!=WONG_TAI_SIN_DISTRICT_BOUNDS
+                or terrain_provenance.get('district_feature_sha256')!=feature_sha256):
+            raise ValueError('Build the official Wong Tai Sin district terrain before importing its streets')
+        wong_tai_sin_extent=transform_geometry(lambda x,y,z=None:local((x,y)),shape(feature['geometry']))
+        roundabouts=REQUIRED_ROUNDABOUTS+[('Hammer Hill / Fung Tak',HAMMER_HILL_ROUNDABOUT)]
     east_shoreline_path=ROOT/'Data/east-kowloon-shoreline.geojson'
     east_shoreline_data=json.loads(east_shoreline_path.read_text())
     island_coast=json.loads((ROOT/'Data/island-coast.json').read_text())
@@ -301,7 +474,7 @@ def build(source, *, retain_road_inventory=False, complete_kowloon_city=False):
         assert west_land.is_valid and west_land.geom_type=='Polygon', 'Northern fill must join western Kowloon'
         surveyed_ground=unary_union([old_kowloon,west_land,east_land])
     ids = set(SOUTH+ISLAND+NORTH+[i.lstrip("-") for i in SCENIC+CENTRAL+KOWLOON+WEST+SHAM_SHUI_PO+LAI_CHI_KOK+KWAI_CHUNG+TSUEN_WAN+WEST_COAST+EAST_KOWLOON+WONG_TAI_SIN+WONG_TAI_SIN_NETWORK])
-    ids.update(i for _,members in REQUIRED_ROUNDABOUTS for i in members)
+    ids.update(i for _,members in roundabouts for i in members)
     ids.update(WESTERN_APPROACHES)
     ids.update(REVIEWED_KOWLOON_TONG_ROADS)
     # ROUTE_ID is the stable source key. Pin old sections to their source snapshot
@@ -312,11 +485,19 @@ def build(source, *, retain_road_inventory=False, complete_kowloon_city=False):
     include_kai_tak=complete_kowloon_city or kai_tak_ids <= retained
     if include_kai_tak:
         ids.update(kai_tak_ids)
+    if complete_wong_tai_sin:
+        ids.update(ident.lstrip('-') for ident in DIAMOND_HILL)
+    if whole_wong_tai_sin:
+        ids.update(ident.lstrip('-') for ident in CHOI_HUNG_TO_HAMMER_HILL)
+        ids.update(ident.lstrip('-') for ident in HAMMER_HILL_WEST_EXIT+HAMMER_HILL_EAST_ENTRY)
     transform = None
     if '--hk1980' in sys.argv:
         from pyproj import Transformer
         transform = Transformer.from_crs(4611,4326,always_xy=True)
-    source_hash = hashlib.file_digest(open(source,'rb'),'sha256').hexdigest()
+    with source.open('rb') as source_stream:
+        source_hash=hashlib.file_digest(source_stream,'sha256').hexdigest()
+    if complete_wong_tai_sin and source_hash!=WONG_TAI_SIN_CENTERLINE_SHA256:
+        raise ValueError('Wong Tai Sin requires the reviewed WGS84 Transport Department centreline archive')
     records = {f['properties']['source_id']:f for f in previous_features} if complete_kowloon_city else {}
     matched = 0; changed = []
     with zipfile.ZipFile(source) as archive, archive.open('doc.kml') as stream:
@@ -326,7 +507,8 @@ def build(source, *, retain_road_inventory=False, complete_kowloon_city=False):
             props = dict(re.findall(r'<td>([A-Z_]+)</td>\s*<td>(.*?)</td>', element.findtext('k:description','',NS)))
             prior = existing.get(props.get('ROUTE_ID'))
             ident = prior['properties']['source_id'] if prior else 'TD_'+props['ROUTE_ID']
-            if ident in deferred:
+            if ident in deferred or (complete_wong_tai_sin and not prior and ident not in ids
+                                     and ident not in district_roads):
                 element.clear()
                 continue
             if prior or ident in ids or props.get('ELEVATION')=='0' or (props.get('ELEVATION')=='1' and props.get('STREET_ENAME','').startswith('CASTLE PEAK ROAD')):
@@ -334,17 +516,32 @@ def build(source, *, retain_road_inventory=False, complete_kowloon_city=False):
                 if transform:coords = [[*transform.transform(*p[:2]),p[2]] for p in coords]
                 if prior:
                     pinned=prior['geometry']['coordinates']
+                    if whole_wong_tai_sin and ident in HAMMER_HILL_MERGE_ROADS and pinned!=coords:
+                        raise ValueError(f'{ident} differs from the reviewed Hammer Hill merge centreline')
                     if pinned==coords:
                         matched+=1
                     else:
-                        before=LineString([local(p) for p in pinned])
-                        after=LineString([local(p) for p in coords])
-                        if before.hausdorff_distance(after)<.025 and math.dist(before.coords[0],after.coords[0])<.025:matched+=1
-                        else:changed.append(ident)
+                        before=[local(p) for p in pinned]
+                        after=[local(p) for p in coords]
+                        # Corresponding vertices bound the distance between their connecting segments.
+                        aligned=len(before)==len(after) and all(math.dist(a,b)<.025 for a,b in zip(before,after))
+                        if aligned or (math.dist(before[0],after[0])<.025
+                                       and LineString(before).hausdorff_distance(LineString(after))<.025):
+                            matched+=1
+                        else:
+                            changed.append(ident)
                     coords=pinned
                 line=LineString([local(p) for p in coords])
                 name=props.get('STREET_ENAME','')
-                if complete_kowloon_city:
+                if complete_wong_tai_sin:
+                    auto_selection=ident in district_roads
+                    if auto_selection:
+                        level='1' if whole_wong_tai_sin and ident in HAMMER_HILL_DECKS else '0'
+                        assert (props.get('ELEVATION')==level and props.get('TRAVEL_DIRECTION') in ('1','2','3')
+                                and wong_tai_sin_extent.intersection(line).length>line.length/2
+                                and surveyed_ground.covers(line.buffer(6.05))), \
+                            (ident,'Reviewed Wong Tai Sin section no longer qualifies as a district surface street')
+                elif complete_kowloon_city:
                     # Import connected surface streets within the official district, with room for the authored carriageway.
                     auto_selection=(not prior and ident not in ids and props.get('ELEVATION')=='0'
                                     and props.get('TRAVEL_DIRECTION') in ('1','2','3')
@@ -362,13 +559,16 @@ def build(source, *, retain_road_inventory=False, complete_kowloon_city=False):
                                       'geometry':{'type':'LineString','coordinates':coords}}
             element.clear()
     assert ids <= records.keys(), 'Source road IDs changed; review the extract before rebuilding.'
+    if complete_wong_tai_sin:
+        assert set(records)==retained|district_roads, \
+            'Wong Tai Sin must add only the reviewed district sections'
     if retain_road_inventory:
         assert set(records)==retained|set(REVIEWED_KOWLOON_TONG_ROADS), \
             'Retained-road mode must preserve prior roads plus only the reviewed Kowloon Tong links'
     assert matched>400, 'Road datum does not agree with the existing map'
     print('ANTILA_ROAD_DATUM_OK:',matched,'shared sections within 2.5 cm; pinned older revisions:',changed)
     original = {i:LineString([local(p) for p in f['geometry']['coordinates']]) for i,f in records.items()}
-    for name,members in REQUIRED_ROUNDABOUTS:
+    for name,members in roundabouts:
         for ident,next_id in zip(members,members[1:]+members[:1]):
             props=records[ident]['properties']
             assert props['ELEVATION']=='0' and props['TRAVEL_DIRECTION']=='3',(name,'Roundabout source access changed')
@@ -389,7 +589,10 @@ def build(source, *, retain_road_inventory=False, complete_kowloon_city=False):
     if deferred_reachable:
         print('ANTILA_TUNNEL_REVIEW_DEFERRED: source sections and centreline lengths m:',
               [(ident,*DEFERRED_CONNECTED_ROADS[ident]) for ident in sorted(deferred_reachable)])
-    if complete_kowloon_city:
+    if complete_wong_tai_sin:
+        assert district_roads <= connected, 'Reviewed Wong Tai Sin streets must remain connected'
+        print('ANTILA_WONG_TAI_SIN_SURFACE_NETWORK:',len(district_roads-retained),'new reviewed sections')
+    elif complete_kowloon_city:
         print('ANTILA_KOWLOON_CITY_SURFACE_NETWORK:',len(unreviewed),'connected sections with district and land support')
     elif unreviewed:
         print('ANTILA_TUNNEL_REVIEW_REQUIRED: reachable source sections not explicitly selected:',sorted(unreviewed))
@@ -421,8 +624,11 @@ def build(source, *, retain_road_inventory=False, complete_kowloon_city=False):
     # These Cornwall Street records cross a railway, which Antila does not model.
     # Keep their source level for provenance while representing their road surface at street elevation.
     STREET_LEVEL_RAIL_CROSSINGS={'TD_107934','TD_107935'}
+    new_profiles={}
+    if whole_wong_tai_sin:
+        new_profiles,hammer_hill_height=hammer_hill_deck_profiles(lines)
     adjacent={};ends={};incident={};deck={i for i,r in records.items()
-        if r['properties']['ELEVATION']=='1' and i not in STREET_LEVEL_RAIL_CROSSINGS}
+        if r['properties']['ELEVATION']=='1' and i not in STREET_LEVEL_RAIL_CROSSINGS and i not in new_profiles}
     for ident,line in lines.items():
         if ident in tube_info:continue
         a,b=(tuple(round(v,1) for v in p) for p in (line.coords[0],line.coords[-1]));ends[ident]=(a,b)
@@ -470,33 +676,64 @@ def build(source, *, retain_road_inventory=False, complete_kowloon_city=False):
                 offset,total = tube_info[ident]
                 # ponytail: smooth authored depth, replace with surveyed longitudinal levels if obtained.
                 y = -32*math.sin(math.pi*(offset+d)/total)
+            elif ident in new_profiles:y=hammer_hill_height(ident,d)
             else:y=deck_height(ident,d,line.length)
             points.append([round(x,4),round(y,4),round(z,4)])
         elevated=any(p[1]>.01 for p in points)
         # Author single-lane widths from measured source spacing and bus clearance.
         width=SINGLE_LANE_WIDTHS.get(ident,12 if ident in wide_junctions else 6 if elevated else 12)
+        if whole_wong_tai_sin and ident in WONG_TAI_SIN_NARROW_CARRIAGEWAYS:
+            assert records[ident]['properties']['TRAVEL_DIRECTION']=='3', (ident,'Narrow carriageway must be one-way')
+            width=WONG_TAI_SIN_NARROW_CARRIAGEWAYS[ident]
         roads.append({'id':ident,'name':records[ident]['properties']['STREET_ENAME'],
                       'tunnel':ident in tube_info,'ramp':ident in ('ID_024204','ID_024201'),
                       'elevated':elevated,'source_level':int(records[ident]['properties']['ELEVATION']),
                       'width':9.1 if ident in tube_info else width,
                       'points':points})
+    migrated_merge=False
     if complete_kowloon_city:
         # New branches must not refit the geometry or authored grades of earlier drives.
         previous_map=json.loads((ROOT/'Data/cross-harbour.json').read_text())
         prior_roads={r['id']:r for r in previous_map['roads']}
-        prior_route_ids={ident.lstrip('-') for route in previous_map['routes'][:14] for ident in route['source_ids']}
-        # Shing Fung Road gains a surveyed relative-level deck, so its approaches need authored grades.
-        roads=[r if r['name']=='SHING FUNG ROAD' and r['id'] not in prior_route_ids else prior_roads.get(r['id'],r) for r in roads]
+        if complete_wong_tai_sin:
+            if whole_wong_tai_sin:
+                prior_decks=previous_map['metadata'].get('wong_tai_sin_decks')
+                if prior_decks!=previous['metadata'].get('wong_tai_sin_decks'):
+                    raise ValueError('Road and source snapshots disagree about the Hammer Hill merge')
+                migrated_merge=migrate_hammer_hill_merge(roads,prior_roads,prior_decks,lines)
+            refresh=HAMMER_HILL_MERGE_ROADS if migrated_merge else set()
+            roads=[r if r['id'] in refresh else prior_roads.get(r['id'],r) for r in roads]
+        else:
+            prior_route_ids={ident.lstrip('-') for route in previous_map['routes'][:14] for ident in route['source_ids']}
+            # Shing Fung Road gains a surveyed relative-level deck, so its approaches need authored grades.
+            roads=[r if r['name']=='SHING FUNG ROAD' and r['id'] not in prior_route_ids else prior_roads.get(r['id'],r) for r in roads]
     by_id = {r['id']:r for r in roads}
     if complete_kowloon_city and CHI_MAN_STREET_ID in by_id:
         by_id[CHI_MAN_STREET_ID]['width'] = CHI_MAN_STREET_WIDTH
+    if whole_wong_tai_sin:
+        for members in (CHOI_HUNG_SIDE_LOOP,HAMMER_HILL_WEST_EXIT,HAMMER_HILL_EAST_ENTRY,LUNG_CHEUNG_UNDERPASS):
+            previous_end=None
+            for member in members:
+                ident=member.lstrip('-')
+                reverse=member.startswith('-')
+                direction=records[ident]['properties']['TRAVEL_DIRECTION']
+                assert direction in (('1','2') if reverse else ('1','3')), (member,'Source direction changed')
+                points=by_id[ident]['points']
+                start,end=(points[-1],points[0]) if reverse else (points[0],points[-1])
+                assert previous_end is None or math.dist(previous_end,start)<.12, \
+                    (member,'Reviewed junction must join continuously')
+                previous_end=end
     routes = []
     itineraries=[('Hung Hom → Hong Kong Island',SOUTH),('Wan Chai return loop',ISLAND),('Hong Kong Island → Kowloon',NORTH),('Wan Chai / Causeway Bay scenic drive',SCENIC),('Admiralty / Central loop',CENTRAL),('Jordan → Yau Ma Tei → Mong Kok',KOWLOON),('West Kowloon → Tai Kok Tsui → Sham Shui Po',WEST),('Mong Kok → Sham Shui Po',SHAM_SHUI_PO),('Sham Shui Po → Cheung Sha Wan → Lai Chi Kok',LAI_CHI_KOK),('Mei Foo → Lai King → Kwai Chung',KWAI_CHUNG),('Kwai Chung → Tsuen Wan',TSUEN_WAN),('Tsuen Wan → Ting Kau → Sham Tseng',WEST_COAST),('Hung Hom → Whampoa → To Kwa Wan → Kowloon City',EAST_KOWLOON),('Kowloon City → Wong Tai Sin',WONG_TAI_SIN)]
     if include_kai_tak:
         itineraries.append(('Kai Tak → Kai Tak Cruise Terminal',KAI_TAK))
+    if complete_wong_tai_sin:
+        itineraries.append(('Wong Tai Sin → Diamond Hill',DIAMOND_HILL))
+    if whole_wong_tai_sin:
+        itineraries.append(('Choi Hung → Hammer Hill',CHOI_HUNG_TO_HAMMER_HILL))
     for name,members in itineraries:
         points = []
-        check_direction=members in (WEST,SHAM_SHUI_PO,LAI_CHI_KOK,KWAI_CHUNG,TSUEN_WAN,WEST_COAST,EAST_KOWLOON,WONG_TAI_SIN,KAI_TAK)
+        check_direction=members in (WEST,SHAM_SHUI_PO,LAI_CHI_KOK,KWAI_CHUNG,TSUEN_WAN,WEST_COAST,EAST_KOWLOON,WONG_TAI_SIN,KAI_TAK,DIAMOND_HILL,CHOI_HUNG_TO_HAMMER_HILL)
         for ident in members:
             reverse=ident.startswith('-');ident=ident.lstrip('-')
             p = by_id[ident]['points']
@@ -514,6 +751,16 @@ def build(source, *, retain_road_inventory=False, complete_kowloon_city=False):
                 dot=sum((b[i]-a[i])*(c[i]-b[i]) for i in range(3))/(math.dist(a,b)*math.dist(b,c))
                 assert dot>-.5, (name,'Drive turns back sharply; choose a continuous source route')
     assert math.dist(routes[4]['points'][0],routes[4]['points'][-1])<.12, 'Central loop must close'
+    if complete_wong_tai_sin:
+        prior_routes=previous_map['routes']
+        if migrated_merge:
+            earlier_choi_hung=[point for i,ident in enumerate(CHOI_HUNG_TO_HAMMER_HILL)
+                               for point in prior_roads[ident]['points'][bool(i):]]
+            if len(prior_routes)!=17 or prior_routes[16]!=dict(routes[16],points=earlier_choi_hung):
+                raise ValueError('The existing Choi Hung itinerary differs from the reviewed pre-apron route')
+            prior_routes=prior_routes[:16]
+        assert routes[:len(prior_routes)]==prior_routes, 'Wong Tai Sin must preserve earlier drives'
+        assert routes[15]['points'][0]==routes[13]['points'][-1], 'Diamond Hill must join the Wong Tai Sin drive'
     for a,b in zip(routes[:3],routes[1:3]):
         assert math.dist(a['points'][-1],b['points'][0]) < .02, 'Gap between crossing and return loop'
     # Cut only open portals out of the old ground. Deep tunnel sections pass below intact streets.
@@ -626,6 +873,15 @@ def build(source, *, retain_road_inventory=False, complete_kowloon_city=False):
             'source':mainland_source['metadata']['source'],
             'response_sha256':mainland_source['metadata']['response_sha256'],
         }
+    if complete_wong_tai_sin:
+        metadata['wong_tai_sin_district_boundary_sha256']=hashlib.sha256(boundary_source).hexdigest()
+        metadata['wong_tai_sin_deferred_roads']=sorted(wong_tai_sin_deferred)
+    if whole_wong_tai_sin:
+        metadata['wong_tai_sin_network_sections']=sorted(WONG_TAI_SIN_NETWORK_ROADS-WONG_TAI_SIN_DISTRICT_ROADS)
+        metadata['wong_tai_sin_decks']={
+            'source_ids':sorted(HAMMER_HILL_DECKS),'authored_height_m':7,'merge':HAMMER_HILL_MERGE,
+            'westbound_exit':HAMMER_HILL_WEST_EXIT,'eastbound_entry':HAMMER_HILL_EAST_ENTRY,
+        }
     output = {'metadata':metadata,'bounds':[WEST_COAST_BOUNDS[0]-80,WEST_COAST_BOUNDS[1]-80,east_bounds[2]+80,ISLAND_BOUNDS[3]+50], 'island_bounds':ISLAND_BOUNDS, 'kowloon_north_bounds':KOWLOON_BOUNDS,
               'island_land':island_coast['land'],'island_coastline':line_parts(unary_union([LineString(p) for p in island_coast['coastline']]).difference(unary_union(cutouts).buffer(1))),
               'island_boundary':line_parts(island.boundary.intersection(box(*ISLAND_BOUNDS).boundary)), 'island_coast_metadata':island_coast['metadata'],
@@ -654,4 +910,6 @@ def build(source, *, retain_road_inventory=False, complete_kowloon_city=False):
 
 if __name__ == '__main__':
     build(Path(sys.argv[1]),retain_road_inventory='--retain-road-inventory' in sys.argv[2:],
-          complete_kowloon_city='--kowloon-city-district' in sys.argv[2:])
+          complete_kowloon_city='--kowloon-city-district' in sys.argv[2:],
+          complete_wong_tai_sin='--wong-tai-sin-district' in sys.argv[2:],
+          whole_wong_tai_sin='--whole-wong-tai-sin-district' in sys.argv[2:])

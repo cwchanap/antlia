@@ -55,6 +55,8 @@ public partial class Main : Node3D
         SelfTest |= OS.GetCmdlineUserArgs().Contains("--streaming-check");
         SelfTest |= OS.GetCmdlineUserArgs().Contains("--map-buffer-check");
         SelfTest |= args.Contains("--kai-tak-check");
+        SelfTest |= args.Contains("--diamond-hill-check");
+        SelfTest |= args.Contains("--wong-tai-sin-district-check");
         SelfTest |= args.Contains("--east-open-spaces-check");
         SelfTest |= args.Contains("--kowloon-city-north-check");
         Map = new RoadMap();
@@ -98,6 +100,7 @@ public partial class Main : Node3D
         if(OS.GetCmdlineUserArgs().Contains("--east-kowloon-review"))CallDeferred(MethodName.CaptureEastKowloon);
         if(OS.GetCmdlineUserArgs().Contains("--harbour-review"))CallDeferred(MethodName.CaptureHarbour);
         if(args.Contains("--kai-tak-review"))CallDeferred(MethodName.CaptureKaiTak);
+        if(args.Contains("--diamond-hill-review"))CallDeferred(MethodName.CaptureDiamondHill);
         if (SelfTest) CallDeferred(MethodName.RunChecks);
         if (OS.GetCmdlineUserArgs().Contains("--capture")) CallDeferred(MethodName.CaptureViews);
         if (OS.GetCmdlineUserArgs().Contains("--audio-review")) CallDeferred(MethodName.ReviewAudio);
@@ -106,7 +109,7 @@ public partial class Main : Node3D
         if (OS.GetCmdlineUserArgs().Contains("--building-review") || OS.GetCmdlineUserArgs().Contains("--footpath-review") || OS.GetCmdlineUserArgs().Contains("--road-review")) CallDeferred(MethodName.ReviewScenery);
         // A restart replays the chosen route; a fresh launch opens route select unless a check or capture drives it.
         if(_pendingRoute>=0)BeginRoute(_pendingRoute);
-        else if(!SelfTest && !args.Any(a=>a is "--kai-tak-review" or "--harbour" or "--harbour-review" or "--east-kowloon-review" or "--capture" or "--audio-review" or "--signal-capture" or "--building-review" or "--footpath-review" or "--road-review"))ShowRouteSelect();
+        else if(!SelfTest && !args.Any(a=>a is "--kai-tak-review" or "--diamond-hill-review" or "--harbour" or "--harbour-review" or "--east-kowloon-review" or "--capture" or "--audio-review" or "--signal-capture" or "--building-review" or "--footpath-review" or "--road-review"))ShowRouteSelect();
         GD.Print($"ANTILA_READY: government map loaded; {Routes.Count} routes, {Routes.Sum(r=>r.Stops.Count)} stops; Blender GLBs; C# driving");
     }
 
@@ -115,9 +118,9 @@ public partial class Main : Node3D
         foreach (var (name, key) in new (string, Key)[] {
             ("accelerate", Key.W), ("brake", Key.S), ("steer_left", Key.A), ("steer_right", Key.D),
             ("handbrake", Key.Space), ("doors", Key.E), ("camera", Key.C), ("reverse", Key.Q),
-            ("tunnel", Key.T), ("island", Key.I), ("central", Key.J), ("kowloon", Key.K), ("west", Key.L), ("northwest", Key.N), ("kwai_chung", Key.B), ("tsuen_wan", Key.U), ("west_coast", Key.O), ("east_kowloon", Key.P), ("wong_tai_sin", Key.Y), ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V),
-            ("kai_tak", Key.F),
-            ("routes", Key.Tab), ("confirm", Key.Enter), ("menu_up", Key.Up), ("menu_down", Key.Down) })
+            ("restart", Key.R), ("horn", Key.H), ("pause", Key.Escape), ("map", Key.M), ("mute", Key.V),
+            ("routes", Key.Tab), ("confirm", Key.Enter), ("menu_up", Key.Up), ("menu_down", Key.Down) }
+            .Concat(FreeDriveShortcuts.Select(s=>(s.Action,s.Key))))
         {
             if (InputMap.HasAction(name)) continue;
             InputMap.AddAction(name);
@@ -405,7 +408,8 @@ public partial class Main : Node3D
             .Where(i=>Mathf.Max(r.Points[i-1].Y,r.Points[i].Y)<.05f)
             .Select(i=>(new Vector2(r.Points[i-1].X,r.Points[i-1].Z),new Vector2(r.Points[i].X,r.Points[i].Z),r.Elevated?6f:r.Width/2)));
         _terrain.SetShaderParameter("harbour_mask",TerrainMask("harbour_mask",HarbourBounds,
-            ()=>Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),pads.Concat(_harbourPaving),HarbourBounds,harbourRoads,2)));
+            ()=>Map.CreateSurfaceMask(Array.Empty<Vector2>(),Array.Empty<(Vector3,Vector3)>(),pads.Concat(_harbourPaving),HarbourBounds,
+                harbourRoads,2,pavingExclusions:_harbourPavingExclusions)));
         _terrain.SetShaderParameter("harbour_origin",HarbourBounds.Position);_terrain.SetShaderParameter("harbour_size",HarbourBounds.Size);
     }
 
@@ -495,18 +499,7 @@ public partial class Main : Node3D
             return;
         }
         if(e.IsActionPressed("map")) { MapOpen=!MapOpen; Bus.SetPaused(Paused || Complete || MapOpen); return; }
-        if(e.IsActionPressed("tunnel")){StartHarbourDrive();return;}
-        if(e.IsActionPressed("island")){StartHarbourDrive(3);return;}
-        if(e.IsActionPressed("central")){StartHarbourDrive(4);return;}
-        if(e.IsActionPressed("kowloon")){StartHarbourDrive(5);return;}
-        if(e.IsActionPressed("west")){StartHarbourDrive(6);return;}
-        if(e.IsActionPressed("northwest")){StartHarbourDrive(8);return;}
-        if(e.IsActionPressed("kwai_chung")){StartHarbourDrive(9);return;}
-        if(e.IsActionPressed("tsuen_wan")){StartHarbourDrive(10);return;}
-        if(e.IsActionPressed("east_kowloon")){StartHarbourDrive(12);return;}
-        if(e.IsActionPressed("wong_tai_sin")){StartHarbourDrive(13);return;}
-        if(HasKaiTakDrive && e.IsActionPressed("kai_tak")){StartHarbourDrive(KaiTakDriveIndex);return;}
-        if(e.IsActionPressed("west_coast")){StartHarbourDrive(11);return;}
+        if(TryFreeDriveShortcut(e))return;
         if(e.IsActionPressed("routes") && !MapOpen)
         {
             if(HarbourDrive || Complete)ShowRouteSelect(); else FinishRoute(true);
@@ -850,7 +843,19 @@ public partial class Main : Node3D
             if(OS.GetCmdlineUserArgs().Contains("--kai-tak-check"))
             {
                 await CheckKaiTak();
-                await CheckHarbourDrives(kaiTakOnly:true);
+                await CheckHarbourDrives(KaiTakDriveIndex);
+                QuitGame();return;
+            }
+            if(OS.GetCmdlineUserArgs().Contains("--diamond-hill-check"))
+            {
+                await CheckDiamondHill();
+                await CheckHarbourDrives(DiamondHillDriveIndex);
+                QuitGame();return;
+            }
+            if(OS.GetCmdlineUserArgs().Contains("--wong-tai-sin-district-check"))
+            {
+                await CheckWongTaiSinDistrictScenery();
+                await CheckHarbourDrives(CheckChoiHungDistrictDrive());
                 QuitGame();return;
             }
             CheckHarbourSceneryFiltering();
@@ -1042,7 +1047,12 @@ public partial class Main : Node3D
         CurrentStreet();
         Check(_streetLookupPosition==Bus.Position,"Crossing the below-ground cutoff must bypass the movement threshold");
         var unnamed=HarbourRoads.Where(r=>r.Name is "-99" or "&lt;Null&gt;").ToArray();
-        Check(unnamed.Count(r=>r.Name=="&lt;Null&gt;")==13,"Two Ting Kau connectors, eight eastern roundabout sections and three Kwai Chung roundabout sections must be covered");
+        var unnamedSources=new List<string>{"TD_110626","TD_110628","TD_107211","TD_107575","TD_107576","TD_107598",
+            "TD_107601","TD_107564","TD_107580","TD_107235","TD_8457","TD_9137","TD_9138"};
+        if(HasDiamondHillDrive)unnamedSources.AddRange(new[]{"TD_103019","TD_103025","TD_103024","TD_103020","TD_103027","TD_103026"});
+        Check(unnamed.Count(r=>r.Name=="&lt;Null&gt;")==unnamedSources.Count,"Unnamed Transport Department connector count changed");
+        foreach(var id in unnamedSources)
+            Check(_harbourRoadIndex.TryGetValue(id,out int index) && HarbourRoads[index].Name=="&lt;Null&gt;","Missing unnamed Transport Department connector "+id);
         foreach(var road in unnamed)
         {
             Bus.Position=road.Points[road.Points.Count/2];
@@ -1052,7 +1062,7 @@ public partial class Main : Node3D
         Check(CurrentStreet()=="NATHAN ROAD","Named street must restore after an unnamed connector");
         Bus.GlobalTransform=saved;NoticeTime=notice;HarbourDrive=harbour;StopIndex=stopIndex;
         if(failures.Count>0)throw new Exception(string.Join("; ",failures));
-        GD.Print($"ANTILA_HUD_CHECKS_OK: north/south correct and oncoming lanes in both modes; turning/junction guards; island, depth and endpoint exploration; H1 distance/boarding/missed-stop guidance; street cache movement and vertical/route jumps; {unnamed.Length} unnamed links including Ting Kau and eastern roundabouts; named-street restore");
+        GD.Print($"ANTILA_HUD_CHECKS_OK: north/south correct and oncoming lanes in both modes; turning/junction guards; island, depth and endpoint exploration; H1 distance/boarding/missed-stop guidance; street cache movement and vertical/route jumps; {unnamed.Length} unnamed links and named-street restore");
     }
 
     private async System.Threading.Tasks.Task CheckReviewRegressions()

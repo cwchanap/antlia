@@ -3,6 +3,8 @@
 Run with .venv-geodata/bin/python Tools/import_shoreline.py [--island|--northwest|--kwai-chung|--tsuen-wan|--west-coast|--east-kowloon] [--download].
 --download refreshes the requested archives, or the CEDD Kai Tak supplements
 when --east-kowloon is set. Source features and provenance ship in Data.
+Use --east-kowloon --wong-tai-sin-district to add the reviewed inland extent.
+Subsequent eastern regeneration retains the recorded Wong Tai Sin extent.
 """
 import datetime
 import hashlib
@@ -21,7 +23,7 @@ from shapely.geometry import LineString, Point, Polygon, box, mapping, shape
 from shapely.ops import polygonize, unary_union, linemerge, nearest_points, transform
 from import_map import ROOT, local, ORIGIN
 from import_open_spaces import replace_outputs
-from import_tunnel import KOWLOON_CITY_NORTH_FILL_BOUNDS
+from import_tunnel import KOWLOON_CITY_NORTH_FILL_BOUNDS, WONG_TAI_SIN_DISTRICT_BOUNDS
 
 BOUNDS = (-2700, -4800, 650, 50)
 ISLAND = '--island' in sys.argv
@@ -30,9 +32,11 @@ KWAI_CHUNG = '--kwai-chung' in sys.argv
 TSUEN_WAN = '--tsuen-wan' in sys.argv
 WEST_COAST = '--west-coast' in sys.argv
 EAST_KOWLOON = '--east-kowloon' in sys.argv
+WONG_TAI_SIN_DISTRICT = '--wong-tai-sin-district' in sys.argv
 SOURCE = 'https://portal.csdi.gov.hk/server/rest/services/common/landsd_rcd_1637223748322_25497/FeatureServer/0/query'
 EAST_KOWLOON_BASE_BOUNDS = (550,-6400,3150,-100)
 EAST_KOWLOON_BOUNDS = (550,-6400,4900,-100)
+WONG_TAI_SIN_MARGIN_M = 50
 KAI_TAK_RECLAMATION_BOUNDS = (2750,-3250,3550,-2160)
 KAI_TAK_SEA_FILL_BBOX = (114.196,22.294,114.221,22.353)
 KAI_TAK_SEA_FILL_SOURCE = 'https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer/411/query'
@@ -160,6 +164,40 @@ def extend_kai_tak_land(existing, sources):
     return land
 
 
+def extend_wong_tai_sin_land(existing, mainland_source):
+    boundary_path=ROOT/'Data/wong-tai-sin-district-boundary.geojson'
+    source=boundary_path.read_bytes()
+    boundary=json.loads(source)
+    feature,=boundary['features']
+    feature_bytes=json.dumps(feature,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode('utf-8')
+    feature_sha256=hashlib.sha256(feature_bytes).hexdigest()
+    if feature['properties']['District']!='Wong Tai Sin District' or feature['properties']['地區號碼']!='H' or \
+            feature_sha256!=boundary['metadata']['feature_sha256']:
+        raise ValueError('Invalid official Wong Tai Sin District boundary provenance')
+    district=project_polygon(feature['geometry'])
+    mainland=union_all([project_polygon(feature['geometry']) for feature in mainland_source['features']])
+    reviewed_extent=district.buffer(WONG_TAI_SIN_MARGIN_M,quad_segs=4)
+    if not district.is_valid or district.is_empty or not mainland.covers(reviewed_extent):
+        raise ValueError('Government mainland must cover the Wong Tai Sin district and inland margin')
+    extension=reviewed_extent.difference(existing)
+    land=existing.union(extension)
+    if not land.is_valid or land.geom_type!='Polygon' or not box(*WONG_TAI_SIN_DISTRICT_BOUNDS).covers(land):
+        raise ValueError('Wong Tai Sin inland ground must join the established eastern land within the reviewed extent')
+    return land,{
+        'bounds':WONG_TAI_SIN_DISTRICT_BOUNDS,
+        'margin_m':WONG_TAI_SIN_MARGIN_M,
+        'added_ground_m2':round(extension.area,3),
+        'district_gap_filled_m2':round(extension.intersection(district).area,3),
+        'district_source':boundary['metadata']['source'],
+        'district_source_sha256':hashlib.sha256(source).hexdigest(),
+        'district_feature_sha256':feature_sha256,
+        'mainland_source':mainland_source['metadata']['source'],
+        'mainland_response_sha256':mainland_source['metadata']['response_sha256'],
+        'processing':'Add the official district footprint and its 50 m inland margin to existing eastern ground. '
+            'The CEDD mainland polygon establishes land coverage; the flat game terrain does not use elevations.',
+    }
+
+
 def download():
     if EAST_KOWLOON:
         download_kai_tak_extension()
@@ -210,6 +248,9 @@ def download():
 def build(*, replacement_source=None):
     source=RAW.read_bytes() if replacement_source is None else replacement_source
     raw=json.loads(source)
+    target=ROOT/('Data/east-kowloon-coast.json' if EAST_KOWLOON else 'Data/west-coast-coast.json' if WEST_COAST else 'Data/tsuen-wan-coast.json' if TSUEN_WAN else 'Data/kwai-chung-coast.json' if KWAI_CHUNG else 'Data/island-coast.json' if ISLAND else 'Data/lai-chi-kok-coast.json' if NORTHWEST else 'Data/west-kowloon-coast.json')
+    include_wong_tai_sin=EAST_KOWLOON and (WONG_TAI_SIN_DISTRICT or
+        (target.exists() and 'wong_tai_sin_district_land' in json.loads(target.read_bytes())['metadata']))
     # The western shore joins the established district at x=-900; eastern TST is retained.
     region=box(*BOUNDS) if ISLAND or NORTHWEST or KWAI_CHUNG or TSUEN_WAN or WEST_COAST or EAST_KOWLOON else box(BOUNDS[0],BOUNDS[1],-900,BOUNDS[3])
     lines=[set_precision(LineString([local(p) for p in f['geometry']['coordinates']]),.001) for f in raw['features']]
@@ -270,12 +311,17 @@ def build(*, replacement_source=None):
                 'sea-fill polygons predate the road. Omit detached land across the approach channel.'
             ),
         }
+    if include_wong_tai_sin:
+        if 'kai_tak_coast_sources' not in raw:
+            raise ValueError('The recorded Wong Tai Sin extension needs the official CEDD mainland source')
+        land,wong_tai_sin=extend_wong_tai_sin_land(land,raw['kai_tak_coast_sources']['reclamation'])
+        output_bounds=WONG_TAI_SIN_DISTRICT_BOUNDS
+        source_metadata=source_metadata|{'wong_tai_sin_district_land':wong_tai_sin}
     parts=list(shore.geoms) if hasattr(shore,'geoms') else [shore]
     output=dict(metadata=source_metadata|dict(source_sha256=hashlib.sha256(source).hexdigest(),origin_wgs84=ORIGIN,
                 processing='HK1980 Grid EPSG:2326 northing/easting to WGS84; approximate local metre projection; 1 mm topology grid; coast simplified within 0.25 m. Straight source gaps and map cuts are authored.'+(' Island: pier outlines included, 10 cm topology weld; ferry-terminal and tunnel-mouth joins up to 120 m are explicitly authored.' if ISLAND else ' Eastern Kowloon: source pier outlines included; recorded seawall joins up to 60 m are authored.' if EAST_KOWLOON else ' Tsuen Wan: source pier outlines included; recorded terminal and seawall joins up to 60 m are authored.' if TSUEN_WAN else ' Ting Kau / Sham Tseng: source pier and connected rocky-shore outlines included; recorded joins up to 120 m are authored.' if WEST_COAST else ''),
                 gap_closures=[list(p.coords) for p in links],max_gap_closure_m=max((p.length for p in links),default=0)),
                 bounds=output_bounds,land=mapping(land),coastline=[list(p.coords) for p in parts if p.length>.5])
-    target=ROOT/('Data/east-kowloon-coast.json' if EAST_KOWLOON else 'Data/west-coast-coast.json' if WEST_COAST else 'Data/tsuen-wan-coast.json' if TSUEN_WAN else 'Data/kwai-chung-coast.json' if KWAI_CHUNG else 'Data/island-coast.json' if ISLAND else 'Data/lai-chi-kok-coast.json' if NORTHWEST else 'Data/west-kowloon-coast.json')
     coast_bytes=json.dumps(output,separators=(',',':')).encode('utf-8')
     if replacement_source is None:
         target.write_bytes(coast_bytes)
@@ -285,6 +331,8 @@ def build(*, replacement_source=None):
 
 
 if __name__=='__main__':
+    if WONG_TAI_SIN_DISTRICT and not EAST_KOWLOON:
+        raise ValueError('--wong-tai-sin-district requires --east-kowloon')
     if '--download' in sys.argv:
         download()
         if not EAST_KOWLOON:

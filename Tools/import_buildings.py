@@ -181,6 +181,7 @@ def local_geometry(geometry):
 
 
 from import_tunnel import CHI_MAN_STREET_ID, ISLAND_BOUNDS, KOWLOON_BOUNDS, WEST_BOUNDS, NORTHWEST_BOUNDS, KWAI_CHUNG_BOUNDS, TSUEN_WAN_BOUNDS, WEST_COAST_BOUNDS, EAST_KOWLOON_BOUNDS
+from import_tunnel import WONG_TAI_SIN_NARROW_CARRIAGEWAYS
 ISLAND_BBOX = (ORIGIN[0]+ISLAND_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-ISLAND_BOUNDS[3]/111320,
                ORIGIN[0]+ISLAND_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-ISLAND_BOUNDS[1]/111320)
 
@@ -200,6 +201,9 @@ KOWLOON_TONG_SELECTED_FEATURE_COUNT = 145
 KOWLOON_TONG_SELECTED_CSUIDS_SHA256 = '9eef70f180fc85aa3d7a1ecdc025bfbb128da01b9293df8b44ff816a00f298ca'
 KOWLOON_TONG_SELECTED_UNION_AREA_M2 = 58082.88613457147
 KOWLOON_CITY_BOUNDARY = 'Data/kowloon-city-district-boundary.geojson'
+WONG_TAI_SIN_BOUNDARY = 'Data/wong-tai-sin-district-boundary.geojson'
+MA_CHAI_HANG_BUILDING_SOURCE = 'Data/ma-chai-hang-building-source.geojson'
+MA_CHAI_HANG_CSUID = '3741622835T20180727'
 CHI_MAN_BUILDING_NOTE = ' Chi Man Street (TD_105191) uses a 0.1 m setback beyond its 5 m carriageway to preserve the surveyed SPCA footprint.'
 
 KWAI_CHUNG_BBOX = (ORIGIN[0]+KWAI_CHUNG_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-KWAI_CHUNG_BOUNDS[3]/111320,
@@ -211,29 +215,75 @@ TSUEN_WAN_BBOX = (ORIGIN[0]+TSUEN_WAN_BOUNDS[0]/(111320*math.cos(math.radians(OR
 WEST_COAST_BBOX = (ORIGIN[0]+WEST_COAST_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-WEST_COAST_BOUNDS[3]/111320,
                    ORIGIN[0]+WEST_COAST_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-WEST_COAST_BOUNDS[1]/111320)
 
-EAST_KOWLOON_BBOX = (ORIGIN[0]+EAST_KOWLOON_BOUNDS[0]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-EAST_KOWLOON_BOUNDS[3]/111320,
-                     ORIGIN[0]+EAST_KOWLOON_BOUNDS[2]/(111320*math.cos(math.radians(ORIGIN[1]))), ORIGIN[1]-EAST_KOWLOON_BOUNDS[1]/111320)
+def bounds_wgs84(bounds):
+    west,north,east,south=bounds
+    x_scale=111320*math.cos(math.radians(ORIGIN[1]))
+    return (ORIGIN[0]+west/x_scale,ORIGIN[1]-south/111320,
+            ORIGIN[0]+east/x_scale,ORIGIN[1]-north/111320)
 
 
-def kowloon_city_boundary():
-    boundary=json.loads((ROOT/KOWLOON_CITY_BOUNDARY).read_text())
+EAST_KOWLOON_BBOX = bounds_wgs84(EAST_KOWLOON_BOUNDS)
+
+
+def district_boundary_feature(path,name):
+    boundary=json.loads((ROOT/path).read_text())
     feature,=boundary['features']
     encoded=json.dumps(feature,sort_keys=True,ensure_ascii=False,separators=(',',':'),allow_nan=False)
     feature_sha256=hashlib.sha256(encoded.encode()).hexdigest()
-    if feature['properties']['District']!='Kowloon City District' or feature_sha256!=boundary['metadata']['feature_sha256']:
-        raise ValueError('Kowloon City District boundary does not match its recorded feature identity')
+    if feature['properties']['District']!=name or feature_sha256!=boundary['metadata']['feature_sha256']:
+        raise ValueError(f'{name} boundary does not match its recorded feature identity')
+    return feature,feature_sha256
+
+
+def kowloon_city_boundary():
+    feature,feature_sha256=district_boundary_feature(KOWLOON_CITY_BOUNDARY,'Kowloon City District')
     return local_geometry(feature['geometry']),feature_sha256
+
+
+def apply_ma_chai_hang_footprint(features):
+    source_bytes=(ROOT/MA_CHAI_HANG_BUILDING_SOURCE).read_bytes()
+    survey=json.loads(source_bytes)
+    refined,=survey['features']
+    props=refined['properties']
+    index,=[i for i,f in enumerate(features) if f['properties']['BuildingCSUID']==MA_CHAI_HANG_CSUID]
+    existing=features[index]
+    old=existing['properties']
+    if (props['BuildingCSUID']!=MA_CHAI_HANG_CSUID or props['Status']!='Active' or
+        any(props[k]!=old[k] for k in ('BuildingID','BuildingNameEN','BuildingBlockType','BaseHeight','TopHeight')) or
+        old['OBJECTID']!=survey['metadata']['layout_OBJECTID']):
+        raise ValueError('Ma Chai Hang survey revision does not match the pinned building identity and heights')
+    features[index]={**existing,'geometry':refined['geometry']}
+    return {'path':MA_CHAI_HANG_BUILDING_SOURCE,'sha256':hashlib.sha256(source_bytes).hexdigest(),
+            'BuildingCSUID':MA_CHAI_HANG_CSUID,'source_OBJECTID':props['OBJECTID'],'layout_OBJECTID':old['OBJECTID']}
 
 
 def building_road_clearance(road):
     # The surveyed Chi Man Street centreline clears the SPCA wall by 2.646 m.
     if road['id']==CHI_MAN_STREET_ID and road['width']==5:
         return road['width']/2+.1
+    # The reviewed narrower links keep the standard setback beyond their pavement.
+    if road['width']==WONG_TAI_SIN_NARROW_CARRIAGEWAYS.get(road['id']):
+        return road['width']/2+3.5
     return max(12,road['width'])/2+3.5
 
 
-def download_island(north=False, west=False, northwest=False, kwai_chung=False, tsuen_wan=False, west_coast=False, east_kowloon=False):
+def write_building_source(target,metadata,features):
+    contents=json.dumps(dict(type='FeatureCollection',metadata=metadata,features=features),ensure_ascii=False,separators=(',',':'),allow_nan=False)
+    with tempfile.NamedTemporaryFile(dir=target.parent,prefix=target.name+'.',suffix='.part',delete=False) as staged:
+        pending=Path(staged.name)
+    try:
+        pending.write_text(contents,encoding='utf-8')
+        pending.replace(target)
+    finally:pending.unlink(missing_ok=True)
+
+
+def download_island(north=False, west=False, northwest=False, kwai_chung=False, tsuen_wan=False, west_coast=False, east_kowloon=False, *, wong_tai_sin=False):
+    east_kowloon=east_kowloon or wong_tai_sin
     bbox = EAST_KOWLOON_BBOX if east_kowloon else WEST_COAST_BBOX if west_coast else TSUEN_WAN_BBOX if tsuen_wan else KWAI_CHUNG_BBOX if kwai_chung else NORTHWEST_BBOX if northwest else WEST_BBOX if west else KOWLOON_BBOX if north else ISLAND_BBOX
+    if wong_tai_sin:
+        feature,district_sha256=district_boundary_feature(WONG_TAI_SIN_BOUNDARY,'Wong Tai Sin District')
+        bbox=shape(feature['geometry']).bounds
+        wong_tai_sin_district=local_geometry(feature['geometry'])
     target=ROOT/('Data/east-kowloon-buildings.geojson' if east_kowloon else 'Data/west-coast-buildings.geojson' if west_coast else 'Data/tsuen-wan-buildings.geojson' if tsuen_wan else 'Data/kwai-chung-buildings.geojson' if kwai_chung else 'Data/lai-chi-kok-buildings.geojson' if northwest else 'Data/west-kowloon-buildings.geojson' if west else 'Data/kowloon-north-buildings.geojson' if north else 'Data/island-buildings.geojson')
     if east_kowloon and not target.exists():
         raise FileNotFoundError('Restore the bundled East Kowloon building source before refreshing its pinned records')
@@ -299,19 +349,20 @@ def download_island(north=False, west=False, northwest=False, kwai_chung=False, 
     query_features_sha256=hashlib.sha256(json.dumps(features,ensure_ascii=False,separators=(',',':'),allow_nan=False).encode()).hexdigest()
     merged_features=features;merge_provenance=None
     if previous is not None:
-        west_south=local([bbox[0],bbox[1]]);east_north=local([bbox[2],bbox[3]])
-        expanded_bounds=[west_south[0],east_north[1],east_north[0],west_south[1]]
-        west,north_edge,east,south=expanded_bounds
-        east_extension=east>previous_east+.01
-        # An eastward refresh must not replace the established northern strip or
-        # admit newer records there unless the query also extends farther north.
-        donor_bbox=previous_metadata['bbox_wgs84']
-        retained_north=local([donor_bbox[2],donor_bbox[3]])[1] if east_extension else previous_north
-        retained_east=previous_east if east_extension else east
-        addition_region=box(west,north_edge,east,south).difference(box(west,retained_north,retained_east,south))
-        if east_extension:
-            district,district_sha256=kowloon_city_boundary()
-            addition_region=addition_region.intersection(district)
+        if wong_tai_sin:
+            addition_region=wong_tai_sin_district
+        else:
+            west,south=local(bbox[:2]);east,north_edge=local(bbox[2:])
+            expanded_bounds=[west,north_edge,east,south]
+            east_extension=east>previous_east+.01
+            # An eastward refresh pins the existing northern strip.
+            donor_bbox=previous_metadata['bbox_wgs84']
+            retained_north=local(donor_bbox[2:])[1] if east_extension else previous_north
+            retained_east=previous_east if east_extension else east
+            addition_region=box(*expanded_bounds).difference(box(west,retained_north,retained_east,south))
+            if east_extension:
+                district,district_sha256=kowloon_city_boundary()
+                addition_region=addition_region.intersection(district)
         additions=[];occupied_ids=set(previous_ids);next_internal_id=max(previous_ids|ids,default=0)+1;id_remaps=[]
         for feature,polygon in zip(features,local_polygons):
             props=feature['properties'];source_id=props['OBJECTID'];uid=props['BuildingCSUID']
@@ -324,6 +375,20 @@ def download_island(north=False, west=False, northwest=False, kwai_chung=False, 
             if internal_id in occupied_ids:raise ValueError(f'Duplicate merged east-Kowloon OBJECTID {internal_id}')
             occupied_ids.add(internal_id);additions.append(feature)
         merged_features=previous_features+additions
+        if wong_tai_sin:
+            prior=previous_metadata.get('wong_tai_sin_merge',{})
+            added_csuids=sorted(set(prior.get('added_csuids',[]))|{f['properties']['BuildingCSUID'] for f in additions})
+            scope=dict(source=SOURCE,selection="Active records with positive-area footprint intersection in the official district, retaining whole source footprints",
+                       bbox_wgs84=list(bbox),retrieved_utc=retrieved_utc,query_feature_count=count,query_features_sha256=query_features_sha256,
+                       district_boundary_feature_sha256=district_sha256,
+                       preserved_source_sha256=prior.get('preserved_source_sha256',hashlib.sha256(previous_bytes).hexdigest()),
+                       preserved_feature_count=prior.get('preserved_feature_count',len(previous_features)),
+                       added_feature_count=len(added_csuids),incremental_added_feature_count=len(additions),added_csuids=added_csuids,
+                       added_csuids_sha256=hashlib.sha256(json.dumps(added_csuids,separators=(',',':')).encode()).hexdigest(),
+                       objectid_remaps=prior.get('objectid_remaps',[])+id_remaps)
+            write_building_source(target,previous_metadata|{'wong_tai_sin_merge':scope},merged_features)
+            print('WONG_TAI_SIN_BUILDINGS_DOWNLOADED:',count,'official records;',len(additions),'unseen active district records',flush=True)
+            return
         original_provenance=previous_metadata.get('merge_provenance',{})
         original_provenance=original_provenance if isinstance(original_provenance,dict) else {}
         original_source_sha256=original_provenance.get('preserved_source_sha256') if isinstance(original_provenance,dict) else None
@@ -374,13 +439,8 @@ def download_island(north=False, west=False, northwest=False, kwai_chung=False, 
                   query_feature_count=count,query_features_sha256=query_features_sha256)
     if east_kowloon and previous is not None:metadata['query_retrieved_utc']=retrieved_utc
     if merge_provenance is not None:metadata['merge_provenance']=merge_provenance
-    contents=json.dumps(dict(type='FeatureCollection',metadata=metadata,features=merged_features),ensure_ascii=False,separators=(',',':'),allow_nan=False)
-    with tempfile.NamedTemporaryFile(dir=target.parent,prefix=target.name+'.',suffix='.part',delete=False) as staged:
-        pending=Path(staged.name)
-    try:
-        pending.write_text(contents,encoding='utf-8')
-        pending.replace(target)
-    finally:pending.unlink(missing_ok=True)
+    if 'wong_tai_sin_merge' in previous_metadata:metadata['wong_tai_sin_merge']=previous_metadata['wong_tai_sin_merge']
+    write_building_source(target,metadata,merged_features)
     print('EAST_KOWLOON_BUILDINGS_DOWNLOADED:' if east_kowloon else 'WEST_COAST_BUILDINGS_DOWNLOADED:' if west_coast else 'TSUEN_WAN_BUILDINGS_DOWNLOADED:' if tsuen_wan else 'KWAI_CHUNG_BUILDINGS_DOWNLOADED:' if kwai_chung else 'NORTHWEST_BUILDINGS_DOWNLOADED:' if northwest else 'WEST_BUILDINGS_DOWNLOADED:' if west else 'NORTH_BUILDINGS_DOWNLOADED:' if north else 'ISLAND_BUILDINGS_DOWNLOADED:',count,flush=True)
 
 
@@ -388,6 +448,9 @@ def build(island=False, north=False, west=False, northwest=False, kwai_chung=Fal
     raw = ROOT / ("Data/southwest-landmarks-source.geojson" if landmarks else "Data/east-kowloon-buildings.geojson" if east_kowloon else "Data/west-coast-buildings.geojson" if west_coast else "Data/tsuen-wan-buildings.geojson" if tsuen_wan else "Data/kwai-chung-buildings.geojson" if kwai_chung else "Data/lai-chi-kok-buildings.geojson" if northwest else "Data/west-kowloon-buildings.geojson" if west else "Data/kowloon-north-buildings.geojson" if north else "Data/island-buildings.geojson" if island else "Data/buildings.geojson")
     raw_data = json.loads(raw.read_text())
     features = raw_data["features"]
+    ma_chai_hang = None
+    if east_kowloon and raw_data.get('metadata',{}).get('wong_tai_sin_merge'):
+        ma_chai_hang = apply_ma_chai_hang_footprint(features)
     roads = json.loads((ROOT / "Data/nathan-road.json").read_text())
     boundary = box(*(KOWLOON_BOUNDS if north else ISLAND_BOUNDS if island else roads['bounds']))
     if island:boundary=shape(json.loads((ROOT/'Data/island-coast.json').read_text())['land'])
@@ -436,7 +499,7 @@ def build(island=False, north=False, west=False, northwest=False, kwai_chung=Fal
         ('buildings.geojson','kowloon-north-buildings.geojson','west-kowloon-buildings.geojson','lai-chi-kok-buildings.geojson','kwai-chung-buildings.geojson','tsuen-wan-buildings.geojson','west-coast-buildings.geojson','east-kowloon-buildings.geojson')]
     kowloon_tong_source_path=ROOT/KOWLOON_TONG_SOURCE
     base_sources = ([raw]+regional_sources) if landmarks else [raw] if island else regional_sources+([kowloon_tong_source_path] if northwest else [])
-    snapshot_pairs=[(path,json.loads(path.read_text())) for path in base_sources]
+    snapshot_pairs=[(path,raw_data if path==raw else json.loads(path.read_text())) for path in base_sources]
     snapshot_pairs.sort(key=lambda pair: datetime.datetime.fromisoformat(pair[1].get('metadata',{}).get('retrieved_utc','2026-09-13T00:00:00+00:00')))
     snapshots=[snapshot for _,snapshot in snapshot_pairs]
     base_features = [f for snapshot in snapshots for f in snapshot['features']]
@@ -748,7 +811,7 @@ def build(island=False, north=False, west=False, northwest=False, kwai_chung=Fal
     assert min(b["height"] for b in output) > 0
     meta = {"provider": raw_data.get('metadata',{}).get('provider','Lands Department, HKSAR Government / CSDI Portal') if landmarks else "Lands Department, HKSAR Government / CSDI Portal", "source": raw_data.get('metadata',{}).get('source',SOURCE) if landmarks else SOURCE,
             "terms": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC", "retrieved_utc": raw_data.get('metadata',{}).get('retrieved_utc','2026-09-13'),
-            "source_sha256": hashlib.sha256(raw.read_bytes()).hexdigest(), "bbox_wgs84": raw_data.get('metadata',{}).get('bbox_wgs84') if landmarks else EAST_KOWLOON_BBOX if east_kowloon else WEST_COAST_BBOX if west_coast else TSUEN_WAN_BBOX if tsuen_wan else KWAI_CHUNG_BBOX if kwai_chung else NORTHWEST_BBOX if northwest else WEST_BBOX if west else KOWLOON_BBOX if north else ISLAND_BBOX if island else BBOX, "origin_wgs84": ORIGIN,
+            "source_sha256": hashlib.sha256(raw.read_bytes()).hexdigest(), "bbox_wgs84": raw_data.get('metadata',{}).get('bbox_wgs84') if landmarks else bounds_wgs84(coast['bounds']) if east_kowloon else WEST_COAST_BBOX if west_coast else TSUEN_WAN_BBOX if tsuen_wan else KWAI_CHUNG_BBOX if kwai_chung else NORTHWEST_BBOX if northwest else WEST_BBOX if west else KOWLOON_BBOX if north else ISLAND_BBOX if island else BBOX, "origin_wgs84": ORIGIN,
             "source_parts": len(features), "rendered_parts": len(output), "source_parts_retained": len({b["id"] for b in output}),
             "source_parts_clipped": clipped, "fallback_height_parts": missing, "footprint_area_m2": round(area),
             "volume_m3": round(sum(p.area*b["height"] for p,b in zip(actual,output))),
@@ -802,6 +865,7 @@ def build(island=False, north=False, west=False, northwest=False, kwai_chung=Fal
             raise ValueError('Kowloon Tong road-clearance footprint accounting changed')
         meta['note']+=' A pinned official CSDI query adds 145 previously absent Tower, Podium and Temporary Structure records within the former-water extension; 144 contribute rendered parts after clearance. Source identities and its 58,082.886 m2 dissolved footprint are recorded in source_supplement. The final 1.967 m2 remnant of source OBJECTID 110069 falls below the existing 4 m2 render cutoff after Cornwall Street clearance.'
     if east_kowloon:meta['note']=meta['note'].replace('western coastline','eastern coastline')
+    if ma_chai_hang:meta['ma_chai_hang_footprint']=ma_chai_hang
     if west_coast:meta['note']=meta['note'].replace('with recorded short gap repairs','plus connected CartoLandCoverLine rock outlines and pier outlines, with recorded authored gap repairs up to 115.34 m')
     if island:
         meta['note']=meta['note'].replace('authored land apron','government-derived land boundary').replace('the coastline remains authored','the island shoreline comes from LandsD iB1000 with recorded authored ferry-terminal and tunnel-mouth joins')
@@ -843,5 +907,7 @@ if __name__ == "__main__":
         (ROOT/'Data/southwest-landmarks-source.geojson').write_bytes(extract_southwest_landmarks(cache))
         build()
     else:
-        if '--download' in sys.argv: download_island('--north' in sys.argv, '--west' in sys.argv, '--northwest' in sys.argv, '--kwai-chung' in sys.argv, '--tsuen-wan' in sys.argv, '--west-coast' in sys.argv, '--east-kowloon' in sys.argv)
-        build('--island' in sys.argv, '--north' in sys.argv, '--west' in sys.argv, '--northwest' in sys.argv, '--kwai-chung' in sys.argv, '--tsuen-wan' in sys.argv, '--west-coast' in sys.argv, '--east-kowloon' in sys.argv)
+        wong_tai_sin='--wong-tai-sin-district' in sys.argv
+        east_kowloon='--east-kowloon' in sys.argv or wong_tai_sin
+        if '--download' in sys.argv: download_island('--north' in sys.argv, '--west' in sys.argv, '--northwest' in sys.argv, '--kwai-chung' in sys.argv, '--tsuen-wan' in sys.argv, '--west-coast' in sys.argv, east_kowloon, wong_tai_sin=wong_tai_sin)
+        build('--island' in sys.argv, '--north' in sys.argv, '--west' in sys.argv, '--northwest' in sys.argv, '--kwai-chung' in sys.argv, '--tsuen-wan' in sys.argv, '--west-coast' in sys.argv, east_kowloon)

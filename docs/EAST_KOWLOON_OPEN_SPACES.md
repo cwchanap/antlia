@@ -1,5 +1,40 @@
 # Kowloon and western New Territories open spaces
 
+## Wong Tai Sin district recreation
+
+The district fill adds 12 surveyed public sites covering 190,718.75 m² and 22 sports outlines with fittings inside their surveyed boundaries. The combined layout has 80 sites, 188 sports surfaces, 137 sport fittings and 4,627 fixtures. The source bundle records exact CEDD geometry, bilingual surveyed names, nine LCSD venue points and the official HAD district boundary hash. [CEDD iB1000](https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer) · [Reviewed source extract](../Data/wong-tai-sin-district-open-spaces-source.geojson)
+
+- Lok Fu Recreation Ground, Shek Ku Lung Road Playground, Shung Ling Street Playground, Wong Tai Sin Cultural Garden, Wong Tai Sin Square and Muk Lun Street Playground.
+- Tsz Wan Shan Estate Central Playground, Tsz Wan Shan Estate Service Reservoir Playground, Wong Tai Sin Service Reservoir Playground, Tsz Wan Shan Road Playground and Lok Wah Street Playground.
+- Ngau Chi Wan Park, with its surveyed eastern basketball court and authored paths and fixtures on the west side. Its pond and five pavilion outlines are reserved. [Ngau Chi Wan Park layout](https://www.lcsd.gov.hk/en/parks/ncwp/layout_map.html)
+
+An authored 26.24 m path connects Tsz Wan Shan Road Playground to public paving. Shung Ling Street Playground and Wong Tai Sin Square reserve their open areas for play and gatherings. The 331 new fixtures join all 4,296 earlier fixtures at their existing positions. The game uses flat recreation surfaces and connects Ngau Chi Wan Park’s west terraces. Jat’s Incline Morning Walkers Garden and Ngau Chi Wan Village Playground still need a verified connection to modeled public pavement. [Bundled recreation check](../evidence/wong-tai-sin-district-2026-11-25/recreation-final-bundled.log)
+
+The layout importer requires each of the 22 reviewed district sports fittings to retain its surveyed ID, site and usage. The in-engine check pairs each fitting with its rendered sports surface and checks the collision meshes. [Missing-fitting regression](../evidence/wong-tai-sin-review-fixes-2026-11-25/recreation-missing-fitting-green.log)
+
+The preservation audit uses the supplemental sources pinned by each earlier layout. The 64-site and 68-site comparisons preserve their surveyed site and sports records and verify the path adjustment at Diamond Hill Water Feature Park and the entrance relocation at Nan Lian Garden. [Preservation checks](../evidence/wong-tai-sin-review-fixes-2026-11-25/recreation-preservation.log)
+
+## Wong Tai Sin and Diamond Hill
+
+The Diamond Hill fill adds four surveyed public sites, bringing the combined inventory to 68 sites and 166 sports outlines. The CEDD iB1000 extract keeps the exact Site and sports outlines, bilingual survey labels and LCSD venue locations where available. Its selected CEDD records carry revision dates from 2014 through 2019. The source bundle includes the queries and response hashes. [CEDD basemap service](https://ginfo.cedd.gov.hk/server/rest/services/Basemap/MapServer)
+
+| Site | Source ID | Survey area (m²) | Sports outlines |
+| --- | --- | ---: | --- |
+| Hammer Hill Road Sports Ground | `1503006003` | 26,698.75 | One running track, one turf football field and one smaller football pitch |
+| Hammer Hill Park | `1503005994` | 7,113.82 | |
+| Po Kong Village Road Park | `1810005512` | 95,013.48 | Two artificial-turf football fields |
+| Nan Lian Garden | `1503005988` | 35,229.01 | |
+
+The four football fittings sit inside their slightly skewed survey outlines. The smaller Hammer Hill pitch uses an authored hard finish. The rendered running track is trimmed by 12.44 m² at the surveyed grandstand clearance. The Po Kong playground and elevated cycling circuit are outside the modeled sports scope. [Hammer Hill Road Sports Ground](https://www.lcsd.gov.hk/clpss/en/webApp/Facility/Details.do?did=16&ftid=38) · [Po Kong Village Road Park](https://www.lcsd.gov.hk/en/parks/pkvrp/)
+
+Nan Lian Garden retains its two-part source boundary. An authored perimeter walk connects it to public paving while reserving six surveyed ornamental ponds and three surveyed pavilions. Generic park furniture and planting are omitted within the garden. Site boundaries describe the reviewed survey, and the venue has its own access guidance. [Nan Lian Garden](https://www.lcsd.gov.hk/en/parks/nlg/index.html)
+
+The baked harbour pavement mask applies the surveyed pond exclusions after combining the paths, street shoulders and building pads. The in-engine recreation check samples the pavement channel inside each pond.
+
+The earlier 64 site boundaries, 161 sports surfaces, 111 sports fittings and 4,073 fixtures are preserved. Clearance was checked against the reviewed road network, updated eastern building footprints and 223 new fixtures.
+
+Rebuild the recreation layout with `Tools/import_east_open_spaces.py` after the district road and building imports. Keep the checked-in layout in place to reuse its authored fixture positions when the source surveys and clearance geometry still match. A road replay that updates only download provenance preserves those positions while publishing current input hashes. The importer rebuilds the garden records, including Nan Lian's surveyed exclusions, on each run. Run `Tools/check_east_open_spaces.py --bundled` with the geodata environment to verify source fragments, fitted pitch containment, reserved landscape features, path access and input hashes.
+
 ## Tsim Sha Tsui, Jordan, Yau Ma Tei and Tai Kok Tsui
 
 | Area | Sites |
